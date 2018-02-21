@@ -1,15 +1,15 @@
 use std::io;
-use std::thread;
-use std::io::BufReader;
 use std::io::prelude::*;
-use std::net::{TcpStream, Shutdown};
+use std::io::BufReader;
+use std::net::TcpStream;
 
 extern crate space;
-use space::ship::Ship;
+use space::dashboard::Dashboard;
+use space::engines::Engines;
+use space::module::{Module, from_primitive};
 
-extern crate serde_json;
 
-fn get_login_info() -> String {
+fn get_info() -> String {
     let mut name = String::new();
     println!("Ship Name:");
     io::stdin().read_line(&mut name).expect("Failed");
@@ -22,29 +22,30 @@ fn get_login_info() -> String {
 }
 
 fn main() {
+    let send = get_info();
+
     let mut stream = TcpStream::connect("localhost:6000").unwrap();
     let mut buff_r = BufReader::new(stream.try_clone().unwrap());
 
-    let send = get_login_info();
-    stream.write(send.as_bytes());
+    stream.write(send.as_bytes()).unwrap();
 
     let mut data = String::new();
-    buff_r.read_line(&mut data);
+    buff_r.read_line(&mut data).unwrap();
     let modules : Vec<&str> = data.split(",").collect();
 
     println!("Choose your module:");
     for (i, module) in modules.iter().enumerate() {
-        println!("{}) {}", i, module);
+        println!("{}) {}", i, module.replace("\n", ""));
     }
 
     let mut choice = String::new();
     io::stdin().read_line(&mut choice).expect("Failed");
-    stream.write(choice.as_bytes());
+    stream.write(choice.as_bytes()).unwrap();
 
-    let mut data = String::new();
-    buff_r.read_line(&mut data);
-    let ship : Ship = serde_json::from_str(&data).unwrap();
-    println!("{:?}", ship.location.0);
-
-    stream.shutdown(Shutdown::Both);
+    let module = from_primitive(choice);
+    match module {
+        Module::Dashboard => Dashboard(buff_r),
+        Module::Engines => Engines(stream),
+        _ => (),
+    }
 }

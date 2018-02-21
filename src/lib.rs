@@ -1,6 +1,10 @@
-#[macro_use] 
+#[macro_use]
 extern crate serde_derive;
+extern crate termion;
 
-pub mod connection;
 pub mod ship;
-mod module;
+pub mod module;
+pub mod engines;
+pub mod dashboard;
+pub mod connection;
+

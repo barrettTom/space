@@ -4,7 +4,10 @@ pub enum Module {
     Engines,
 }
 
-pub fn from_primitive(num : isize) -> Module {
+pub fn from_primitive(data : String) -> Module {
+    let data = data.replace("\n", "");
+    let num = data.parse::<isize>().unwrap();
+
     match num {
         0 => Module::Dashboard,
         1 => Module::Navigation,
