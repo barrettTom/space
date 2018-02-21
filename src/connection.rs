@@ -8,8 +8,7 @@ use ship::Ship;
 use module::{Module, from_primitive};
 
 pub struct Connection {
-//    name        : String,
-    ship        : Ship,
+    index       : usize,
     module      : Module,
     stream      : TcpStream,
     buff_r      : BufReader<TcpStream>,
@@ -17,12 +16,22 @@ pub struct Connection {
 }
 
 impl Connection {
-    pub fn new(mut stream : TcpStream) -> Connection {
+    pub fn new(mut stream : TcpStream, ships : &mut Vec<Ship>) -> Connection {
         let mut buff_r = BufReader::new(stream.try_clone().unwrap());
 
         let mut data = String::new();
         buff_r.read_line(&mut data).unwrap();
-        //let name = &data[..data.find(":").unwrap()];
+        let name = &data[..data.find(":").unwrap()];
+
+        let result = ships.into_iter().position(|ship| ship.name == name);
+        let index = match result {
+            Some(index) => index,
+            None => { 
+                let mut ship = Ship::new(name);
+                ships.push(ship);
+                ships.len() - 1
+            },
+        };
 
         let modules = b"dashboard,navigation,engine\n";
         stream.write(modules).unwrap();
@@ -34,8 +43,7 @@ impl Connection {
         stream.set_nonblocking(true).unwrap();
 
         Connection { 
-//            name    : String::from(name),
-            ship    : Ship::new(),
+            index   : index,
             module  : module,
             stream  : stream,
             buff_r  : buff_r,
@@ -43,10 +51,11 @@ impl Connection {
         }
     }
 
-    pub fn process(&mut self) {
+
+    pub fn process(&mut self, ships : &mut Vec<Ship>) {
         match self.module {
             Module::Dashboard => {
-                let mut send = serde_json::to_string(&self.ship).unwrap();
+                let mut send = serde_json::to_string(&ships[self.index]).unwrap();
                 send.push_str("\n");
                 match self.stream.write(send.as_bytes()) {
                     Ok(_result) => (),
@@ -56,12 +65,14 @@ impl Connection {
             Module::Engines => {
                 let mut data = String::new();
                 match self.buff_r.read_line(&mut data) {
-                    Ok(_result) => println!("{}", data),
-                    Err(_error) => println!("{}", _error)
+                    Ok(_result) => match data.as_bytes() {
+                        b"5\n" => ships[self.index].location.0 += 1,
+                        _ => (),
+                    },
+                    Err(_error) => println!("b{}", _error)
                 }
             }
             _ => ()
         }
     }
 }
-

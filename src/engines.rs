@@ -20,7 +20,7 @@ pub fn Engines(mut stream : TcpStream) {
                     break;
                 }
                 send.push_str("\n");
-                stream.write(send.as_bytes());
+                stream.write(send.as_bytes()).unwrap();
             }
             None => ()
         }

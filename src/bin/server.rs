@@ -9,19 +9,20 @@ fn main() {
     let listener = TcpListener::bind("localhost:6000").unwrap();
     listener.set_nonblocking(true).unwrap();
 
+    let mut ships = Vec::new();
+
     let mut connections = Vec::new();
     for stream in listener.incoming() {
         match stream {
-            Ok(stream) => connections.push(Connection::new(stream)),
+            Ok(stream) => connections.push(Connection::new(stream, &mut ships)),
             _ => {
-                println!("looped");
                 for i in 0..connections.len() {
-                    connections[i].process();
+                    connections[i].process(&mut ships);
                 }
                 connections.retain(|connection| connection.open );
+
                 sleep(Duration::from_millis(100));
             }
         }
     }
-
 }

@@ -1,12 +1,14 @@
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Ship {
-    pub location : (isize, isize, isize)
+    pub name        : String,
+    pub location    : (isize, isize, isize),
 }
 
 impl Ship {
-    pub fn new() -> Ship {
+    pub fn new(name : &str) -> Ship {
         Ship {
-            location : (0,0,0)
+            name        : String::from(name),
+            location    : (0,0,0),
         }
     }
 }
