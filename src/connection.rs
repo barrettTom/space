@@ -27,7 +27,7 @@ impl Connection {
         let index = match result {
             Some(index) => index,
             None => { 
-                let mut ship = Ship::new(name);
+                let ship = Ship::new(name);
                 ships.push(ship);
                 ships.len() - 1
             },
@@ -67,6 +67,11 @@ impl Connection {
                 match self.buff_r.read_line(&mut data) {
                     Ok(_result) => match data.as_bytes() {
                         b"5\n" => ships[self.index].location.0 += 1,
+                        b"0\n" => ships[self.index].location.0 -= 1,
+                        b"8\n" => ships[self.index].location.1 += 1,
+                        b"2\n" => ships[self.index].location.1 -= 1,
+                        b"4\n" => ships[self.index].location.2 += 1,
+                        b"6\n" => ships[self.index].location.2 -= 1,
                         _ => (),
                     },
                     Err(_error) => println!("b{}", _error)
