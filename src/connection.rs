@@ -67,16 +67,20 @@ impl Connection {
                 let mut location = masses[self.index].get_location();
                 let mut data = String::new();
                 match self.buff_r.read_line(&mut data) {
-                    Ok(_result) => match data.as_bytes() {
+                    Ok(result) => match data.as_bytes() {
                         b"5\n" => location.0 += 1,
                         b"0\n" => location.0 -= 1,
                         b"8\n" => location.1 += 1,
                         b"2\n" => location.1 -= 1,
                         b"4\n" => location.2 += 1,
                         b"6\n" => location.2 -= 1,
-                        _ => (),
+                        _ => {
+                            if result == 0 {
+                                self.open = false;
+                            }
+                        },
                     },
-                    Err(_error) => println!("b{}", _error)
+                    Err(_error) => (),
                 }
                 masses[self.index].give_location(location);
             }
