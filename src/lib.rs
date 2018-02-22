@@ -2,6 +2,7 @@
 extern crate serde_derive;
 extern crate termion;
 
+pub mod mass;
 pub mod ship;
 pub mod module;
 pub mod engines;

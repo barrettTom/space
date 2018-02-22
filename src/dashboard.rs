@@ -11,8 +11,6 @@ pub fn Dashboard(mut buff_r : BufReader<TcpStream>) {
         let mut data = String::new();
         buff_r.read_line(&mut data).unwrap();
         let ship : Ship = serde_json::from_str(&data).unwrap();
-        println!("Location: ({},{},{})",    ship.location.0,
-                                            ship.location.1,
-                                            ship.location.2);
+        println!("{:?}", ship);
     }
 }
