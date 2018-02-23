@@ -4,11 +4,11 @@ extern crate serde_json;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Astroid {
     name        : String,
-    location    : (isize, isize, isize),
+    location    : (f64, f64, f64),
 }
 
 impl Mass for Astroid {
-    fn new(name : &str, location : (isize, isize, isize)) -> Astroid {
+    fn new(name : &str, location : (f64, f64, f64)) -> Astroid {
         Astroid {
             name : String::from(name),
             location : location,
@@ -19,11 +19,11 @@ impl Mass for Astroid {
         &self.name
     }
 
-    fn location(&self) -> (isize, isize, isize) {
+    fn location(&self) -> (f64, f64, f64) {
         self.location
     }
 
-    fn set_location(&mut self, location : (isize, isize, isize)) {
+    fn set_location(&mut self, location : (f64, f64, f64)) {
         self.location = location;
     }
 

@@ -28,7 +28,7 @@ impl Connection {
         let index = match result {
             Some(index) => index,
             None => { 
-                let ship = Box::new(Ship::new(name, (0,0,0)));
+                let ship = Box::new(Ship::new(name, (0.0,0.0,0.0)));
                 masses.push(ship);
                 masses.len() - 1
             },
@@ -67,12 +67,12 @@ impl Connection {
                 let mut data = String::new();
                 match self.buff_r.read_line(&mut data) {
                     Ok(result) => match data.as_bytes() {
-                        b"5\n" => location.0 += 1,
-                        b"0\n" => location.0 -= 1,
-                        b"8\n" => location.1 += 1,
-                        b"2\n" => location.1 -= 1,
-                        b"4\n" => location.2 += 1,
-                        b"6\n" => location.2 -= 1,
+                        b"5\n" => location.0 += 1.0,
+                        b"0\n" => location.0 -= 1.0,
+                        b"8\n" => location.1 += 1.0,
+                        b"2\n" => location.1 -= 1.0,
+                        b"4\n" => location.2 += 1.0,
+                        b"6\n" => location.2 -= 1.0,
                         _ => {
                             if result == 0 {
                                 self.open = false;
@@ -86,8 +86,8 @@ impl Connection {
             Module::Navigation => {
                 let ship = &masses[self.index].downcast_ref::<Ship>().unwrap();
 
-                let within_range : Vec<_> = masses.iter().filter(|mass|
-                                                                 distance(ship.location(), mass.location()) < ship.range()).collect();
+                let within_range : Vec<&Box<Mass>> = masses.iter().filter(|mass|
+                distance(ship.location(), mass.location()) < ship.range()).collect();
 
                 let mut send = String::new();
                 for mass in within_range {
@@ -105,6 +105,6 @@ impl Connection {
 
 }
 
-fn distance(l0 : (isize, isize, isize), l1 : (isize, isize, isize)) -> f64 {
-    (((l1.0-l0.0).pow(2) + (l1.1-l0.1).pow(2) + (l1.2-l0.2).pow(2)) as f64).sqrt()
+fn distance(l0 : (f64, f64, f64), l1 : (f64, f64, f64)) -> f64 {
+    (((l1.0-l0.0).powf(2.0) + (l1.1-l0.1).powf(2.0) + (l1.2-l0.2).powf(2.0))).sqrt()
 }

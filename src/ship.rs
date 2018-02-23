@@ -4,7 +4,7 @@ extern crate serde_json;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Ship {
     name        : String,
-    location    : (isize, isize, isize),
+    location    : (f64, f64, f64),
     r           : f64,
 }
 
@@ -15,7 +15,7 @@ impl Ship {
 }
 
 impl Mass for Ship {
-    fn new(name : &str, location : (isize, isize, isize)) -> Ship {
+    fn new(name : &str, location : (f64, f64, f64)) -> Ship {
         Ship {
             name        : String::from(name),
             location    : location,
@@ -27,11 +27,11 @@ impl Mass for Ship {
         &self.name
     }
 
-    fn location(&self) -> (isize, isize, isize) {
+    fn location(&self) -> (f64, f64, f64) {
         self.location
     }
 
-    fn set_location(&mut self, location : (isize, isize, isize)) {
+    fn set_location(&mut self, location : (f64, f64, f64)) {
         self.location = location;
     }
 
