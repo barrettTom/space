@@ -88,15 +88,16 @@ impl Connection {
 
                 let mut within_range = Vec::new();
                 for mass in masses.iter() {
-                    if distance(ship.location(), mass.location()) > ship.range() {
+                    if distance(ship.location(), mass.location()) < ship.range() {
                         within_range.push(mass);
                     }
                 }
                 let mut send = String::new();
                 for mass in within_range {
                     send.push_str(&mass.serialize());
-                    send.push_str("\n");
+                    send.push_str(",");
                 }
+                send.push_str("\n");
                 match self.stream.write(send.as_bytes()) {
                     Ok(_result) => (),
                     Err(_error) => self.open = false,

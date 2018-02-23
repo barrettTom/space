@@ -19,7 +19,7 @@ impl Mass for Ship {
         Ship {
             name        : String::from(name),
             location    : location,
-            r           : 10.0,
+            r           : 100.0,
         }
     }
 
@@ -37,5 +37,9 @@ impl Mass for Ship {
 
     fn serialize(&self) ->String {
         serde_json::to_string(self).unwrap()
+    }
+
+    fn deserialize(&mut self, data : &str) {
+        //self = serde_json::from_str(data).unwrap();
     }
 }
