@@ -86,12 +86,9 @@ impl Connection {
             Module::Navigation => {
                 let ship = &masses[self.index].downcast_ref::<Ship>().unwrap();
 
-                let mut within_range = Vec::new();
-                for mass in masses.iter() {
-                    if distance(ship.location(), mass.location()) < ship.range() {
-                        within_range.push(mass);
-                    }
-                }
+                let within_range : Vec<_> = masses.iter().filter(|mass|
+                                                                 distance(ship.location(), mass.location()) < ship.range()).collect();
+
                 let mut send = String::new();
                 for mass in within_range {
                     send.push_str(&mass.serialize());
