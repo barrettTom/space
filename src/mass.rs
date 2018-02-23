@@ -1,7 +1,11 @@
-pub trait Mass {
+use downcast::Any;
+
+pub trait Mass : Any {
     fn new(name : &str, location : (isize, isize, isize)) -> Self where Self: Sized;
-    fn get_name(&self) -> &String;
-    fn get_location(&self) -> (isize, isize, isize);
-    fn give_location(&mut self, location : (isize, isize, isize));
+    fn name(&self) -> &String;
+    fn location(&self) -> (isize, isize, isize);
+    fn set_location(&mut self, location : (isize, isize, isize));
     fn serialize(&self) -> String;
 }
+
+downcast!(Mass);

@@ -6,6 +6,7 @@ use std::net::TcpStream;
 extern crate space;
 use space::dashboard::Dashboard;
 use space::engines::Engines;
+use space::navigation::Navigation;
 use space::module::{Module, from_primitive};
 
 
@@ -46,6 +47,6 @@ fn main() {
     match module {
         Module::Dashboard => Dashboard(buff_r),
         Module::Engines => Engines(stream),
-        _ => (),
+        Module::Navigation => Navigation(stream, buff_r),
     }
 }

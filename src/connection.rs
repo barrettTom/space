@@ -24,7 +24,7 @@ impl Connection {
         buff_r.read_line(&mut data).unwrap();
         let name = &data[..data.find(":").unwrap()];
 
-        let result = masses.into_iter().position(|ship| ship.get_name() == name);
+        let result = masses.into_iter().position(|ship| ship.name() == name);
         let index = match result {
             Some(index) => index,
             None => { 
@@ -52,7 +52,6 @@ impl Connection {
         }
     }
 
-
     pub fn process(&mut self, masses : &mut Vec<Box<Mass>>) {
         match self.module {
             Module::Dashboard => {
@@ -64,7 +63,7 @@ impl Connection {
                 }
             }
             Module::Engines => {
-                let mut location = masses[self.index].get_location();
+                let mut location = masses[self.index].location();
                 let mut data = String::new();
                 match self.buff_r.read_line(&mut data) {
                     Ok(result) => match data.as_bytes() {
@@ -82,11 +81,32 @@ impl Connection {
                     },
                     Err(_error) => (),
                 }
-                masses[self.index].give_location(location);
+                masses[self.index].set_location(location);
             }
             Module::Navigation => {
-                ()
+                let ship = &masses[self.index].downcast_ref::<Ship>().unwrap();
+
+                let mut within_range = Vec::new();
+                for mass in masses.iter() {
+                    if distance(ship.location(), mass.location()) > ship.range() {
+                        within_range.push(mass);
+                    }
+                }
+                let mut send = String::new();
+                for mass in within_range {
+                    send.push_str(&mass.serialize());
+                    send.push_str("\n");
+                }
+                match self.stream.write(send.as_bytes()) {
+                    Ok(_result) => (),
+                    Err(_error) => self.open = false,
+                }
             }
         }
     }
+
+}
+
+fn distance(l0 : (isize, isize, isize), l1 : (isize, isize, isize)) -> f64 {
+    (((l1.0-l0.0).pow(2) + (l1.1-l0.1).pow(2) + (l1.2-l0.2).pow(2)) as f64).sqrt()
 }

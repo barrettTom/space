@@ -2,24 +2,16 @@ use mass::Mass;
 extern crate serde_json;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Ship {
+pub struct Astroid {
     name        : String,
     location    : (isize, isize, isize),
-    r           : f64,
 }
 
-impl Ship {
-    pub fn range(&self) -> f64 {
-        self.r
-    }
-}
-
-impl Mass for Ship {
-    fn new(name : &str, location : (isize, isize, isize)) -> Ship {
-        Ship {
-            name        : String::from(name),
-            location    : location,
-            r           : 10.0,
+impl Mass for Astroid {
+    fn new(name : &str, location : (isize, isize, isize)) -> Astroid {
+        Astroid {
+            name : String::from(name),
+            location : location,
         }
     }
 

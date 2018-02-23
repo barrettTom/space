@@ -4,13 +4,23 @@ use std::net::TcpListener;
 
 extern crate space;
 use space::mass::Mass;
+use space::astroid::Astroid;
 use space::connection::Connection;
+
+
+fn populate() -> Vec<Box<Mass>> {
+    let mut masses : Vec<Box<Mass>> = Vec::new();
+
+    masses.push(Box::new(Astroid::new("cZfAJ", (10, -5, 4))));
+
+    masses
+}
 
 fn main() {
     let listener = TcpListener::bind("localhost:6000").unwrap();
     listener.set_nonblocking(true).unwrap();
 
-    let mut masses : Vec<Box<Mass>>= Vec::new();
+    let mut masses = populate();
 
     let mut connections = Vec::new();
     for stream in listener.incoming() {
