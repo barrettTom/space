@@ -6,7 +6,12 @@ pub trait Mass : Any {
     fn location(&self) -> (f64, f64, f64);
     fn set_location(&mut self, location : (f64, f64, f64));
     fn serialize(&self) -> String;
-    fn deserialize(&mut self, data : &str);
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Type {
+    Ship,
+    Astroid,
 }
 
 downcast!(Mass);

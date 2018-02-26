@@ -92,7 +92,7 @@ impl Connection {
                 let mut send = String::new();
                 for mass in within_range {
                     send.push_str(&mass.serialize());
-                    send.push_str(",");
+                    send.push_str(";");
                 }
                 send.push_str("\n");
                 match self.stream.write(send.as_bytes()) {

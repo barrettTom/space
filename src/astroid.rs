@@ -1,9 +1,10 @@
-use mass::Mass;
+use mass::{Mass, Type};
 extern crate serde_json;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Astroid {
     name        : String,
+    t           : Type,
     location    : (f64, f64, f64),
 }
 
@@ -11,6 +12,7 @@ impl Mass for Astroid {
     fn new(name : &str, location : (f64, f64, f64)) -> Astroid {
         Astroid {
             name : String::from(name),
+            t : Type::Astroid,
             location : location,
         }
     }
@@ -29,8 +31,5 @@ impl Mass for Astroid {
 
     fn serialize(&self) ->String {
         serde_json::to_string(self).unwrap()
-    }
-
-    fn deserialize(&mut self, data : &str) {
     }
 }
