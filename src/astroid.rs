@@ -19,14 +19,16 @@ impl Astroid {
                             .gen_ascii_chars()
                             .take(8)
                             .collect();
-        let mut r = Range::new(-50.0, 50.0);
+        let mut pr = Range::new(-50.0, 50.0);
+        let mut vr = Range::new(-5.0, 5.0);
         let mut rng = rand::thread_rng();
-        let position = (r.sample(&mut rng), r.sample(&mut rng), r.sample(&mut rng));
+        let position = (pr.sample(&mut rng), pr.sample(&mut rng), pr.sample(&mut rng));
+        let velocity = (vr.sample(&mut rng), vr.sample(&mut rng), vr.sample(&mut rng));
         Astroid {
             name        : name,
             t           : Type::Astroid,
             position    : position,
-            velocity    : (0.0, 0.0, 0.0),
+            velocity    : velocity,
         }
     }
 }
