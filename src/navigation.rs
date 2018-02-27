@@ -16,7 +16,7 @@ use ship::Ship;
 use math::distance;
 use astroid::Astroid;
 
-pub fn Navigation(name : String, mut stream :TcpStream, mut buff_r : BufReader<TcpStream>){
+pub fn Navigation(name : String, mut stream : TcpStream, mut buff_r : BufReader<TcpStream>){
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
     let mut stdin = async_stdin().bytes();
@@ -55,14 +55,16 @@ pub fn Navigation(name : String, mut stream :TcpStream, mut buff_r : BufReader<T
                termion::clear::All,
                termion::cursor::Goto(1,1)).unwrap();
 
-        let location = ship.expect("zz").location();
+        let position = ship.unwrap().position();
         for (i, mass) in masses.iter().enumerate() {
-            write!(stdout, "{}{}) {} {:?} Distance : {}",
+            write!(stdout, "{}{}) {} ({:.2}, {:.2}, {:.2}) Distance : {:.2}",
                    termion::cursor::Goto(1, 2 + i as u16),
                    i,
                    mass.name(),
-                   mass.location(),
-                   distance(mass.location(), location)).unwrap();
+                   mass.position().0,
+                   mass.position().1,
+                   mass.position().2,
+                   distance(mass.position(), position)).unwrap();
         }
 
         match stdin.next() {
@@ -70,6 +72,7 @@ pub fn Navigation(name : String, mut stream :TcpStream, mut buff_r : BufReader<T
                 let c = c.unwrap();
                 let mut send = String::new();
                 send.push(c as char);
+                println!("{}", send);
                 if send.as_bytes() == b"q" {
                     break;
                 }

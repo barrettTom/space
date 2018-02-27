@@ -4,40 +4,50 @@ extern crate serde_json;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Ship {
     name        : String,
-    location    : (f64, f64, f64),
+    position    : (f64, f64, f64),
+    velocity    : (f64, f64, f64),
     t           : Type,
     r           : f64,
 }
 
 impl Ship {
+    pub fn new(name : &str, position : (f64, f64, f64)) -> Ship {
+        Ship {
+            name        : String::from(name),
+            position    : position,
+            velocity    : (0.0, 0.0, 0.0),
+            t           : Type::Ship,
+            r           : 100.0,
+        }
+    }
+
     pub fn range(&self) -> f64 {
         self.r
     }
 }
 
 impl Mass for Ship {
-    fn new(name : &str, location : (f64, f64, f64)) -> Ship {
-        Ship {
-            name        : String::from(name),
-            location    : location,
-            t           : Type::Ship,
-            r           : 100.0,
-        }
-    }
-
     fn name(&self) -> &String {
         &self.name
     }
 
-    fn location(&self) -> (f64, f64, f64) {
-        self.location
-    }
-
-    fn set_location(&mut self, location : (f64, f64, f64)) {
-        self.location = location;
+    fn position(&self) -> (f64, f64, f64) {
+        self.position
     }
 
     fn serialize(&self) -> String {
         serde_json::to_string(self).unwrap()
+    }
+
+    fn process(&mut self) {
+        self.position.0 += self.velocity.0;
+        self.position.1 += self.velocity.1;
+        self.position.2 += self.velocity.2;
+    }
+
+    fn give_acceleration(&mut self, acceleration : (f64, f64, f64)) {
+        self.velocity.0 += acceleration.0;
+        self.velocity.1 += acceleration.1;
+        self.velocity.2 += acceleration.2;
     }
 }

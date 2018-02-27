@@ -64,16 +64,16 @@ impl Connection {
                 }
             }
             Module::Engines => {
-                let mut location = masses[self.index].location();
+                let mut acceleration = (0.0, 0.0, 0.0);
                 let mut data = String::new();
                 match self.buff_r.read_line(&mut data) {
                     Ok(result) => match data.as_bytes() {
-                        b"5\n" => location.0 += 1.0,
-                        b"0\n" => location.0 -= 1.0,
-                        b"8\n" => location.1 += 1.0,
-                        b"2\n" => location.1 -= 1.0,
-                        b"4\n" => location.2 += 1.0,
-                        b"6\n" => location.2 -= 1.0,
+                        b"5\n" => acceleration.0 += 1.0,
+                        b"0\n" => acceleration.0 -= 1.0,
+                        b"8\n" => acceleration.1 += 1.0,
+                        b"2\n" => acceleration.1 -= 1.0,
+                        b"4\n" => acceleration.2 += 1.0,
+                        b"6\n" => acceleration.2 -= 1.0,
                         _ => {
                             if result == 0 {
                                 self.open = false;
@@ -82,13 +82,13 @@ impl Connection {
                     },
                     Err(_error) => (),
                 }
-                masses[self.index].set_location(location);
+                masses[self.index].give_acceleration(acceleration);
             }
             Module::Navigation => {
                 let ship = &masses[self.index].downcast_ref::<Ship>().unwrap();
 
                 let within_range : Vec<&Box<Mass>> = masses.iter().filter(|mass|
-                distance(ship.location(), mass.location()) < ship.range()).collect();
+                distance(ship.position(), mass.position()) < ship.range()).collect();
 
                 let mut send = String::new();
                 for mass in within_range {
