@@ -9,21 +9,17 @@ use space::engines::Engines;
 use space::navigation::Navigation;
 use space::module::{Module, from_primitive};
 
-
-fn get_info() -> String {
+fn main() {
     let mut name = String::new();
     println!("Ship Name:");
     io::stdin().read_line(&mut name).expect("Failed");
+    name = name.replace("\n", "");
 
     let mut password = String::new();
     println!("Password:");
     io::stdin().read_line(&mut password).expect("Failed");
 
-    name.replace("\n", "") + ":" + &password
-}
-
-fn main() {
-    let send = get_info();
+    let send = name.clone() + ":" + &password;
 
     let mut stream = TcpStream::connect("localhost:6000").unwrap();
     let mut buff_r = BufReader::new(stream.try_clone().unwrap());
@@ -47,6 +43,6 @@ fn main() {
     match module {
         Module::Dashboard => Dashboard(buff_r),
         Module::Engines => Engines(stream),
-        Module::Navigation => Navigation(stream, buff_r),
+        Module::Navigation => Navigation(name, stream, buff_r),
     }
 }

@@ -8,6 +8,7 @@ extern crate termion;
 
 pub mod mass;
 pub mod ship;
+pub mod math;
 pub mod module;
 pub mod astroid;
 pub mod engines;
