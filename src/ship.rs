@@ -39,6 +39,29 @@ impl Mass for Ship {
         serde_json::to_string(self).unwrap()
     }
 
+    fn slow(&mut self) {
+        if self.velocity.0 > 0.01 {
+            self.velocity.0 += -1.0 * self.velocity.0 * 0.1;
+        }
+        else {
+            self.velocity.0 = 0.0;
+        }
+
+        if self.velocity.1 > 0.01 {
+            self.velocity.1 += -1.0 * self.velocity.1 * 0.1;
+        }
+        else {
+            self.velocity.1 = 0.0;
+        }
+
+        if self.velocity.2 > 0.01 {
+            self.velocity.2 += -1.0 * self.velocity.2 * 0.1;
+        }
+        else {
+            self.velocity.2 = 0.0;
+        }
+    }
+
     fn process(&mut self) {
         self.position.0 += self.velocity.0;
         self.position.1 += self.velocity.1;

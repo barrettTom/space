@@ -44,6 +44,10 @@ impl Mass for Astroid {
         serde_json::to_string(self).unwrap()
     }
 
+    fn slow(&mut self) {
+
+    }
+
     fn process(&mut self) {
         self.position.0 += self.velocity.0;
         self.position.1 += self.velocity.1;

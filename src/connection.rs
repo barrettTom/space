@@ -68,12 +68,13 @@ impl Connection {
                 let mut data = String::new();
                 match self.buff_r.read_line(&mut data) {
                     Ok(result) => match data.as_bytes() {
-                        b"5\n" => acceleration.0 += 1.0,
-                        b"0\n" => acceleration.0 -= 1.0,
-                        b"8\n" => acceleration.1 += 1.0,
-                        b"2\n" => acceleration.1 -= 1.0,
-                        b"4\n" => acceleration.2 += 1.0,
-                        b"6\n" => acceleration.2 -= 1.0,
+                        b"5\n" => acceleration.0 += 0.1,
+                        b"0\n" => acceleration.0 -= 0.1,
+                        b"8\n" => acceleration.1 += 0.1,
+                        b"2\n" => acceleration.1 -= 0.1,
+                        b"4\n" => acceleration.2 += 0.1,
+                        b"6\n" => acceleration.2 -= 0.1,
+                        b"-\n" => masses[self.index].slow(),
                         _ => {
                             if result == 0 {
                                 self.open = false;
