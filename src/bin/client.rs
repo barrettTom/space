@@ -4,9 +4,9 @@ use std::io::BufReader;
 use std::net::TcpStream;
 
 extern crate space;
-use space::dashboard::Dashboard;
-use space::engines::Engines;
-use space::navigation::Navigation;
+use space::dashboard::client_dashboard;
+use space::engines::client_engines;
+use space::navigation::client_navigation;
 use space::module::{Module, from_primitive};
 
 fn main() {
@@ -41,8 +41,8 @@ fn main() {
 
     let module = from_primitive(choice);
     match module {
-        Module::Dashboard => Dashboard(buff_r),
-        Module::Engines => Engines(stream),
-        Module::Navigation => Navigation(name, stream, buff_r),
+        Module::Dashboard => client_dashboard(buff_r),
+        Module::Engines => client_engines(stream),
+        Module::Navigation => client_navigation(name, stream, buff_r),
     }
 }

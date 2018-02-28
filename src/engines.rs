@@ -4,8 +4,13 @@ use termion::async_stdin;
 use std::thread::sleep;
 use std::io::{Read, Write, stdout};
 use std::time::Duration;
+use std::io::BufReader;
+use std::io::BufRead;
 
-pub fn Engines(mut stream : TcpStream) {
+use ship::Ship;
+use mass::Mass;
+
+pub fn client_engines(mut stream : TcpStream) {
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
     let mut stdin = async_stdin().bytes();
@@ -28,4 +33,28 @@ pub fn Engines(mut stream : TcpStream) {
         stdout.flush().unwrap();
         sleep(Duration::from_millis(100));
     }
+}
+
+pub fn server_engines(buff_r : &mut BufReader<TcpStream>, ship : &mut Box<Mass>) -> bool {
+    let mut acceleration = (0.0, 0.0, 0.0);
+    let mut data = String::new();
+    match buff_r.read_line(&mut data) {
+        Ok(result) => match data.as_bytes() {
+            b"5\n" => acceleration.0 += 0.1,
+            b"0\n" => acceleration.0 -= 0.1,
+            b"8\n" => acceleration.1 += 0.1,
+            b"2\n" => acceleration.1 -= 0.1,
+            b"4\n" => acceleration.2 += 0.1,
+            b"6\n" => acceleration.2 -= 0.1,
+            b"-\n" => ship.slow(),
+            _ => {
+                if result == 0 {
+                    return false
+                }
+            },
+        },
+        Err(_error) => (),
+    }
+    ship.give_acceleration(acceleration);
+    true
 }

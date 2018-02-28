@@ -12,6 +12,9 @@ use mass::Mass;
 use astroid::Astroid;
 use module::{Module, from_primitive};
 use math::distance;
+use dashboard::server_dashboard;
+use engines::server_engines;
+use navigation::server_navigation;
 
 pub struct Connection {
     index       : usize,
@@ -58,67 +61,10 @@ impl Connection {
     }
 
     pub fn process(&mut self, masses : &mut Vec<Box<Mass>>) {
-        match self.module {
-            Module::Dashboard => {
-                let mut send = masses[self.index].serialize();
-                send.push_str("\n");
-                match self.stream.write(send.as_bytes()) {
-                    Ok(_result) => (),
-                    Err(_error) => self.open = false,
-                }
-            }
-            Module::Engines => {
-                let mut acceleration = (0.0, 0.0, 0.0);
-                let mut data = String::new();
-                match self.buff_r.read_line(&mut data) {
-                    Ok(result) => match data.as_bytes() {
-                        b"5\n" => acceleration.0 += 0.1,
-                        b"0\n" => acceleration.0 -= 0.1,
-                        b"8\n" => acceleration.1 += 0.1,
-                        b"2\n" => acceleration.1 -= 0.1,
-                        b"4\n" => acceleration.2 += 0.1,
-                        b"6\n" => acceleration.2 -= 0.1,
-                        b"-\n" => masses[self.index].slow(),
-                        _ => {
-                            if result == 0 {
-                                self.open = false;
-                            }
-                        },
-                    },
-                    Err(_error) => (),
-                }
-                masses[self.index].give_acceleration(acceleration);
-            }
-            Module::Navigation => {
-                let ship = &masses[self.index].downcast_ref::<Ship>().unwrap();
-
-                let within_range : Vec<&Box<Mass>> = masses.iter().filter(|mass|
-                distance(ship.position(), mass.position()) < ship.range()).collect();
-
-                let mut send = String::new();
-                for mass in within_range {
-                    send.push_str(&mass.serialize());
-                    send.push_str(";");
-                }
-                send.push_str("\n");
-                match self.stream.write(send.as_bytes()) {
-                    Ok(_result) => (),
-                    Err(_error) => self.open = false,
-                }
-
-                let mut string_mass = String::new();
-                self.buff_r.read_line(&mut string_mass).unwrap();
-                if string_mass.len() > 0 {
-                    let json = &mut serde_json::de::Deserializer::from_slice(string_mass.as_bytes());
-                    let mut deserialized : Box<Deserializer> = Box::new(Deserializer::erase(json));
-                    if string_mass.contains("Ship") {
-                        let mass : Ship = erased_serde::deserialize(&mut deserialized).unwrap();
-                    }
-                    else {
-                        let mass : Astroid = erased_serde::deserialize(&mut deserialized).unwrap();
-                    }
-                }
-            }
-        }
+        self.open = match self.module {
+            Module::Dashboard => server_dashboard(masses[self.index].serialize(), &self.stream),
+            Module::Engines => server_engines(&mut self.buff_r, &mut masses[self.index]),
+            Module::Navigation => server_navigation(masses, self.index, &self.stream, &mut self.buff_r),
+        };
     }
 }
