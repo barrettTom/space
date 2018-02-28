@@ -50,7 +50,6 @@ pub fn Navigation(name : String, mut stream : TcpStream, mut buff_r : BufReader<
             }
         }
 
-
         write!(stdout, "{}{}Targets:",
                termion::clear::All,
                termion::cursor::Goto(1,1)).unwrap();
@@ -72,12 +71,20 @@ pub fn Navigation(name : String, mut stream : TcpStream, mut buff_r : BufReader<
                 let c = c.unwrap();
                 let mut send = String::new();
                 send.push(c as char);
-                println!("{}", send);
                 if send.as_bytes() == b"q" {
                     break;
                 }
-                //send.push_str("\n");
-                //stream.write(send.as_bytes()).unwrap();
+                else {
+                    let i = match send.parse::<usize>() {
+                        Ok(num) => num,
+                        Err(_err) => 100,
+                    };
+                    if i < masses.len() {
+                        send = masses[i].serialize();
+                        send.push_str("\n");
+                        stream.write(send.as_bytes()).unwrap();
+                    }
+                }
             }
             None => ()
         }

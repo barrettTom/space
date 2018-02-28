@@ -6,8 +6,9 @@ pub struct Ship {
     name        : String,
     position    : (f64, f64, f64),
     velocity    : (f64, f64, f64),
-    t           : Type,
+    mass_type   : Type,
     r           : f64,
+    target      : Option<usize>,
 }
 
 impl Ship {
@@ -16,8 +17,9 @@ impl Ship {
             name        : String::from(name),
             position    : position,
             velocity    : (0.0, 0.0, 0.0),
-            t           : Type::Ship,
+            mass_type   : Type::Ship,
             r           : 100.0,
+            target      : None,
         }
     }
 

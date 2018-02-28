@@ -3,9 +3,13 @@ use std::io::BufReader;
 use std::net::TcpStream;
 
 extern crate serde_json;
+extern crate erased_serde;
+
+use erased_serde::Deserializer;
 
 use ship::Ship;
 use mass::Mass;
+use astroid::Astroid;
 use module::{Module, from_primitive};
 use math::distance;
 
@@ -100,6 +104,19 @@ impl Connection {
                 match self.stream.write(send.as_bytes()) {
                     Ok(_result) => (),
                     Err(_error) => self.open = false,
+                }
+
+                let mut string_mass = String::new();
+                self.buff_r.read_line(&mut string_mass).unwrap();
+                if string_mass.len() > 0 {
+                    let json = &mut serde_json::de::Deserializer::from_slice(string_mass.as_bytes());
+                    let mut deserialized : Box<Deserializer> = Box::new(Deserializer::erase(json));
+                    if string_mass.contains("Ship") {
+                        let mass : Ship = erased_serde::deserialize(&mut deserialized).unwrap();
+                    }
+                    else {
+                        let mass : Astroid = erased_serde::deserialize(&mut deserialized).unwrap();
+                    }
                 }
             }
         }

@@ -8,7 +8,7 @@ use astroid::rand::Rng;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Astroid {
     name        : String,
-    t           : Type,
+    mass_type   : Type,
     position    : (f64, f64, f64),
     velocity    : (f64, f64, f64),
 }
@@ -20,13 +20,13 @@ impl Astroid {
                             .take(8)
                             .collect();
         let mut pr = Range::new(-50.0, 50.0);
-        let mut vr = Range::new(-5.0, 5.0);
+        let mut vr = Range::new(-1.0, 1.0);
         let mut rng = rand::thread_rng();
         let position = (pr.sample(&mut rng), pr.sample(&mut rng), pr.sample(&mut rng));
         let velocity = (vr.sample(&mut rng), vr.sample(&mut rng), vr.sample(&mut rng));
         Astroid {
             name        : name,
-            t           : Type::Astroid,
+            mass_type   : Type::Astroid,
             position    : position,
             velocity    : velocity,
         }
