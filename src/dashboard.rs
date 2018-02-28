@@ -6,7 +6,6 @@ use std::io::Write;
 extern crate serde_json;
 
 use ship::Ship;
-use mass::Mass;
 
 pub fn client_dashboard(mut buff_r : BufReader<TcpStream>) {
     loop {

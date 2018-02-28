@@ -6,7 +6,6 @@ authors = ["tom barrett <spalf0@gmail.com>"]
 [dependencies]
 serde = "1.0"
 serde_derive = "1.0"
-erased-serde = "0.3"
 serde_json = "1.0"
 termion = "1.5.1"
 downcast = "0.8"

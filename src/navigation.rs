@@ -1,14 +1,11 @@
 use std::net::TcpStream;
 use std::io::{BufRead, BufReader};
-use std::io::{stdout, Read, Write, stdin};
+use std::io::{stdout, Read, Write};
 use termion::raw::IntoRawMode;
 use termion::async_stdin;
 
-extern crate erased_serde;
 extern crate serde_json;
 extern crate termion;
-
-use erased_serde::Deserializer;
 
 use mass::Mass;
 use ship::Ship;
@@ -26,28 +23,14 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
 
         let string_masses = data.split(";");
         let mut masses : Vec<Box<Mass>> = Vec::new();
-        let mut ship : Option<Ship> = None;
         for string_mass in string_masses {
             if string_mass.len() == 1 {
                 break;
             }
-            let json = &mut serde_json::de::Deserializer::from_slice(string_mass.as_bytes());
-            let mut deserialized : Box<Deserializer> = Box::new(Deserializer::erase(json));
-
-            if string_mass.contains("Ship") {
-                let mass : Ship = erased_serde::deserialize(&mut deserialized).unwrap();
-                if mass.name() == &name {
-                    ship = Some(mass);
-                }
-                else {
-                    masses.push(Box::new(mass));
-                }
-            }
-            else {
-                let mass : Astroid = erased_serde::deserialize(&mut deserialized).unwrap();
-                masses.push(Box::new(mass));
-            }
+            masses.push(build_mass(string_mass));
         }
+
+        let ship = masses.iter().find(|ship| ship.name() == &name);
 
         write!(stdout, "{}{}Targets:",
                termion::clear::All,
@@ -109,19 +92,24 @@ pub fn server_navigation(masses : &mut Vec<Box<Mass>>, index : usize, mut stream
         Err(_error) => return false,
     }
 
-    /*
     let mut string_mass = String::new();
     buff_r.read_line(&mut string_mass).unwrap();
     if string_mass.len() > 0 {
-        let json = &mut serde_json::de::Deserializer::from_slice(string_mass.as_bytes());
-        let mut deserialized : Box<Deserializer> = Box::new(Deserializer::erase(json));
-        if string_mass.contains("Ship") {
-            let mass : Ship = erased_serde::deserialize(&mut deserialized).unwrap();
-        }
-        else {
-            let mass : Astroid = erased_serde::deserialize(&mut deserialized).unwrap();
-        }
+        let target = build_mass(&string_mass);
+        //ship.give_target(masses.iter().position(|mass| 
+        //                                        mass.name() == target.name()));
     }
-    */
+
     true
+}
+
+fn build_mass(string_mass : &str) -> Box<Mass> {
+    let mut mass = Astroid::new();
+    if string_mass.contains("Ship") {
+        let mass : Ship = serde_json::from_str(&string_mass).unwrap();
+    }
+    else {
+        let mass : Astroid = serde_json::from_str(&string_mass).unwrap();
+    }
+    Box::new(mass)
 }

@@ -23,6 +23,10 @@ impl Ship {
         }
     }
 
+    pub fn give_target(&mut self, target : Option<usize>) {
+        self.target = target;
+    }
+
     pub fn range(&self) -> f64 {
         self.r
     }

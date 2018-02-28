@@ -3,18 +3,13 @@ use std::io::BufReader;
 use std::net::TcpStream;
 
 extern crate serde_json;
-extern crate erased_serde;
-
-use erased_serde::Deserializer;
 
 use ship::Ship;
 use mass::Mass;
-use astroid::Astroid;
-use module::{Module, from_primitive};
-use math::distance;
-use dashboard::server_dashboard;
 use engines::server_engines;
+use dashboard::server_dashboard;
 use navigation::server_navigation;
+use module::{Module, from_primitive};
 
 pub struct Connection {
     index       : usize,

@@ -1,8 +1,10 @@
-use mass::{Mass, Type};
-extern crate rand;
 use self::rand::distributions::Range;
 use astroid::rand::distributions::Sample;
+
+extern crate rand;
 extern crate serde_json;
+
+use mass::{Mass, Type};
 use astroid::rand::Rng;
 
 #[derive(Serialize, Deserialize, Debug)]

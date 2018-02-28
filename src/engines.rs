@@ -7,7 +7,6 @@ use std::time::Duration;
 use std::io::BufReader;
 use std::io::BufRead;
 
-use ship::Ship;
 use mass::Mass;
 
 pub fn client_engines(mut stream : TcpStream) {
