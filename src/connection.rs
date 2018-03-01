@@ -55,11 +55,11 @@ impl Connection {
         }
     }
 
-    pub fn process(&mut self, masses : &mut Vec<Box<Mass>>) {
+    pub fn process(&mut self, mut masses : &mut Vec<Box<Mass>>) {
         self.open = match self.module {
             Module::Dashboard => server_dashboard(masses[self.index].serialize(), &self.stream),
-            Module::Engines => server_engines(&mut self.buff_r, &mut masses[self.index]),
-            Module::Navigation => server_navigation(masses, self.index, &self.stream, &mut self.buff_r),
+            Module::Engines => server_engines(&mut masses[self.index], &mut self.buff_r),
+            Module::Navigation => server_navigation(&mut masses.to_vec(), &mut masses[self.index], &self.stream, &mut self.buff_r),
         };
     }
 }

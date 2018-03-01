@@ -1,7 +1,7 @@
 use mass::{Mass, Type};
 extern crate serde_json;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ship {
     name        : String,
     position    : (f64, f64, f64),
@@ -22,14 +22,6 @@ impl Ship {
             target      : None,
         }
     }
-
-    pub fn give_target(&mut self, target : Option<usize>) {
-        self.target = target;
-    }
-
-    pub fn range(&self) -> f64 {
-        self.r
-    }
 }
 
 impl Mass for Ship {
@@ -43,6 +35,14 @@ impl Mass for Ship {
 
     fn serialize(&self) -> String {
         serde_json::to_string(self).unwrap()
+    }
+
+    fn range(&self) -> f64 {
+        self.r
+    }
+
+    fn give_target(&mut self, target : Option<usize>) {
+        self.target = target;
     }
 
     fn slow(&mut self) {
@@ -66,6 +66,10 @@ impl Mass for Ship {
         else {
             self.velocity.2 = 0.0;
         }
+    }
+
+    fn box_clone(&self) -> Box<Mass> {
+        Box::new((*self).clone())
     }
 
     fn process(&mut self) {

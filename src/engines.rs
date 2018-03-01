@@ -34,7 +34,7 @@ pub fn client_engines(mut stream : TcpStream) {
     }
 }
 
-pub fn server_engines(buff_r : &mut BufReader<TcpStream>, ship : &mut Box<Mass>) -> bool {
+pub fn server_engines(ship : &mut Box<Mass>, buff_r : &mut BufReader<TcpStream>) -> bool {
     let mut acceleration = (0.0, 0.0, 0.0);
     let mut data = String::new();
     match buff_r.read_line(&mut data) {

@@ -30,13 +30,14 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
             masses.push(build_mass(string_mass));
         }
 
-        let ship = masses.iter().find(|ship| ship.name() == &name);
+        let index = masses.iter().position(|ship| ship.name() == &name).unwrap();
+        let ship = masses.remove(index);
 
         write!(stdout, "{}{}Targets:",
                termion::clear::All,
                termion::cursor::Goto(1,1)).unwrap();
 
-        let position = ship.unwrap().position();
+        let position = ship.position();
         for (i, mass) in masses.iter().enumerate() {
             write!(stdout, "{}{}) {} ({:.2}, {:.2}, {:.2}) Distance : {:.2}",
                    termion::cursor::Goto(1, 2 + i as u16),
@@ -75,9 +76,7 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
     }
 }
 
-pub fn server_navigation(masses : &mut Vec<Box<Mass>>, index : usize, mut stream : &TcpStream, buff_r : &mut BufReader<TcpStream>) -> bool {
-    let ship = masses[index].downcast_ref::<Ship>().unwrap();
-
+pub fn server_navigation(masses : &mut Vec<Box<Mass>>, ship : &mut Box<Mass>, mut stream : &TcpStream, buff_r : &mut BufReader<TcpStream>) -> bool {
     let within_range : Vec<&Box<Mass>> = masses.iter().filter(|mass|
     distance(ship.position(), mass.position()) < ship.range()).collect();
 
@@ -93,23 +92,23 @@ pub fn server_navigation(masses : &mut Vec<Box<Mass>>, index : usize, mut stream
     }
 
     let mut string_mass = String::new();
-    buff_r.read_line(&mut string_mass).unwrap();
+
     if string_mass.len() > 0 {
         let target = build_mass(&string_mass);
-        //ship.give_target(masses.iter().position(|mass| 
-        //                                        mass.name() == target.name()));
+        ship.give_target(masses.iter().position(|mass|
+                                                mass.name() == target.name()));
     }
 
     true
 }
 
 fn build_mass(string_mass : &str) -> Box<Mass> {
-    let mut mass = Astroid::new();
     if string_mass.contains("Ship") {
         let mass : Ship = serde_json::from_str(&string_mass).unwrap();
+        return Box::new(mass)
     }
     else {
         let mass : Astroid = serde_json::from_str(&string_mass).unwrap();
+        return Box::new(mass)
     }
-    Box::new(mass)
 }

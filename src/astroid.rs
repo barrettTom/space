@@ -7,7 +7,7 @@ extern crate serde_json;
 use mass::{Mass, Type};
 use astroid::rand::Rng;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Astroid {
     name        : String,
     mass_type   : Type,
@@ -48,8 +48,12 @@ impl Mass for Astroid {
         serde_json::to_string(self).unwrap()
     }
 
-    fn slow(&mut self) {
+    fn slow(&mut self) {}
+    fn range(&self) -> f64 {0.0}
+    fn give_target(&mut self, target : Option<usize>) {}
 
+    fn box_clone(&self) -> Box<Mass> {
+        Box::new((*self).clone())
     }
 
     fn process(&mut self) {
