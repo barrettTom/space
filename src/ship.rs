@@ -22,30 +22,8 @@ impl Ship {
             target      : None,
         }
     }
-}
 
-impl Mass for Ship {
-    fn name(&self) -> &String {
-        &self.name
-    }
-
-    fn position(&self) -> (f64, f64, f64) {
-        self.position
-    }
-
-    fn serialize(&self) -> String {
-        serde_json::to_string(self).unwrap()
-    }
-
-    fn range(&self) -> f64 {
-        self.r
-    }
-
-    fn give_target(&mut self, target : Option<usize>) {
-        self.target = target;
-    }
-
-    fn slow(&mut self) {
+    pub fn slow(&mut self) {
         if self.velocity.0 > 0.01 {
             self.velocity.0 += -1.0 * self.velocity.0 * 0.1;
         }
@@ -68,14 +46,36 @@ impl Mass for Ship {
         }
     }
 
-    fn box_clone(&self) -> Box<Mass> {
-        Box::new((*self).clone())
+    pub fn range(&self) -> f64 {
+        self.r
+    }
+
+    pub fn give_target(&mut self, target : Option<usize>) {
+        self.target = target;
+    }
+}
+
+impl Mass for Ship {
+    fn name(&self) -> &String {
+        &self.name
     }
 
     fn process(&mut self) {
         self.position.0 += self.velocity.0;
         self.position.1 += self.velocity.1;
         self.position.2 += self.velocity.2;
+    }
+
+    fn position(&self) -> (f64, f64, f64) {
+        self.position
+    }
+
+    fn serialize(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    fn box_clone(&self) -> Box<Mass> {
+        Box::new((*self).clone())
     }
 
     fn give_acceleration(&mut self, acceleration : (f64, f64, f64)) {

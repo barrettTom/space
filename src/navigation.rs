@@ -11,6 +11,7 @@ use mass::Mass;
 use ship::Ship;
 use math::distance;
 use astroid::Astroid;
+use connection::Connection;
 
 pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : BufReader<TcpStream>){
     let stdout = stdout();
@@ -24,7 +25,7 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
         let string_masses = data.split(";");
         let mut masses : Vec<Box<Mass>> = Vec::new();
         for string_mass in string_masses {
-            if string_mass.len() == 1 {
+            if string_mass.len() <= 1 {
                 break;
             }
             masses.push(build_mass(string_mass));
@@ -76,30 +77,40 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
     }
 }
 
-pub fn server_navigation(masses : &mut Vec<Box<Mass>>, ship : &mut Box<Mass>, mut stream : &TcpStream, buff_r : &mut BufReader<TcpStream>) -> bool {
-    let within_range : Vec<&Box<Mass>> = masses.iter().filter(|mass|
-    distance(ship.position(), mass.position()) < ship.range()).collect();
+impl Connection {
+    pub fn server_navigation(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
+        let position = masses[self.index].position();
+        let range =  masses[self.index].downcast_ref::<Ship>().unwrap().range();
 
-    let mut send = String::new();
-    for mass in within_range {
-        send.push_str(&mass.serialize());
-        send.push_str(";");
+        {
+            let within_range : Vec<&Box<Mass>> = masses.iter().filter(|mass|
+                                                                      distance(position, mass.position()) < range)
+                                                                      .collect();
+            let mut send = String::new();
+            for mass in within_range {
+                send.push_str(&mass.serialize());
+                send.push_str(";");
+            }
+            send.push_str("\n");
+            match self.stream.write(send.as_bytes()) {
+                Ok(_result) => (),
+                Err(_error) => return false,
+            }
+        }
+
+        let mut string_mass = String::new();
+        match self.buff_r.read_line(&mut string_mass) {
+            Ok(_result) => (),
+            Err(_error) => (),
+        }
+        if string_mass.len() > 0 {
+            let target = build_mass(&string_mass);
+            let t = masses.iter().position(|mass|
+                                           mass.name() == target.name());
+            masses[self.index].downcast_mut::<Ship>().unwrap().give_target(t);
+        }
+        true
     }
-    send.push_str("\n");
-    match stream.write(send.as_bytes()) {
-        Ok(_result) => (),
-        Err(_error) => return false,
-    }
-
-    let mut string_mass = String::new();
-
-    if string_mass.len() > 0 {
-        let target = build_mass(&string_mass);
-        ship.give_target(masses.iter().position(|mass|
-                                                mass.name() == target.name()));
-    }
-
-    true
 }
 
 fn build_mass(string_mass : &str) -> Box<Mass> {

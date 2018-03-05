@@ -5,7 +5,9 @@ use std::io::Write;
 
 extern crate serde_json;
 
+use mass::Mass;
 use ship::Ship;
+use connection::Connection;
 
 pub fn client_dashboard(mut buff_r : BufReader<TcpStream>) {
     loop {
@@ -16,10 +18,13 @@ pub fn client_dashboard(mut buff_r : BufReader<TcpStream>) {
     }
 }
 
-pub fn server_dashboard(mut ship_string : String, mut stream : &TcpStream) -> bool {
-    ship_string.push_str("\n");
-    match stream.write(ship_string.as_bytes()) {
-        Ok(_result) => true,
-        Err(_error) => false,
+impl Connection {
+    pub fn server_dashboard(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
+        let mut ship_string = masses[self.index].serialize();
+        ship_string.push_str("\n");
+        match self.stream.write(ship_string.as_bytes()) {
+            Ok(_result) => true,
+            Err(_error) => false,
+        }
     }
 }

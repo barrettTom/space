@@ -4,10 +4,11 @@ use termion::async_stdin;
 use std::thread::sleep;
 use std::io::{Read, Write, stdout};
 use std::time::Duration;
-use std::io::BufReader;
 use std::io::BufRead;
 
+use ship::Ship;
 use mass::Mass;
+use connection::Connection;
 
 pub fn client_engines(mut stream : TcpStream) {
     let stdout = stdout();
@@ -34,26 +35,29 @@ pub fn client_engines(mut stream : TcpStream) {
     }
 }
 
-pub fn server_engines(ship : &mut Box<Mass>, buff_r : &mut BufReader<TcpStream>) -> bool {
-    let mut acceleration = (0.0, 0.0, 0.0);
-    let mut data = String::new();
-    match buff_r.read_line(&mut data) {
-        Ok(result) => match data.as_bytes() {
-            b"5\n" => acceleration.0 += 0.1,
-            b"0\n" => acceleration.0 -= 0.1,
-            b"8\n" => acceleration.1 += 0.1,
-            b"2\n" => acceleration.1 -= 0.1,
-            b"4\n" => acceleration.2 += 0.1,
-            b"6\n" => acceleration.2 -= 0.1,
-            b"-\n" => ship.slow(),
-            _ => {
-                if result == 0 {
-                    return false
-                }
+impl Connection {
+    pub fn server_engines(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
+        let ship = masses[self.index].downcast_mut::<Ship>().unwrap();
+        let mut acceleration = (0.0, 0.0, 0.0);
+        let mut data = String::new();
+        match self.buff_r.read_line(&mut data) {
+            Ok(result) => match data.as_bytes() {
+                b"5\n" => acceleration.0 += 0.1,
+                b"0\n" => acceleration.0 -= 0.1,
+                b"8\n" => acceleration.1 += 0.1,
+                b"2\n" => acceleration.1 -= 0.1,
+                b"4\n" => acceleration.2 += 0.1,
+                b"6\n" => acceleration.2 -= 0.1,
+                b"-\n" => ship.slow(),
+                _ => {
+                    if result == 0 {
+                        return false
+                    }
+                },
             },
-        },
-        Err(_error) => (),
+            Err(_error) => (),
+        }
+        ship.give_acceleration(acceleration);
+        true
     }
-    ship.give_acceleration(acceleration);
-    true
 }

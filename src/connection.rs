@@ -6,16 +6,13 @@ extern crate serde_json;
 
 use ship::Ship;
 use mass::Mass;
-use engines::server_engines;
-use dashboard::server_dashboard;
-use navigation::server_navigation;
 use module::{Module, from_primitive};
 
 pub struct Connection {
-    index       : usize,
-    module      : Module,
-    stream      : TcpStream,
-    buff_r      : BufReader<TcpStream>,
+    pub index   : usize,
+    pub module  : Module,
+    pub stream  : TcpStream,
+    pub buff_r  : BufReader<TcpStream>,
     pub open    : bool,
 }
 
@@ -57,9 +54,9 @@ impl Connection {
 
     pub fn process(&mut self, mut masses : &mut Vec<Box<Mass>>) {
         self.open = match self.module {
-            Module::Dashboard => server_dashboard(masses[self.index].serialize(), &self.stream),
-            Module::Engines => server_engines(&mut masses[self.index], &mut self.buff_r),
-            Module::Navigation => server_navigation(&mut masses.to_vec(), &mut masses[self.index], &self.stream, &mut self.buff_r),
+            Module::Engines => self.server_engines(&mut masses),
+            Module::Dashboard => self.server_dashboard(&mut masses),
+            Module::Navigation => self.server_navigation(&mut masses),
         };
     }
 }

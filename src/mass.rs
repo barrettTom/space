@@ -5,11 +5,8 @@ pub trait Mass : Any {
     fn position(&self) -> (f64, f64, f64);
     fn serialize(&self) -> String;
     fn process(&mut self);
-    fn slow(&mut self);
     fn give_acceleration(&mut self, acceleration : (f64, f64, f64));
     fn box_clone(&self) -> Box<Mass>;
-    fn range(&self) -> f64;
-    fn give_target(&mut self, target : Option<usize>);
 }
 
 impl Clone for Box<Mass> {
