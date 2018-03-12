@@ -53,6 +53,10 @@ impl Ship {
     pub fn give_target(&mut self, target : Option<usize>) {
         self.target = target;
     }
+
+    pub fn recv_target(&self) -> Option<usize> {
+        self.target
+    }
 }
 
 impl Mass for Ship {

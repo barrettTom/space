@@ -79,23 +79,30 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
 
 impl Connection {
     pub fn server_navigation(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
-        let position = masses[self.index].position();
-        let range =  masses[self.index].downcast_ref::<Ship>().unwrap().range();
+        let m = masses.to_vec();
+        let ship = masses[self.index].downcast_mut::<Ship>().unwrap();
 
-        {
-            let within_range : Vec<&Box<Mass>> = masses.iter().filter(|mass|
-                                                                      distance(position, mass.position()) < range)
-                                                                      .collect();
-            let mut send = String::new();
-            for mass in within_range {
-                send.push_str(&mass.serialize());
-                send.push_str(";");
+        match ship.recv_target() {
+            Some(index) => {
+                if distance(m[index].position(), ship.position()) > ship.range() {
+                    ship.give_target(None);
+                }
             }
-            send.push_str("\n");
-            match self.stream.write(send.as_bytes()) {
-                Ok(_result) => (),
-                Err(_error) => return false,
-            }
+            None => (),
+        }
+
+        let within_range : Vec<&Box<Mass>> = m.iter().filter(|mass|
+                                                             distance(ship.position(), mass.position()) < ship.range())
+                                                             .collect();
+        let mut send = String::new();
+        for mass in within_range {
+            send.push_str(&mass.serialize());
+            send.push_str(";");
+        }
+        send.push_str("\n");
+        match self.stream.write(send.as_bytes()) {
+            Ok(_result) => (),
+            Err(_error) => return false,
         }
 
         let mut string_mass = String::new();
@@ -105,9 +112,9 @@ impl Connection {
         }
         if string_mass.len() > 0 {
             let target = build_mass(&string_mass);
-            let t = masses.iter().position(|mass|
-                                           mass.name() == target.name());
-            masses[self.index].downcast_mut::<Ship>().unwrap().give_target(t);
+            let t = m.iter().position(|mass|
+                                      mass.name() == target.name());
+            ship.give_target(t);
         }
         true
     }
