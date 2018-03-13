@@ -22,7 +22,7 @@ impl Astroid {
                             .take(8)
                             .collect();
         let mut pr = Range::new(-50.0, 50.0);
-        let mut vr = Range::new(-1.0, 1.0);
+        let mut vr = Range::new(-0.5, 0.5);
         let mut rng = rand::thread_rng();
         let position = (pr.sample(&mut rng), pr.sample(&mut rng), pr.sample(&mut rng));
         let velocity = (vr.sample(&mut rng), vr.sample(&mut rng), vr.sample(&mut rng));
@@ -56,6 +56,10 @@ impl Mass for Astroid {
         self.position.0 += self.velocity.0;
         self.position.1 += self.velocity.1;
         self.position.2 += self.velocity.2;
+    }
+
+    fn recv_velocity(&self) -> (f64, f64, f64) {
+        self.velocity
     }
 
     fn give_acceleration(&mut self, acceleration : (f64, f64, f64)) {

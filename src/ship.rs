@@ -46,6 +46,13 @@ impl Ship {
         }
     }
 
+    pub fn speedup(&mut self) {
+        self.velocity.0 *= 1.05;
+        self.velocity.1 *= 1.05;
+        self.velocity.2 *= 1.05;
+
+    }
+
     pub fn range(&self) -> f64 {
         self.r
     }
@@ -80,6 +87,10 @@ impl Mass for Ship {
 
     fn box_clone(&self) -> Box<Mass> {
         Box::new((*self).clone())
+    }
+
+    fn recv_velocity(&self) -> (f64, f64, f64) {
+        self.velocity
     }
 
     fn give_acceleration(&mut self, acceleration : (f64, f64, f64)) {

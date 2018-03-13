@@ -42,7 +42,7 @@ fn main() {
     let module = from_primitive(choice);
     match module {
         Module::Dashboard => client_dashboard(buff_r),
-        Module::Engines => client_engines(stream),
+        Module::Engines => client_engines(stream, buff_r),
         Module::Navigation => client_navigation(name, stream, buff_r),
     }
 }
