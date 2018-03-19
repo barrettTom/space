@@ -11,9 +11,9 @@ use space::connection::Connection;
 fn populate() -> Vec<Box<Mass>> {
     let mut masses : Vec<Box<Mass>> = Vec::new();
 
-    masses.push(Box::new(Astroid::new()));
-    masses.push(Box::new(Astroid::new()));
-    masses.push(Box::new(Astroid::new()));
+    for _ in 0..10 {
+        masses.push(Box::new(Astroid::new()));
+    }
 
     masses
 }

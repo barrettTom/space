@@ -1,3 +1,4 @@
+use module::Module;
 use mass::{Mass, Type};
 extern crate serde_json;
 
@@ -9,10 +10,17 @@ pub struct Ship {
     mass_type   : Type,
     r           : f64,
     target      : Option<usize>,
+    modules     : Vec<Module>,
 }
 
 impl Ship {
     pub fn new(name : &str, position : (f64, f64, f64)) -> Ship {
+        let mut modules = Vec::new();
+
+        modules.push(Module::Navigation);
+        modules.push(Module::Engines);
+        modules.push(Module::Dashboard);
+
         Ship {
             name        : String::from(name),
             position    : position,
@@ -20,6 +28,7 @@ impl Ship {
             mass_type   : Type::Ship,
             r           : 100.0,
             target      : None,
+            modules     : modules,
         }
     }
 
@@ -63,6 +72,18 @@ impl Ship {
 
     pub fn recv_target(&self) -> Option<usize> {
         self.target
+    }
+
+    pub fn get_modules(&self) -> String {
+        let mut data = String::new();
+
+        for module in self.modules.iter() {
+            data.push_str(&serde_json::to_string(&module).unwrap());
+            data.push_str(";");
+        }
+        data.push_str("\n");
+
+        data
     }
 }
 

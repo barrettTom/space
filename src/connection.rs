@@ -6,7 +6,7 @@ extern crate serde_json;
 
 use ship::Ship;
 use mass::Mass;
-use module::{Module, from_primitive};
+use module::Module;
 
 pub struct Connection {
     pub index   : usize,
@@ -34,12 +34,12 @@ impl Connection {
             },
         };
 
-        let modules = b"dashboard,navigation,engine\n";
-        stream.write(modules).unwrap();
+        let modules = masses[index].downcast_ref::<Ship>().unwrap().get_modules();
+        stream.write(modules.as_bytes()).unwrap();
 
         let mut data = String::new();
         buff_r.read_line(&mut data).unwrap();
-        let module = from_primitive(data);
+        let module : Module = serde_json::from_str(&data.replace("\n","")).unwrap();
 
         stream.set_nonblocking(true).unwrap();
 

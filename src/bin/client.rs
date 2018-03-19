@@ -3,11 +3,13 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::net::TcpStream;
 
+extern crate serde_json;
+
 extern crate space;
 use space::dashboard::client_dashboard;
 use space::engines::client_engines;
 use space::navigation::client_navigation;
-use space::module::{Module, from_primitive};
+use space::module::Module;
 
 fn main() {
     let mut name = String::new();
@@ -28,7 +30,8 @@ fn main() {
 
     let mut data = String::new();
     buff_r.read_line(&mut data).unwrap();
-    let modules : Vec<&str> = data.split(",").collect();
+    let mut modules : Vec<&str> = data.split(";").collect();
+    modules.pop();
 
     println!("Choose your module:");
     for (i, module) in modules.iter().enumerate() {
@@ -37,9 +40,11 @@ fn main() {
 
     let mut choice = String::new();
     io::stdin().read_line(&mut choice).expect("Failed");
-    stream.write(choice.as_bytes()).unwrap();
+    let mut module = modules[choice.replace("\n","").parse::<usize>().unwrap()].to_owned();
+    module.push_str("\n");
+    stream.write(module.as_bytes()).unwrap();
 
-    let module = from_primitive(choice);
+    let module : Module = serde_json::from_str(&module.replace("\n","")).unwrap();
     match module {
         Module::Dashboard => client_dashboard(buff_r),
         Module::Engines => client_engines(stream, buff_r),
