@@ -28,7 +28,7 @@ impl Connection {
         let index = match result {
             Some(index) => index,
             None => { 
-                let ship = Box::new(Ship::new(name, (0.0,0.0,0.0)));
+                let ship = Box::new(Ship::new(name, (0.0, 0.0, 0.0)));
                 masses.push(ship);
                 masses.len() - 1
             },

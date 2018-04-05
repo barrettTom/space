@@ -1,6 +1,23 @@
+use std::time::{Duration, Instant, SystemTime};
+
 use module::Module;
 use mass::{Mass, Type};
 extern crate serde_json;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+enum TargetingStatus {
+    None,
+    Targeting,
+    Targeted,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct Targeting {
+    target  : Option<usize>,
+    status  : TargetingStatus,
+    time    : u64,
+    start   : Option<SystemTime>,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ship {
@@ -9,8 +26,8 @@ pub struct Ship {
     velocity    : (f64, f64, f64),
     mass_type   : Type,
     r           : f64,
-    target      : Option<usize>,
     modules     : Vec<Module>,
+    targeting   : Targeting,
 }
 
 impl Ship {
@@ -22,13 +39,18 @@ impl Ship {
         modules.push(Module::Dashboard);
 
         Ship {
-            name        : String::from(name),
-            position    : position,
-            velocity    : (0.0, 0.0, 0.0),
-            mass_type   : Type::Ship,
-            r           : 100.0,
-            target      : None,
-            modules     : modules,
+            name            : String::from(name),
+            position        : position,
+            velocity        : (0.0, 0.0, 0.0),
+            mass_type       : Type::Ship,
+            r               : 100.0,
+            targeting       : Targeting {
+                                    target : None,
+                                    status : TargetingStatus::None,
+                                    time   : 3,
+                                    start  : None,
+                              },
+            modules         : modules,
         }
     }
 
@@ -59,7 +81,6 @@ impl Ship {
         self.velocity.0 *= 1.05;
         self.velocity.1 *= 1.05;
         self.velocity.2 *= 1.05;
-
     }
 
     pub fn range(&self) -> f64 {
@@ -67,23 +88,20 @@ impl Ship {
     }
 
     pub fn give_target(&mut self, target : Option<usize>) {
-        self.target = target;
+        self.targeting.target = target;
+        self.targeting.status = TargetingStatus::Targeted;
+        //self.targeting.start = Some(SystemTime::now());
     }
 
     pub fn recv_target(&self) -> Option<usize> {
-        self.target
+        match self.targeting.status {
+            TargetingStatus::Targeted => self.targeting.target,
+            _ => None
+        }
     }
 
     pub fn get_modules(&self) -> String {
-        let mut data = String::new();
-
-        for module in self.modules.iter() {
-            data.push_str(&serde_json::to_string(&module).unwrap());
-            data.push_str(";");
-        }
-        data.push_str("\n");
-
-        data
+        serde_json::to_string(&self.modules).unwrap() + "\n"
     }
 }
 
@@ -96,6 +114,16 @@ impl Mass for Ship {
         self.position.0 += self.velocity.0;
         self.position.1 += self.velocity.1;
         self.position.2 += self.velocity.2;
+        /*
+        match self.targeting.start {
+            Some(time) => {
+                if time.elapsed().unwrap().as_secs() > self.targeting.time {
+                    self.targeting.status = TargetingStatus::Targeted;
+                }
+            }
+            None => (),
+        }
+        */
     }
 
     fn position(&self) -> (f64, f64, f64) {

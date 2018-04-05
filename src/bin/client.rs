@@ -30,21 +30,20 @@ fn main() {
 
     let mut data = String::new();
     buff_r.read_line(&mut data).unwrap();
-    let mut modules : Vec<&str> = data.split(";").collect();
-    modules.pop();
+    let modules : Vec<Module> = serde_json::from_str(&data.replace("\n","")).unwrap();
 
     println!("Choose your module:");
     for (i, module) in modules.iter().enumerate() {
-        println!("{}) {}", i, module.replace("\n", ""));
+        println!("{}) {:?}", i, module);
     }
 
     let mut choice = String::new();
     io::stdin().read_line(&mut choice).expect("Failed");
-    let mut module = modules[choice.replace("\n","").parse::<usize>().unwrap()].to_owned();
-    module.push_str("\n");
-    stream.write(module.as_bytes()).unwrap();
+    let module = modules[choice.replace("\n", "").parse::<usize>().unwrap()].clone();
 
-    let module : Module = serde_json::from_str(&module.replace("\n","")).unwrap();
+    let send = serde_json::to_string(&module).unwrap() + "\n";
+    stream.write(send.as_bytes()).unwrap();
+
     match module {
         Module::Dashboard => client_dashboard(buff_r),
         Module::Engines => client_engines(stream, buff_r),

@@ -44,7 +44,7 @@ impl Mass for Astroid {
         self.position
     }
 
-    fn serialize(&self) ->String {
+    fn serialize(&self) -> String {
         serde_json::to_string(self).unwrap()
     }
 

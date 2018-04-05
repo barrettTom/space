@@ -4,6 +4,7 @@ extern crate serde_derive;
 extern crate downcast;
 
 extern crate termion;
+extern crate time;
 
 pub mod mass;
 pub mod ship;
