@@ -18,10 +18,10 @@ pub fn client_engines(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>)
     let mut stdin = async_stdin().bytes();
 
     loop {
-        let mut data = String::new();
-        buff_r.read_line(&mut data).unwrap();
+        let mut recv = String::new();
+        buff_r.read_line(&mut recv).unwrap();
 
-        let has_target = match data.as_bytes() {
+        let has_target = match recv.as_bytes() {
             b"true\n" => true,
             _ => false
         };
@@ -72,9 +72,9 @@ impl Connection {
         }
 
         let mut acceleration = (0.0, 0.0, 0.0);
-        let mut data = String::new();
-        match self.buff_r.read_line(&mut data) {
-            Ok(result) => match data.as_bytes() {
+        let mut recv = String::new();
+        match self.buff_r.read_line(&mut recv) {
+            Ok(result) => match recv.as_bytes() {
                 b"5\n" => acceleration.0 += 0.1,
                 b"0\n" => acceleration.0 -= 0.1,
                 b"8\n" => acceleration.1 += 0.1,

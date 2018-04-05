@@ -20,9 +20,9 @@ impl Connection {
     pub fn new(mut stream : TcpStream, masses : &mut Vec<Box<Mass>>) -> Connection {
         let mut buff_r = BufReader::new(stream.try_clone().unwrap());
 
-        let mut data = String::new();
-        buff_r.read_line(&mut data).unwrap();
-        let name = &data[..data.find(":").unwrap()];
+        let mut recv = String::new();
+        buff_r.read_line(&mut recv).unwrap();
+        let name = &recv[..recv.find(":").unwrap()];
 
         match masses.iter().find(|ship| ship.name() == name).is_some() {
             false => masses.push(Box::new(Ship::new(name, (0.0, 0.0, 0.0)))),
@@ -35,9 +35,9 @@ impl Connection {
         let modules = ship.get_modules();
         stream.write(modules.as_bytes()).unwrap();
 
-        let mut data = String::new();
-        buff_r.read_line(&mut data).unwrap();
-        let module : Module = serde_json::from_str(&data.replace("\n","")).unwrap();
+        let mut recv = String::new();
+        buff_r.read_line(&mut recv).unwrap();
+        let module : Module = serde_json::from_str(&recv.replace("\n","")).unwrap();
 
         stream.set_nonblocking(true).unwrap();
 

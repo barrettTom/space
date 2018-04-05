@@ -11,9 +11,9 @@ use connection::Connection;
 
 pub fn client_dashboard(mut buff_r : BufReader<TcpStream>) {
     loop {
-        let mut data = String::new();
-        buff_r.read_line(&mut data).unwrap();
-        let ship : Ship = serde_json::from_str(&data).unwrap();
+        let mut recv = String::new();
+        buff_r.read_line(&mut recv).unwrap();
+        let ship : Ship = serde_json::from_str(&recv).unwrap();
         println!("{:?}", ship);
     }
 }

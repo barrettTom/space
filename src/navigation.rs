@@ -19,10 +19,10 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
     let mut stdin = async_stdin().bytes();
 
     loop {
-        let mut data = String::new();
-        buff_r.read_line(&mut data).unwrap();
+        let mut recv = String::new();
+        buff_r.read_line(&mut recv).unwrap();
 
-        let string_masses = data.split(";");
+        let string_masses = recv.split(";");
         let mut masses : Vec<Box<Mass>> = Vec::new();
         for string_mass in string_masses {
             if string_mass.len() <= 1 {

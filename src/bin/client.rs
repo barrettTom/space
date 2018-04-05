@@ -28,9 +28,9 @@ fn main() {
 
     stream.write(send.as_bytes()).unwrap();
 
-    let mut data = String::new();
-    buff_r.read_line(&mut data).unwrap();
-    let modules : Vec<Module> = serde_json::from_str(&data.replace("\n","")).unwrap();
+    let mut recv = String::new();
+    buff_r.read_line(&mut recv).unwrap();
+    let modules : Vec<Module> = serde_json::from_str(&recv.replace("\n","")).unwrap();
 
     println!("Choose your module:");
     for (i, module) in modules.iter().enumerate() {
