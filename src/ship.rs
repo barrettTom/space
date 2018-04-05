@@ -89,8 +89,8 @@ impl Ship {
 
     pub fn give_target(&mut self, target : Option<usize>) {
         self.targeting.target = target;
-        self.targeting.status = TargetingStatus::Targeted;
-        //self.targeting.start = Some(SystemTime::now());
+        self.targeting.status = TargetingStatus::Targeting;
+        self.targeting.start = Some(SystemTime::now());
     }
 
     pub fn recv_target(&self) -> Option<usize> {
@@ -114,7 +114,6 @@ impl Mass for Ship {
         self.position.0 += self.velocity.0;
         self.position.1 += self.velocity.1;
         self.position.2 += self.velocity.2;
-        /*
         match self.targeting.start {
             Some(time) => {
                 if time.elapsed().unwrap().as_secs() > self.targeting.time {
@@ -123,7 +122,6 @@ impl Mass for Ship {
             }
             None => (),
         }
-        */
     }
 
     fn position(&self) -> (f64, f64, f64) {
