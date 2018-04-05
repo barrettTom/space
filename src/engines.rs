@@ -58,7 +58,8 @@ pub fn client_engines(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>)
 impl Connection {
     pub fn server_engines(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
         let m = masses.to_vec();
-        let ship = masses[self.index].downcast_mut::<Ship>().unwrap();
+        let mass = masses.into_iter().find(|ship| ship.name() == &self.name).unwrap();
+        let ship = mass.downcast_mut::<Ship>().unwrap();
 
         let mut send = String::new();
         match ship.recv_target().is_some() {
@@ -84,8 +85,9 @@ impl Connection {
                 b"-\n" => ship.slow(),
                 b"c\n" => {
                     match ship.recv_target() {
-                        Some(index) => {
-                            let d_v = m[index].recv_velocity();
+                        Some(name) => {
+                            let target = m.into_iter().find(|target| target.name() == &name).unwrap();
+                            let d_v = target.recv_velocity();
                             let m_v = ship.recv_velocity();
                             acceleration = (d_v.0 - m_v.0,
                                             d_v.1 - m_v.1,
@@ -96,8 +98,9 @@ impl Connection {
                 },
                 b"t\n" => {
                     match ship.recv_target() {
-                        Some(index) => {
-                            let d_p = m[index].position();
+                        Some(name) => {
+                            let target = m.into_iter().find(|target| target.name() == &name).unwrap();
+                            let d_p = target.recv_velocity();
                             let m_p = ship.position();
                             acceleration = ((d_p.0 - m_p.0) * 0.01,
                                             (d_p.1 - m_p.1) * 0.01,

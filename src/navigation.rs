@@ -32,22 +32,36 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
         }
 
         let index = masses.iter().position(|ship| ship.name() == &name).unwrap();
-        let ship = masses.remove(index);
+        let ship = masses.remove(index).downcast::<Ship>().unwrap();
 
         write!(stdout, "{}{}Targets:",
                termion::clear::All,
                termion::cursor::Goto(1,1)).unwrap();
 
-        let position = ship.position();
         for (i, mass) in masses.iter().enumerate() {
-            write!(stdout, "{}{}) {} ({:.2}, {:.2}, {:.2}) Distance : {:.2}",
+
+            let target_data = match ship.recv_target() {
+                Some(name) => {
+                    if &name == mass.name() {
+                        serde_json::to_string(&ship.recv_target_status()).unwrap()
+                    }
+                    else {
+                        String::new()
+                    }
+                }
+                None => String::new(),
+            };
+
+            write!(stdout, "{}{}) {} ({:.2}, {:.2}, {:.2}) Distance : {:.2} {}",
                    termion::cursor::Goto(1, 2 + i as u16),
                    i,
                    mass.name(),
                    mass.position().0,
                    mass.position().1,
                    mass.position().2,
-                   distance(mass.position(), position)).unwrap();
+                   distance(mass.position(), ship.position()),
+                   target_data
+                   ).unwrap();
         }
 
         match stdin.next() {
@@ -80,11 +94,13 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
 impl Connection {
     pub fn server_navigation(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
         let m = masses.to_vec();
-        let ship = masses[self.index].downcast_mut::<Ship>().unwrap();
+        let mass = masses.into_iter().find(|ship| ship.name() == &self.name).unwrap();
+        let ship = mass.downcast_mut::<Ship>().unwrap();
 
         match ship.recv_target() {
-            Some(index) => {
-                if distance(m[index].position(), ship.position()) > ship.range() {
+            Some(name) => {
+                let target = m.iter().find(|target| target.name() == &name).unwrap();
+                if distance(target.position(), ship.position()) > ship.range() {
                     ship.give_target(None);
                 }
             }
@@ -112,9 +128,8 @@ impl Connection {
         }
         if string_mass.len() > 0 {
             let target = build_mass(&string_mass);
-            let t = m.iter().position(|mass|
-                                      mass.name() == target.name());
-            ship.give_target(t);
+            let name = target.name().clone();
+            ship.give_target(Some(name));
         }
         true
     }

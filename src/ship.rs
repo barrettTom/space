@@ -5,7 +5,7 @@ use mass::{Mass, Type};
 extern crate serde_json;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-enum TargetingStatus {
+pub enum TargetingStatus {
     None,
     Targeting,
     Targeted,
@@ -13,7 +13,7 @@ enum TargetingStatus {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Targeting {
-    target  : Option<usize>,
+    target  : Option<String>,
     status  : TargetingStatus,
     time    : u64,
     start   : Option<SystemTime>,
@@ -87,7 +87,7 @@ impl Ship {
         self.r
     }
 
-    pub fn give_target(&mut self, target : Option<usize>) {
+    pub fn give_target(&mut self, target : Option<String>) {
         self.targeting.target = target;
         match self.targeting.target {
             Some(_) => {
@@ -101,11 +101,12 @@ impl Ship {
         }
     }
 
-    pub fn recv_target(&self) -> Option<usize> {
-        match self.targeting.status {
-            TargetingStatus::Targeted => self.targeting.target,
-            _ => None
-        }
+    pub fn recv_target(&self) -> Option<String> {
+        self.targeting.target.clone()
+    }
+
+    pub fn recv_target_status(&self) -> TargetingStatus {
+        self.targeting.status.clone()
     }
 
     pub fn get_modules(&self) -> String {

@@ -20,9 +20,9 @@ pub fn client_dashboard(mut buff_r : BufReader<TcpStream>) {
 
 impl Connection {
     pub fn server_dashboard(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
-        let mut ship_string = masses[self.index].serialize();
-        ship_string.push_str("\n");
-        match self.stream.write(ship_string.as_bytes()) {
+        let ship = masses.iter().find(|ship| ship.name() == &self.name).unwrap();
+        let send = ship.serialize() + "\n";
+        match self.stream.write(send.as_bytes()) {
             Ok(_result) => true,
             Err(_error) => false,
         }

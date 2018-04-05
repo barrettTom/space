@@ -9,7 +9,7 @@ use mass::Mass;
 use module::Module;
 
 pub struct Connection {
-    pub index   : usize,
+    pub name    : String,
     pub module  : Module,
     pub stream  : TcpStream,
     pub buff_r  : BufReader<TcpStream>,
@@ -24,17 +24,15 @@ impl Connection {
         buff_r.read_line(&mut data).unwrap();
         let name = &data[..data.find(":").unwrap()];
 
-        let result = masses.into_iter().position(|ship| ship.name() == name);
-        let index = match result {
-            Some(index) => index,
-            None => { 
-                let ship = Box::new(Ship::new(name, (0.0, 0.0, 0.0)));
-                masses.push(ship);
-                masses.len() - 1
-            },
-        };
+        match masses.iter().find(|ship| ship.name() == name).is_some() {
+            false => masses.push(Box::new(Ship::new(name, (0.0, 0.0, 0.0)))),
+            _ => (),
+        }
 
-        let modules = masses[index].downcast_ref::<Ship>().unwrap().get_modules();
+        let mass = masses.iter().find(|ship| ship.name() == name).unwrap();
+        let ship = mass.downcast_ref::<Ship>().unwrap();
+
+        let modules = ship.get_modules();
         stream.write(modules.as_bytes()).unwrap();
 
         let mut data = String::new();
@@ -44,7 +42,7 @@ impl Connection {
         stream.set_nonblocking(true).unwrap();
 
         Connection { 
-            index   : index,
+            name    : String::from(name),
             module  : module,
             stream  : stream,
             buff_r  : buff_r,
