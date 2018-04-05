@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant, SystemTime};
+use std::time::SystemTime;
 
 use module::Module;
 use mass::{Mass, Type};
@@ -89,8 +89,16 @@ impl Ship {
 
     pub fn give_target(&mut self, target : Option<usize>) {
         self.targeting.target = target;
-        self.targeting.status = TargetingStatus::Targeting;
-        self.targeting.start = Some(SystemTime::now());
+        match self.targeting.target {
+            Some(_) => {
+                self.targeting.status = TargetingStatus::Targeting;
+                self.targeting.start = Some(SystemTime::now());
+            },
+            None => {
+                self.targeting.status = TargetingStatus::None;
+                self.targeting.start = None;
+            }
+        }
     }
 
     pub fn recv_target(&self) -> Option<usize> {
@@ -114,11 +122,13 @@ impl Mass for Ship {
         self.position.0 += self.velocity.0;
         self.position.1 += self.velocity.1;
         self.position.2 += self.velocity.2;
+
         match self.targeting.start {
             Some(time) => {
-                if time.elapsed().unwrap().as_secs() > self.targeting.time {
-                    self.targeting.status = TargetingStatus::Targeted;
-                }
+                            if time.elapsed().unwrap().as_secs() > self.targeting.time {
+                                self.targeting.status = TargetingStatus::Targeted;
+                                self.targeting.start = None;
+                            }
             }
             None => (),
         }
