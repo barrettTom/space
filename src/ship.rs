@@ -1,23 +1,8 @@
-use std::time::SystemTime;
+extern crate serde_json;
 
 use module::Module;
 use mass::{Mass, Type};
-extern crate serde_json;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum TargetingStatus {
-    None,
-    Targeting,
-    Targeted,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct Targeting {
-    target  : Option<String>,
-    status  : TargetingStatus,
-    time    : u64,
-    start   : Option<SystemTime>,
-}
+use targeting::{Targeting, TargetingStatus};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ship {
@@ -44,12 +29,7 @@ impl Ship {
             velocity        : (0.0, 0.0, 0.0),
             mass_type       : Type::Ship,
             r               : 100.0,
-            targeting       : Targeting {
-                                    target : None,
-                                    status : TargetingStatus::None,
-                                    time   : 3,
-                                    start  : None,
-                              },
+            targeting       : Targeting::new(),
             modules         : modules,
         }
     }
@@ -88,25 +68,15 @@ impl Ship {
     }
 
     pub fn give_target(&mut self, target : Option<String>) {
-        self.targeting.target = target;
-        match self.targeting.target {
-            Some(_) => {
-                self.targeting.status = TargetingStatus::Targeting;
-                self.targeting.start = Some(SystemTime::now());
-            },
-            None => {
-                self.targeting.status = TargetingStatus::None;
-                self.targeting.start = None;
-            }
-        }
+        self.targeting.give_target(target);
     }
 
     pub fn recv_target(&self) -> Option<String> {
-        self.targeting.target.clone()
+        self.targeting.get_target()
     }
 
     pub fn recv_target_status(&self) -> TargetingStatus {
-        self.targeting.status.clone()
+        self.targeting.get_status()
     }
 
     pub fn get_modules(&self) -> String {
@@ -123,16 +93,7 @@ impl Mass for Ship {
         self.position.0 += self.velocity.0;
         self.position.1 += self.velocity.1;
         self.position.2 += self.velocity.2;
-
-        match self.targeting.start {
-            Some(time) => {
-                            if time.elapsed().unwrap().as_secs() > self.targeting.time {
-                                self.targeting.status = TargetingStatus::Targeted;
-                                self.targeting.start = None;
-                            }
-            }
-            None => (),
-        }
+        self.targeting.process()
     }
 
     fn position(&self) -> (f64, f64, f64) {

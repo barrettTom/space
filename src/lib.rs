@@ -13,5 +13,6 @@ pub mod module;
 pub mod astroid;
 pub mod engines;
 pub mod dashboard;
+pub mod targeting;
 pub mod connection;
 pub mod navigation;
