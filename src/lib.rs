@@ -7,9 +7,12 @@ extern crate termion;
 extern crate time;
 
 pub mod mass;
+pub mod item;
 pub mod ship;
 pub mod math;
 pub mod module;
+pub mod mining;
+pub mod storage;
 pub mod astroid;
 pub mod engines;
 pub mod dashboard;

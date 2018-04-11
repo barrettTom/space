@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum TargetingStatus {
     None,
     Targeting,
@@ -28,10 +28,10 @@ impl Targeting {
     pub fn process(&mut self) {
         match self.start {
             Some(time) => {
-                            if time.elapsed().unwrap().as_secs() > self.time {
-                                self.status = TargetingStatus::Targeted;
-                                self.start = None;
-                            }
+                if time.elapsed().unwrap().as_secs() > self.time {
+                    self.status = TargetingStatus::Targeted;
+                    self.start = None;
+                }
             }
             None => (),
         }
@@ -50,11 +50,11 @@ impl Targeting {
         }
     }
 
-    pub fn get_target(&self) -> Option<String> {
+    pub fn recv_target(&self) -> Option<String> {
         self.target.clone()
     }
 
-    pub fn get_status(&self) -> TargetingStatus {
+    pub fn recv_status(&self) -> TargetingStatus {
         self.status.clone()
     }
 }

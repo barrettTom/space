@@ -2,6 +2,7 @@ use downcast::Any;
 
 pub trait Mass : Any {
     fn name(&self) -> &String;
+    fn recv_mass_type(&self) -> MassType;
     fn position(&self) -> (f64, f64, f64);
     fn serialize(&self) -> String;
     fn process(&mut self);
@@ -17,7 +18,7 @@ impl Clone for Box<Mass> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum Type {
+pub enum MassType {
     Ship,
     Astroid,
 }

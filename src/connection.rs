@@ -32,7 +32,7 @@ impl Connection {
         let mass = masses.iter().find(|ship| ship.name() == name).unwrap();
         let ship = mass.downcast_ref::<Ship>().unwrap();
 
-        let modules = ship.get_modules();
+        let modules = ship.recv_modules();
         stream.write(modules.as_bytes()).unwrap();
 
         let mut recv = String::new();
@@ -55,6 +55,7 @@ impl Connection {
             Module::Engines => self.server_engines(&mut masses),
             Module::Dashboard => self.server_dashboard(&mut masses),
             Module::Navigation => self.server_navigation(&mut masses),
+            Module::Mining => self.server_mining(&mut masses),
         };
     }
 }

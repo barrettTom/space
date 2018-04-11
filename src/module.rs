@@ -3,4 +3,5 @@ pub enum Module {
     Dashboard,
     Navigation,
     Engines,
+    Mining,
 }

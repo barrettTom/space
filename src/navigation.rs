@@ -43,7 +43,7 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
             let target_data = match ship.recv_target() {
                 Some(name) => {
                     if &name == mass.name() {
-                        serde_json::to_string(&ship.recv_target_status()).unwrap()
+                        serde_json::to_string(&ship.recv_targeting_status()).unwrap()
                     }
                     else {
                         String::new()
@@ -100,7 +100,7 @@ impl Connection {
         match ship.recv_target() {
             Some(name) => {
                 let target = m.iter().find(|target| target.name() == &name).unwrap();
-                if distance(target.position(), ship.position()) > ship.range() {
+                if distance(target.position(), ship.position()) > ship.recv_range() {
                     ship.give_target(None);
                 }
             }
@@ -108,7 +108,7 @@ impl Connection {
         }
 
         let within_range : Vec<&Box<Mass>> = m.iter().filter(|mass|
-                                                             distance(ship.position(), mass.position()) < ship.range())
+                                                             distance(ship.position(), mass.position()) < ship.recv_range())
                                                              .collect();
         let mut send = String::new();
         for mass in within_range {

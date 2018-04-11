@@ -6,8 +6,9 @@ use std::net::TcpStream;
 extern crate serde_json;
 
 extern crate space;
-use space::dashboard::client_dashboard;
+use space::mining::client_mining;
 use space::engines::client_engines;
+use space::dashboard::client_dashboard;
 use space::navigation::client_navigation;
 use space::module::Module;
 
@@ -48,5 +49,6 @@ fn main() {
         Module::Dashboard => client_dashboard(buff_r),
         Module::Engines => client_engines(stream, buff_r),
         Module::Navigation => client_navigation(name, stream, buff_r),
+        Module::Mining => client_mining(stream, buff_r),
     }
 }

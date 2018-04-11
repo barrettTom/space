@@ -7,9 +7,11 @@ use std::time::Duration;
 use std::io::{BufRead, BufReader};
 
 extern crate termion;
+extern crate serde_json;
 
 use ship::Ship;
 use mass::Mass;
+use targeting::TargetingStatus;
 use connection::Connection;
 
 pub fn client_engines(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>) {
@@ -20,11 +22,7 @@ pub fn client_engines(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>)
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-
-        let has_target = match recv.as_bytes() {
-            b"true\n" => true,
-            _ => false
-        };
+        let has_target = serde_json::from_str(&recv.replace("\n", "")).unwrap();
 
         write!(stdout, "{}{}use numpad to freely move\n", termion::clear::All, termion::cursor::Goto(1, 1)).unwrap();
         write!(stdout, "{}+ : speedup", termion::cursor::Goto(1, 2)).unwrap();
@@ -61,11 +59,9 @@ impl Connection {
         let mass = masses.into_iter().find(|ship| ship.name() == &self.name).unwrap();
         let ship = mass.downcast_mut::<Ship>().unwrap();
 
-        let mut send = String::new();
-        match ship.recv_target().is_some() {
-            true => send.push_str("true\n"),
-            false => send.push_str("false\n"),
-        }
+        let targeted = ship.recv_targeting_status() == TargetingStatus::Targeted;
+        let send = serde_json::to_string(&targeted).unwrap() + "\n";
+
         match self.stream.write(send.as_bytes()) {
             Ok(_result) => (),
             Err(_error) => return false,
@@ -100,7 +96,7 @@ impl Connection {
                     match ship.recv_target() {
                         Some(name) => {
                             let target = m.into_iter().find(|target| target.name() == &name).unwrap();
-                            let d_p = target.recv_velocity();
+                            let d_p = target.position();
                             let m_p = ship.position();
                             acceleration = ((d_p.0 - m_p.0) * 0.01,
                                             (d_p.1 - m_p.1) * 0.01,

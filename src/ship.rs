@@ -1,18 +1,23 @@
+use std::time::SystemTime;
+
 extern crate serde_json;
 
 use module::Module;
-use mass::{Mass, Type};
+use mass::{Mass, MassType};
 use targeting::{Targeting, TargetingStatus};
+use storage::Storage;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ship {
     name        : String,
+    mass_type   : MassType,
     position    : (f64, f64, f64),
     velocity    : (f64, f64, f64),
-    mass_type   : Type,
-    r           : f64,
+    range       : f64,
     modules     : Vec<Module>,
     targeting   : Targeting,
+    mining      : Mining,
+    storage     : Storage,
 }
 
 impl Ship {
@@ -22,15 +27,18 @@ impl Ship {
         modules.push(Module::Navigation);
         modules.push(Module::Engines);
         modules.push(Module::Dashboard);
+        modules.push(Module::Mining);
 
         Ship {
-            name            : String::from(name),
-            position        : position,
-            velocity        : (0.0, 0.0, 0.0),
-            mass_type       : Type::Ship,
-            r               : 100.0,
-            targeting       : Targeting::new(),
-            modules         : modules,
+            name        : String::from(name),
+            mass_type   : MassType::Ship,
+            position    : position,
+            velocity    : (0.0, 0.0, 0.0),
+            range       : 100.0,
+            modules     : modules,
+            targeting   : Targeting::new(),
+            mining      : Mining::new(),
+            storage     : Storage::new(Vec::new()),
         }
     }
 
@@ -63,8 +71,24 @@ impl Ship {
         self.velocity.2 *= 1.05;
     }
 
-    pub fn range(&self) -> f64 {
-        self.r
+    pub fn start_mining(&mut self) {
+        self.mining.start()
+    }
+
+    pub fn stop_mining(&mut self) {
+        self.mining.stop()
+    }
+
+    pub fn recv_range(&self) -> f64 {
+        self.range
+    }
+
+    pub fn recv_mining_range(&self) -> f64 {
+        self.mining.recv_range()
+    }
+
+    pub fn recv_mining_status(&self) -> bool {
+        self.mining.recv_status()
     }
 
     pub fn give_target(&mut self, target : Option<String>) {
@@ -72,14 +96,14 @@ impl Ship {
     }
 
     pub fn recv_target(&self) -> Option<String> {
-        self.targeting.get_target()
+        self.targeting.recv_target()
     }
 
-    pub fn recv_target_status(&self) -> TargetingStatus {
-        self.targeting.get_status()
+    pub fn recv_targeting_status(&self) -> TargetingStatus {
+        self.targeting.recv_status()
     }
 
-    pub fn get_modules(&self) -> String {
+    pub fn recv_modules(&self) -> String {
         serde_json::to_string(&self.modules).unwrap() + "\n"
     }
 }
@@ -87,6 +111,10 @@ impl Ship {
 impl Mass for Ship {
     fn name(&self) -> &String {
         &self.name
+    }
+
+    fn recv_mass_type(&self) -> MassType {
+        self.mass_type.clone()
     }
 
     fn process(&mut self) {
@@ -116,5 +144,41 @@ impl Mass for Ship {
         self.velocity.0 += acceleration.0;
         self.velocity.1 += acceleration.1;
         self.velocity.2 += acceleration.2;
+    }
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct Mining {
+    range   : f64,
+    status  : bool,
+    time    : u64,
+    start   : Option<SystemTime>,
+}
+
+impl Mining {
+    pub fn new() -> Mining {
+        Mining {
+            range   : 10.0,
+            status  : false,
+            time    : 1,
+            start   : None,
+        }
+    }
+
+    pub fn start(&mut self) {
+        self.status = true;
+    }
+
+    pub fn stop(&mut self) {
+        self.status = false;
+    }
+
+    pub fn recv_range(&self) -> f64 {
+        self.range
+    }
+
+    pub fn recv_status(&self) -> bool {
+        self.status
     }
 }
