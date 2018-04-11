@@ -2,6 +2,7 @@ use std::io::BufReader;
 use std::io::BufRead;
 use std::net::TcpStream;
 use std::io::Write;
+use std::collections::HashMap;
 
 extern crate serde_json;
 
@@ -19,8 +20,8 @@ pub fn client_dashboard(mut buff_r : BufReader<TcpStream>) {
 }
 
 impl Connection {
-    pub fn server_dashboard(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
-        let ship = masses.iter().find(|ship| ship.name() == &self.name).unwrap();
+    pub fn server_dashboard(&mut self, masses : &mut HashMap<String, Box<Mass>>) -> bool {
+        let ship = masses.get(&self.name).unwrap();
         let send = ship.serialize() + "\n";
         match self.stream.write(send.as_bytes()) {
             Ok(_result) => true,

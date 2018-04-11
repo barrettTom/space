@@ -1,4 +1,5 @@
 use std::io::{BufReader, BufRead};
+use std::collections::HashMap;
 use std::net::TcpStream;
 use std::io::{stdout, Read, Write};
 use termion::raw::IntoRawMode;
@@ -59,12 +60,13 @@ pub fn client_mining(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>) 
 }
 
 impl Connection {
-    pub fn server_mining(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
-        let m = masses.to_vec();
-        let mass = masses.into_iter().find(|ship| ship.name() == &self.name).unwrap();
+    pub fn server_mining(&mut self, masses : &mut HashMap<String, Box<Mass>>) -> bool {
+        let masses_clone = masses.clone();
+        let mass = masses.get_mut(&self.name).unwrap();
         let ship = mass.downcast_mut::<Ship>().unwrap();
+
         let target = match ship.recv_target() {
-            Some(name) => m.iter().find(|target| target.name() == &name),
+            Some(name) => masses_clone.get(&name),
             None => None,
         };
 

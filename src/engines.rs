@@ -5,6 +5,7 @@ use std::thread::sleep;
 use std::io::{Read, Write, stdout};
 use std::time::Duration;
 use std::io::{BufRead, BufReader};
+use std::collections::HashMap;
 
 extern crate termion;
 extern crate serde_json;
@@ -54,9 +55,10 @@ pub fn client_engines(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>)
 }
 
 impl Connection {
-    pub fn server_engines(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
-        let m = masses.to_vec();
-        let mass = masses.into_iter().find(|ship| ship.name() == &self.name).unwrap();
+    pub fn server_engines(&mut self, masses : &mut HashMap<String, Box<Mass>>) -> bool {
+        let masses_clone = masses.clone();
+
+        let mass = masses.get_mut(&self.name).unwrap();
         let ship = mass.downcast_mut::<Ship>().unwrap();
 
         let targeted = ship.recv_targeting_status() == TargetingStatus::Targeted;
@@ -82,7 +84,7 @@ impl Connection {
                 b"c\n" => {
                     match ship.recv_target() {
                         Some(name) => {
-                            let target = m.into_iter().find(|target| target.name() == &name).unwrap();
+                            let target = masses_clone.get(&name).unwrap();
                             let d_v = target.recv_velocity();
                             let m_v = ship.recv_velocity();
                             acceleration = (d_v.0 - m_v.0,
@@ -95,7 +97,7 @@ impl Connection {
                 b"t\n" => {
                     match ship.recv_target() {
                         Some(name) => {
-                            let target = m.into_iter().find(|target| target.name() == &name).unwrap();
+                            let target = masses_clone.get(&name).unwrap();
                             let d_p = target.position();
                             let m_p = ship.position();
                             acceleration = ((d_p.0 - m_p.0) * 0.01,
@@ -113,6 +115,7 @@ impl Connection {
             },
             Err(_error) => (),
         }
+
         ship.give_acceleration(acceleration);
 
         true

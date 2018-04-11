@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::net::TcpStream;
 use std::io::{BufRead, BufReader};
 use std::io::{stdout, Read, Write};
@@ -92,14 +93,14 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
 }
 
 impl Connection {
-    pub fn server_navigation(&mut self, masses : &mut Vec<Box<Mass>>) -> bool {
-        let m = masses.to_vec();
-        let mass = masses.into_iter().find(|ship| ship.name() == &self.name).unwrap();
+    pub fn server_navigation(&mut self, masses : &mut HashMap<String, Box<Mass>>) -> bool {
+        let masses_clone = masses.clone();
+        let mass = masses.get_mut(&self.name).unwrap();
         let ship = mass.downcast_mut::<Ship>().unwrap();
 
         match ship.recv_target() {
             Some(name) => {
-                let target = m.iter().find(|target| target.name() == &name).unwrap();
+                let target = masses_clone.get(&name).unwrap();
                 if distance(target.position(), ship.position()) > ship.recv_range() {
                     ship.give_target(None);
                 }
@@ -107,9 +108,9 @@ impl Connection {
             None => (),
         }
 
-        let within_range : Vec<&Box<Mass>> = m.iter().filter(|mass|
-                                                             distance(ship.position(), mass.position()) < ship.recv_range())
-                                                             .collect();
+        let within_range : Vec<&Box<Mass>> = masses_clone.values().filter(|mass|
+                                                                          distance(ship.position(), mass.position()) < ship.recv_range())
+                                                                          .collect();
         let mut send = String::new();
         for mass in within_range {
             send.push_str(&mass.serialize());

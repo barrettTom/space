@@ -1,6 +1,7 @@
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::net::TcpStream;
+use std::collections::HashMap;
 
 extern crate serde_json;
 
@@ -17,19 +18,14 @@ pub struct Connection {
 }
 
 impl Connection {
-    pub fn new(mut stream : TcpStream, masses : &mut Vec<Box<Mass>>) -> Connection {
+    pub fn new(mut stream : TcpStream, masses : &mut HashMap<String, Box<Mass>>) -> Connection {
         let mut buff_r = BufReader::new(stream.try_clone().unwrap());
 
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
         let name = &recv[..recv.find(":").unwrap()];
 
-        match masses.iter().find(|ship| ship.name() == name).is_some() {
-            false => masses.push(Box::new(Ship::new(name, (0.0, 0.0, 0.0)))),
-            _ => (),
-        }
-
-        let mass = masses.iter().find(|ship| ship.name() == name).unwrap();
+        let mass = masses.entry(name.to_string()).or_insert(Box::new(Ship::new(name, (0.0, 0.0, 0.0))));
         let ship = mass.downcast_ref::<Ship>().unwrap();
 
         let modules = ship.recv_modules();
@@ -50,7 +46,7 @@ impl Connection {
         }
     }
 
-    pub fn process(&mut self, mut masses : &mut Vec<Box<Mass>>) {
+    pub fn process(&mut self, mut masses : &mut HashMap<String, Box<Mass>>) {
         self.open = match self.module {
             Module::Engines => self.server_engines(&mut masses),
             Module::Dashboard => self.server_dashboard(&mut masses),

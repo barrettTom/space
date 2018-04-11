@@ -1,6 +1,7 @@
 use std::thread::sleep;
 use std::time::Duration;
 use std::net::TcpListener;
+use std::collections::HashMap;
 
 extern crate space;
 use space::mass::Mass;
@@ -8,11 +9,11 @@ use space::astroid::Astroid;
 use space::connection::Connection;
 
 
-fn populate() -> Vec<Box<Mass>> {
-    let mut masses : Vec<Box<Mass>> = Vec::new();
+fn populate() -> HashMap<String, Box<Mass>> {
+    let mut masses : HashMap<String, Box<Mass>> = HashMap::new();
 
     for _ in 0..10 {
-        masses.push(Box::new(Astroid::new()));
+        masses.insert("zz".to_string(), Box::new(Astroid::new()));
     }
 
     masses
@@ -34,7 +35,7 @@ fn main() {
                 }
                 connections.retain(|connection| connection.open);
 
-                for mass in masses.iter_mut() {
+                for mass in masses.values_mut() {
                     mass.process();
                 }
 
