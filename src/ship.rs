@@ -1,43 +1,48 @@
-use std::time::SystemTime;
-
 extern crate serde_json;
 
-use module::Module;
-use mass::{Mass, MassType};
-use targeting::{Targeting, TargetingStatus};
+use std::time::SystemTime;
+//use std::collections::HashMap;
+
 use storage::Storage;
+use mass::{Mass, MassType};
+//use module::{Module, ModuleType};
+use module::ModuleType;
+use targeting::{Targeting, TargetingStatus};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ship {
-    name        : String,
     mass_type   : MassType,
     position    : (f64, f64, f64),
     velocity    : (f64, f64, f64),
     range       : f64,
-    modules     : Vec<Module>,
-    targeting   : Targeting,
+    modules     : Vec<ModuleType>,
     mining      : Mining,
+    targeting   : Targeting,
+//    modules     : HashMap<ModuleType, Box<Module>>,
     storage     : Storage,
 }
 
 impl Ship {
-    pub fn new(name : &str, position : (f64, f64, f64)) -> Ship {
+    pub fn new(position : (f64, f64, f64)) -> Ship {
         let mut modules = Vec::new();
 
-        modules.push(Module::Navigation);
-        modules.push(Module::Engines);
-        modules.push(Module::Dashboard);
-        modules.push(Module::Mining);
+        modules.push(ModuleType::Navigation);
+        modules.push(ModuleType::Engines);
+        modules.push(ModuleType::Dashboard);
+        modules.push(ModuleType::Mining);
+
+//        let mut modules : HashMap<ModuleType, Box<Module>> = HashMap::new();
+//        modules.insert(ModuleType::Navigation, Targeting::new());
+//        modules.insert(ModuleType::Mining, Mining::new());
 
         Ship {
-            name        : String::from(name),
             mass_type   : MassType::Ship,
             position    : position,
             velocity    : (0.0, 0.0, 0.0),
             range       : 100.0,
             modules     : modules,
-            targeting   : Targeting::new(),
             mining      : Mining::new(),
+            targeting   : Targeting::new(),
             storage     : Storage::new(Vec::new()),
         }
     }
@@ -70,7 +75,6 @@ impl Ship {
         self.velocity.1 *= 1.05;
         self.velocity.2 *= 1.05;
     }
-
     pub fn start_mining(&mut self) {
         self.mining.start()
     }
@@ -109,10 +113,6 @@ impl Ship {
 }
 
 impl Mass for Ship {
-    fn name(&self) -> &String {
-        &self.name
-    }
-
     fn recv_mass_type(&self) -> MassType {
         self.mass_type.clone()
     }

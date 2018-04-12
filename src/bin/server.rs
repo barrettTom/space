@@ -1,19 +1,20 @@
+extern crate space;
+
 use std::thread::sleep;
 use std::time::Duration;
 use std::net::TcpListener;
 use std::collections::HashMap;
 
-extern crate space;
 use space::mass::Mass;
+use space::math::rand_name;
 use space::astroid::Astroid;
 use space::connection::Connection;
-
 
 fn populate() -> HashMap<String, Box<Mass>> {
     let mut masses : HashMap<String, Box<Mass>> = HashMap::new();
 
     for _ in 0..10 {
-        masses.insert("zz".to_string(), Box::new(Astroid::new()));
+        masses.insert(rand_name(), Box::new(Astroid::new()));
     }
 
     masses

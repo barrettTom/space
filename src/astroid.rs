@@ -1,17 +1,15 @@
-use self::rand::distributions::Range;
-use astroid::rand::distributions::Sample;
-
 extern crate rand;
 extern crate serde_json;
 
-use storage::Storage;
-use astroid::rand::Rng;
-use mass::{Mass, MassType};
+use self::rand::distributions::Range;
+use self::rand::distributions::Sample;
+
 use item::Item;
+use storage::Storage;
+use mass::{Mass, MassType};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Astroid {
-    name        : String,
     mass_type   : MassType,
     position    : (f64, f64, f64),
     velocity    : (f64, f64, f64),
@@ -20,10 +18,6 @@ pub struct Astroid {
 
 impl Astroid {
     pub fn new() -> Astroid {
-        let name : String = rand::thread_rng()
-                            .gen_ascii_chars()
-                            .take(8)
-                            .collect();
         let mut rng = rand::thread_rng();
 
         let mut pr = Range::new(-50.0, 50.0);
@@ -38,7 +32,6 @@ impl Astroid {
             resouces.push(Item::new("Iron", 1))
         }
         Astroid {
-            name        : name,
             mass_type   : MassType::Astroid,
             position    : position,
             velocity    : velocity,
@@ -48,10 +41,6 @@ impl Astroid {
 }
 
 impl Mass for Astroid {
-    fn name(&self) -> &String {
-        &self.name
-    }
-
     fn recv_mass_type(&self) -> MassType {
         self.mass_type.clone()
     }

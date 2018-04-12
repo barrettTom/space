@@ -1,16 +1,16 @@
+extern crate space;
+extern crate serde_json;
+
 use std::io;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::net::TcpStream;
 
-extern crate serde_json;
-
-extern crate space;
-use space::mining::client_mining;
-use space::engines::client_engines;
-use space::dashboard::client_dashboard;
-use space::navigation::client_navigation;
-use space::module::Module;
+use space::module::ModuleType;
+use space::client::mining::client_mining;
+use space::client::engines::client_engines;
+use space::client::dashboard::client_dashboard;
+use space::client::navigation::client_navigation;
 
 fn main() {
     let mut name = String::new();
@@ -31,7 +31,7 @@ fn main() {
 
     let mut recv = String::new();
     buff_r.read_line(&mut recv).unwrap();
-    let modules : Vec<Module> = serde_json::from_str(&recv.replace("\n","")).unwrap();
+    let modules : Vec<ModuleType> = serde_json::from_str(&recv.replace("\n","")).unwrap();
 
     println!("Choose your module:");
     for (i, module) in modules.iter().enumerate() {
@@ -46,9 +46,9 @@ fn main() {
     stream.write(send.as_bytes()).unwrap();
 
     match module {
-        Module::Dashboard => client_dashboard(buff_r),
-        Module::Engines => client_engines(stream, buff_r),
-        Module::Navigation => client_navigation(name, stream, buff_r),
-        Module::Mining => client_mining(stream, buff_r),
+        ModuleType::Dashboard => client_dashboard(buff_r),
+        ModuleType::Engines => client_engines(stream, buff_r),
+        ModuleType::Navigation => client_navigation(name, stream, buff_r),
+        ModuleType::Mining => client_mining(stream, buff_r),
     }
 }

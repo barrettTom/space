@@ -1,23 +1,10 @@
-use std::io::BufReader;
-use std::io::BufRead;
-use std::net::TcpStream;
+extern crate serde_json;
+
 use std::io::Write;
 use std::collections::HashMap;
 
-extern crate serde_json;
-
 use mass::Mass;
-use ship::Ship;
 use connection::Connection;
-
-pub fn client_dashboard(mut buff_r : BufReader<TcpStream>) {
-    loop {
-        let mut recv = String::new();
-        buff_r.read_line(&mut recv).unwrap();
-        let ship : Ship = serde_json::from_str(&recv).unwrap();
-        println!("{:?}", ship);
-    }
-}
 
 impl Connection {
     pub fn server_dashboard(&mut self, masses : &mut HashMap<String, Box<Mass>>) -> bool {

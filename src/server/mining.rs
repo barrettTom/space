@@ -1,12 +1,8 @@
-use std::io::{BufReader, BufRead};
-use std::collections::HashMap;
-use std::net::TcpStream;
-use std::io::{stdout, Read, Write};
-use termion::raw::IntoRawMode;
-use termion::async_stdin;
-
 extern crate serde_json;
-extern crate termion;
+
+use std::io::BufRead;
+use std::io::Write;
+use std::collections::HashMap;
 
 use ship::Ship;
 use math::distance;
@@ -19,44 +15,6 @@ struct ServerData {
     is_within_range     : bool,
     mining_range        : f64,
     mining_status       : bool,
-}
-
-pub fn client_mining(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>) {
-    let stdout = stdout();
-    let mut stdout = stdout.lock().into_raw_mode().unwrap();
-    let mut stdin = async_stdin().bytes();
-
-    loop {
-        let mut recv = String::new();
-        buff_r.read_line(&mut recv).unwrap();
-        let data : ServerData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
-
-        write!(stdout, "{}", termion::clear::All).unwrap();
-
-        match data.has_astroid_target {
-            true => match data.is_within_range {
-                true => write!(stdout, "{}Press F to begin mining.", termion::cursor::Goto(1,1)).unwrap(),
-                false => write!(stdout, "{}Astroid must be within range of {}.", termion::cursor::Goto(1,1), data.mining_range).unwrap(),
-            },
-            false => write!(stdout, "{}Ship has no astroid targeted.", termion::cursor::Goto(1,1)).unwrap(),
-        }
-
-        match stdin.next() {
-            Some(c) => {
-                let c = c.unwrap();
-                let mut send = String::new();
-                send.push(c as char);
-                if send.as_bytes() == b"q" {
-                    break;
-                }
-                send.push_str("\n");
-                stream.write(send.as_bytes()).unwrap();
-            }
-            None => ()
-        }
-
-        stdout.flush().unwrap();
-    }
 }
 
 impl Connection {
