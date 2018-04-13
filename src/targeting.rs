@@ -9,10 +9,11 @@ pub enum TargetingStatus {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Targeting {
-    target  : Option<String>,
-    status  : TargetingStatus,
-    time    : u64,
-    start   : Option<SystemTime>,
+    pub target  : Option<String>,
+    pub range   : f64,
+    pub status  : TargetingStatus,
+    time        : u64,
+    start       : Option<SystemTime>,
 }
 
 impl Targeting {
@@ -20,6 +21,7 @@ impl Targeting {
         Targeting {
             target : None,
             status : TargetingStatus::None,
+            range  : 100.0,
             time   : 3,
             start  : None,
         }

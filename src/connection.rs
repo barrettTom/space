@@ -5,9 +5,8 @@ use std::io::prelude::*;
 use std::net::TcpStream;
 use std::collections::HashMap;
 
-use ship::Ship;
-use mass::Mass;
 use module::ModuleType;
+use mass::{Mass, MassType};
 
 pub struct Connection {
     pub name        : String,
@@ -18,25 +17,26 @@ pub struct Connection {
 }
 
 impl Connection {
-    pub fn new(mut stream : TcpStream, masses : &mut HashMap<String, Box<Mass>>) -> Connection {
+    pub fn new(mut stream : TcpStream, masses : &mut HashMap<String, Mass>) -> Connection {
         let mut buff_r = BufReader::new(stream.try_clone().unwrap());
 
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
         let name = &recv[..recv.find(":").unwrap()];
 
-        let mass = masses.entry(name.to_string()).or_insert(Box::new(Ship::new((0.0, 0.0, 0.0))));
-        let ship = mass.downcast_ref::<Ship>().unwrap();
+        let ship = masses.entry(name.to_string()).or_insert(Mass::new_ship());
 
-        let modules = ship.recv_modules();
-        stream.write(modules.as_bytes()).unwrap();
+        let send = match ship.mass_type {
+            MassType::Ship{ref modules, ..} => serde_json::to_string(modules).unwrap() + "\n",
+            _ => String::new(),
+        };
+        stream.write(send.as_bytes()).unwrap();
 
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
         let module_type : ModuleType = serde_json::from_str(&recv.replace("\n","")).unwrap();
 
         stream.set_nonblocking(true).unwrap();
-
         Connection { 
             name        : String::from(name),
             module_type : module_type,
@@ -46,12 +46,12 @@ impl Connection {
         }
     }
 
-    pub fn process(&mut self, mut masses : &mut HashMap<String, Box<Mass>>) {
+    pub fn process(&mut self, mut masses : &mut HashMap<String, Mass>) {
         self.open = match self.module_type {
+            ModuleType::Mining => self.server_mining(&mut masses),
             ModuleType::Engines => self.server_engines(&mut masses),
             ModuleType::Dashboard => self.server_dashboard(&mut masses),
             ModuleType::Navigation => self.server_navigation(&mut masses),
-            ModuleType::Mining => self.server_mining(&mut masses),
         };
     }
 }

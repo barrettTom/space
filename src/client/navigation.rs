@@ -1,19 +1,16 @@
 extern crate termion;
-extern crate itertools;
+//extern crate itertools;
 extern crate serde_json;
 
 use std::net::TcpStream;
 use std::collections::BTreeMap;
 use self::termion::async_stdin;
-use self::itertools::Itertools;
 use std::io::{BufRead, BufReader};
 use std::io::{stdout, Read, Write};
 use self::termion::raw::IntoRawMode;
 
-use mass::Mass;
-use ship::Ship;
 use math::distance;
-use astroid::Astroid;
+use mass::{Mass, MassType};
 
 pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : BufReader<TcpStream>){
     let stdout = stdout();
@@ -23,30 +20,24 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-
-        let string_hashmap = recv.split(";");
-        let mut masses : BTreeMap<String, Box<Mass>> = BTreeMap::new();
-        for string_element in string_hashmap {
-            if string_element.len() <= 1 {
-                break;
-            }
-            let (string_name, string_mass) = string_element.split("@").next_tuple().unwrap();
-            masses.insert(string_name.to_string(), build_mass(string_mass));
-        }
-
+        let mut within_range : BTreeMap<String, Mass> = serde_json::from_str(&recv).unwrap();
 
         write!(stdout, "{}{}Targets:",
                termion::clear::All,
                termion::cursor::Goto(1,1)).unwrap();
 
-        let ship = masses.remove(&name).unwrap().downcast::<Ship>().unwrap();
+        let ship = within_range.remove(&name).unwrap();
+        let targeting = match ship.mass_type {
+            MassType::Ship{ref targeting, ..} => Some(targeting.clone()),
+            _ => None,
+        }.unwrap();
 
-        for (i, (mass_name, mass)) in masses.iter().enumerate() {
+        for (i, (mass_name, mass)) in within_range.iter().enumerate() {
 
-            let target_data = match ship.recv_target() {
+            let target_data = match targeting.target.clone() {
                 Some(target_name) => {
                     if &target_name == mass_name {
-                        serde_json::to_string(&ship.recv_targeting_status()).unwrap()
+                        serde_json::to_string(&targeting.status).unwrap()
                     }
                     else {
                         String::new()
@@ -59,10 +50,10 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
                    termion::cursor::Goto(1, 2 + i as u16),
                    i,
                    mass_name,
-                   mass.position().0,
-                   mass.position().1,
-                   mass.position().2,
-                   distance(mass.position(), ship.position()),
+                   mass.position.0,
+                   mass.position.1,
+                   mass.position.2,
+                   distance(mass.position, ship.position),
                    target_data
                    ).unwrap();
         }
@@ -75,9 +66,9 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
                 }
                 else {
                     let i = c.to_digit(10).unwrap() as usize;
-                    if i < masses.len() {
+                    if i < within_range.len() {
                         let mut send = String::new();
-                        send.push_str(masses.iter().nth(i).unwrap().0);
+                        send.push_str(within_range.iter().nth(i).unwrap().0);
                         send.push_str("\n");
                         stream.write(send.as_bytes()).unwrap();
                     }
@@ -86,16 +77,5 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
             None => ()
         }
         stdout.flush().unwrap();
-    }
-}
-
-fn build_mass(string_mass : &str) -> Box<Mass> {
-    if string_mass.contains("Ship") {
-        let mass : Ship = serde_json::from_str(&string_mass).unwrap();
-        return Box::new(mass)
-    }
-    else {
-        let mass : Astroid = serde_json::from_str(&string_mass).unwrap();
-        return Box::new(mass)
     }
 }

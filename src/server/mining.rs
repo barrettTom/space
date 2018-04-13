@@ -4,7 +4,6 @@ use std::io::BufRead;
 use std::io::Write;
 use std::collections::HashMap;
 
-use ship::Ship;
 use math::distance;
 use mass::{Mass, MassType};
 use connection::Connection;
@@ -18,40 +17,38 @@ struct ServerData {
 }
 
 impl Connection {
-    pub fn server_mining(&mut self, masses : &mut HashMap<String, Box<Mass>>) -> bool {
+    pub fn server_mining(&mut self, masses : &mut HashMap<String, Mass>) -> bool {
         let masses_clone = masses.clone();
-        let mass = masses.get_mut(&self.name).unwrap();
-        let ship = mass.downcast_mut::<Ship>().unwrap();
+        let ship = masses.get_mut(&self.name).unwrap();
 
-        let target = match ship.recv_target() {
-            Some(name) => masses_clone.get(&name),
-            None => None,
+        let (mining, targeting) = match ship.mass_type {
+            MassType::Ship{ref targeting, ref mut mining, ..} => (Some(mining), Some(targeting.clone())),
+            _ => (None, None),
         };
+        let mining = mining.unwrap();
 
+        let target = masses_clone.get(&targeting.unwrap().target.unwrap());
         let has_astroid_target = match target {
-            Some(target) => match target.recv_mass_type() {
-                MassType::Ship => false,
-                MassType::Astroid => true,
+            Some(target) => match target.mass_type {
+                MassType::Astroid{..} => true,
+                _ => false,
             },
             None => false,
         };
 
         let is_within_range = match has_astroid_target {
             true => match target {
-                Some(target) => match ship.recv_mining_range() > distance(ship.position(), target.position()) {
-                    true => true,
-                    false => false,
-                },
-                None => false,
+                Some(target) => mining.range > distance(ship.position, target.position),
+                _ => false,
             }
-            false => false,
+            _ => false,
         };
 
         let send = serde_json::to_string(&ServerData {
                                             has_astroid_target  : has_astroid_target,
                                             is_within_range     : is_within_range,
-                                            mining_range        : ship.recv_mining_range(),
-                                            mining_status       : ship.recv_mining_status(),
+                                            mining_range        : mining.range,
+                                            mining_status       : mining.status,
                                          }).unwrap() + "\n";
 
         match self.stream.write(send.as_bytes()) {
@@ -64,9 +61,9 @@ impl Connection {
             Ok(result) => match recv.as_bytes() {
                 b"F\n" => {
                     if is_within_range {
-                        match ship.recv_mining_status() {
-                            true => ship.stop_mining(),
-                            false => ship.start_mining(),
+                        match mining.status {
+                            true => mining.stop(),
+                            false => mining.start(),
                         }
                     }
                 },
@@ -78,7 +75,6 @@ impl Connection {
             }
             Err(_error) => (),
         }
-
         true
     }
 }

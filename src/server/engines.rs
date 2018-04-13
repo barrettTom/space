@@ -4,19 +4,21 @@ use std::io::Write;
 use std::io::BufRead;
 use std::collections::HashMap;
 
-use ship::Ship;
-use mass::Mass;
+use mass::{Mass, MassType};
 use connection::Connection;
 use targeting::TargetingStatus;
 
 impl Connection {
-    pub fn server_engines(&mut self, masses : &mut HashMap<String, Box<Mass>>) -> bool {
+    pub fn server_engines(&mut self, masses : &mut HashMap<String, Mass>) -> bool {
         let masses_clone = masses.clone();
 
-        let mass = masses.get_mut(&self.name).unwrap();
-        let ship = mass.downcast_mut::<Ship>().unwrap();
+        let ship = masses.get_mut(&self.name).unwrap();
+        let targeting = match ship.mass_type {
+            MassType::Ship{ref targeting, ..} => Some(targeting.clone()),
+            _ => None,
+        }.unwrap();
 
-        let targeted = ship.recv_targeting_status() == TargetingStatus::Targeted;
+        let targeted = targeting.status == TargetingStatus::Targeted;
         let send = serde_json::to_string(&targeted).unwrap() + "\n";
 
         match self.stream.write(send.as_bytes()) {
@@ -34,14 +36,24 @@ impl Connection {
                 b"2\n" => acceleration.1 -= 0.1,
                 b"4\n" => acceleration.2 += 0.1,
                 b"6\n" => acceleration.2 -= 0.1,
-                b"+\n" => ship.speedup(),
-                b"-\n" => ship.slow(),
+                b"+\n" => {
+                    let m_v = ship.velocity;
+                    acceleration = (m_v.0 * 0.05,
+                                    m_v.1 * 0.05,
+                                    m_v.2 * 0.05);
+                },
+                b"-\n" => {
+                    let m_v = ship.velocity;
+                    acceleration = (-1.0 * m_v.0 * 0.05,
+                                    -1.0 * m_v.1 * 0.05,
+                                    -1.0 * m_v.2 * 0.05);
+                },
                 b"c\n" => {
-                    match ship.recv_target() {
+                    match targeting.target {
                         Some(name) => {
                             let target = masses_clone.get(&name).unwrap();
-                            let d_v = target.recv_velocity();
-                            let m_v = ship.recv_velocity();
+                            let d_v = target.velocity;
+                            let m_v = ship.velocity;
                             acceleration = (d_v.0 - m_v.0,
                                             d_v.1 - m_v.1,
                                             d_v.2 - m_v.2);
@@ -50,11 +62,11 @@ impl Connection {
                     }
                 },
                 b"t\n" => {
-                    match ship.recv_target() {
+                    match targeting.target {
                         Some(name) => {
                             let target = masses_clone.get(&name).unwrap();
-                            let d_p = target.position();
-                            let m_p = ship.position();
+                            let d_p = target.position;
+                            let m_p = ship.position;
                             acceleration = ((d_p.0 - m_p.0) * 0.01,
                                             (d_p.1 - m_p.1) * 0.01,
                                             (d_p.2 - m_p.2) * 0.01);
@@ -71,7 +83,7 @@ impl Connection {
             Err(_error) => (),
         }
 
-        ship.give_acceleration(acceleration);
+        ship.accelerate(acceleration);
 
         true
     }

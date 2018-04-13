@@ -7,14 +7,13 @@ use std::collections::HashMap;
 
 use space::mass::Mass;
 use space::math::rand_name;
-use space::astroid::Astroid;
 use space::connection::Connection;
 
-fn populate() -> HashMap<String, Box<Mass>> {
-    let mut masses : HashMap<String, Box<Mass>> = HashMap::new();
+fn populate() -> HashMap<String, Mass> {
+    let mut masses : HashMap<String, Mass> = HashMap::new();
 
     for _ in 0..10 {
-        masses.insert(rand_name(), Box::new(Astroid::new()));
+        masses.insert(rand_name(), Mass::new_astroid());
     }
 
     masses

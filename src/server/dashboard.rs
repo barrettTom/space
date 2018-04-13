@@ -7,9 +7,9 @@ use mass::Mass;
 use connection::Connection;
 
 impl Connection {
-    pub fn server_dashboard(&mut self, masses : &mut HashMap<String, Box<Mass>>) -> bool {
+    pub fn server_dashboard(&mut self, masses : &mut HashMap<String, Mass>) -> bool {
         let ship = masses.get(&self.name).unwrap();
-        let send = ship.serialize() + "\n";
+        let send = serde_json::to_string(&ship).unwrap();
         match self.stream.write(send.as_bytes()) {
             Ok(_result) => true,
             Err(_error) => false,

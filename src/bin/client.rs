@@ -46,9 +46,9 @@ fn main() {
     stream.write(send.as_bytes()).unwrap();
 
     match module {
+        ModuleType::Mining => client_mining(stream, buff_r),
         ModuleType::Dashboard => client_dashboard(buff_r),
         ModuleType::Engines => client_engines(stream, buff_r),
         ModuleType::Navigation => client_navigation(name, stream, buff_r),
-        ModuleType::Mining => client_mining(stream, buff_r),
     }
 }
