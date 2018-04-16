@@ -8,9 +8,9 @@ use std::collections::HashMap;
 use math::distance;
 use module::{ModuleType, NavigationStatus};
 use mass::{Mass, MassType};
-use connection::Connection;
+use server::connection::ServerConnection;
 
-impl Connection {
+impl ServerConnection {
     pub fn server_navigation(&mut self, masses : &mut HashMap<String, Mass>) -> bool {
         let masses_clone = masses.clone();
         let ship = masses.get_mut(&self.name).unwrap();

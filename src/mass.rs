@@ -5,7 +5,7 @@ use self::rand::distributions::Range;
 use self::rand::distributions::Sample;
 
 use storage::Storage;
-use module::{Module, ModuleType};
+use module::Module;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mass {
@@ -61,8 +61,8 @@ impl Mass {
 
         Mass {
             mass_type   : ship,
-            position    : (0.0,0.0,0.0),
-            velocity    : (0.0,0.0,0.0),
+            position    : (0.0, 0.0, 0.0),
+            velocity    : (0.0, 0.0, 0.0),
         }
     }
 

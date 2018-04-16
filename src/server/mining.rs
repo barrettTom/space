@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use math::distance;
 use mass::{Mass, MassType};
 use module::ModuleType;
-use connection::Connection;
+use::server::connection::ServerConnection;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ServerData {
@@ -17,7 +17,7 @@ struct ServerData {
     mining_status       : bool,
 }
 
-impl Connection {
+impl ServerConnection {
     pub fn server_mining(&mut self, masses : &mut HashMap<String, Mass>) -> bool {
         let masses_clone = masses.clone();
         let ship = masses.get_mut(&self.name).unwrap();

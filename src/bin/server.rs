@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use space::mass::Mass;
 use space::math::rand_name;
-use space::connection::Connection;
+use space::server::connection::ServerConnection;
 
 fn populate() -> HashMap<String, Mass> {
     let mut masses : HashMap<String, Mass> = HashMap::new();
@@ -28,7 +28,7 @@ fn main() {
     let mut connections = Vec::new();
     for stream in listener.incoming() {
         match stream {
-            Ok(stream) => connections.push(Connection::new(stream, &mut masses)),
+            Ok(stream) => connections.push(ServerConnection::new(stream, &mut masses)),
             _ => {
                 for i in 0..connections.len() {
                     connections[i].process(&mut masses);

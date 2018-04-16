@@ -8,4 +8,3 @@ pub mod module;
 pub mod client;
 pub mod server;
 pub mod storage;
-pub mod connection;

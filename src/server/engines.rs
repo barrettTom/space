@@ -6,10 +6,10 @@ use std::collections::HashMap;
 
 use mass::{Mass, MassType};
 use module::{ModuleType};
-use connection::Connection;
 use module::NavigationStatus;
+use server::connection::ServerConnection;
 
-impl Connection {
+impl ServerConnection {
     pub fn server_engines(&mut self, masses : &mut HashMap<String, Mass>) -> bool {
         let masses_clone = masses.clone();
 

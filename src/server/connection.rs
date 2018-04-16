@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use module::{Module, ModuleType};
 use mass::{Mass, MassType};
 
-pub struct Connection {
+pub struct ServerConnection {
     pub name        : String,
     pub module      : Module,
     pub stream      : TcpStream,
@@ -16,8 +16,8 @@ pub struct Connection {
     pub open        : bool,
 }
 
-impl Connection {
-    pub fn new(mut stream : TcpStream, masses : &mut HashMap<String, Mass>) -> Connection {
+impl ServerConnection {
+    pub fn new(mut stream : TcpStream, masses : &mut HashMap<String, Mass>) -> ServerConnection {
         let mut buff_r = BufReader::new(stream.try_clone().unwrap());
 
         let mut recv = String::new();
@@ -37,7 +37,7 @@ impl Connection {
         let module : Module = serde_json::from_str(&recv.replace("\n","")).unwrap();
 
         stream.set_nonblocking(true).unwrap();
-        Connection { 
+        ServerConnection { 
             name        : String::from(name),
             module      : module,
             stream      : stream,
