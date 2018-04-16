@@ -5,12 +5,12 @@ use std::io::prelude::*;
 use std::net::TcpStream;
 use std::collections::HashMap;
 
-use module::ModuleType;
+use module::{Module, ModuleType};
 use mass::{Mass, MassType};
 
 pub struct Connection {
     pub name        : String,
-    pub module_type : ModuleType,
+    pub module      : Module,
     pub stream      : TcpStream,
     pub buff_r      : BufReader<TcpStream>,
     pub open        : bool,
@@ -34,12 +34,12 @@ impl Connection {
 
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let module_type : ModuleType = serde_json::from_str(&recv.replace("\n","")).unwrap();
+        let module : Module = serde_json::from_str(&recv.replace("\n","")).unwrap();
 
         stream.set_nonblocking(true).unwrap();
         Connection { 
             name        : String::from(name),
-            module_type : module_type,
+            module      : module,
             stream      : stream,
             buff_r      : buff_r,
             open        : true,
@@ -47,11 +47,11 @@ impl Connection {
     }
 
     pub fn process(&mut self, mut masses : &mut HashMap<String, Mass>) {
-        self.open = match self.module_type {
-            ModuleType::Mining => self.server_mining(&mut masses),
-            ModuleType::Engines => self.server_engines(&mut masses),
+        self.open = match self.module.module_type {
             ModuleType::Dashboard => self.server_dashboard(&mut masses),
-            ModuleType::Navigation => self.server_navigation(&mut masses),
+            ModuleType::Engines => self.server_engines(&mut masses),
+            ModuleType::Mining{..} => self.server_mining(&mut masses),
+            ModuleType::Navigation{..} => self.server_navigation(&mut masses),
         };
     }
 }

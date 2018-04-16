@@ -1,12 +1,11 @@
 extern crate rand;
 
+use std::collections::HashMap;
 use self::rand::distributions::Range;
 use self::rand::distributions::Sample;
 
 use storage::Storage;
-use module::ModuleType;
-use targeting::Targeting;
-use mining::Mining;
+use module::{Module, ModuleType};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mass {
@@ -18,9 +17,7 @@ pub struct Mass {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum MassType {
     Ship {
-        modules     : Vec<ModuleType>,
-        mining      : Mining,
-        targeting   : Targeting,
+        modules     : HashMap<String, Module>,
         storage     : Storage,
     },
     Astroid{
@@ -50,17 +47,15 @@ impl Mass {
     }
 
     pub fn new_ship() -> Mass {
-        let mut modules = Vec::new();
+        let mut modules = HashMap::new();
 
-        modules.push(ModuleType::Navigation);
-        modules.push(ModuleType::Engines);
-        modules.push(ModuleType::Dashboard);
-        modules.push(ModuleType::Mining);
+        modules.insert("Mining".to_string(), Module::new_mining());
+        modules.insert("Engines".to_string(), Module::new_engines());
+        modules.insert("Dashboard".to_string(), Module::new_dashboard());
+        modules.insert("Navigation".to_string(), Module::new_navigation());
 
         let ship = MassType::Ship {
             modules     : modules,
-            mining      : Mining::new(),
-            targeting   : Targeting::new(),
             storage     : Storage::new(Vec::new()),
         };
 
@@ -76,8 +71,10 @@ impl Mass {
         self.position.1 += self.velocity.1;
         self.position.2 += self.velocity.2;
         match self.mass_type {
-            MassType::Ship{ref mut targeting, ..} => {
-                targeting.process();
+            MassType::Ship{ref mut modules, ..} => {
+                for module in modules.values_mut() {
+                    module.process();
+                }
             },
             _ => (),
         }

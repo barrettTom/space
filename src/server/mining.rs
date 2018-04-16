@@ -6,6 +6,7 @@ use std::collections::HashMap;
 
 use math::distance;
 use mass::{Mass, MassType};
+use module::ModuleType;
 use connection::Connection;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -21,60 +22,90 @@ impl Connection {
         let masses_clone = masses.clone();
         let ship = masses.get_mut(&self.name).unwrap();
 
-        let (mining, targeting) = match ship.mass_type {
-            MassType::Ship{ref targeting, ref mut mining, ..} => (Some(mining), Some(targeting.clone())),
-            _ => (None, None),
-        };
-        let mining = mining.unwrap();
 
-        let target = masses_clone.get(&targeting.unwrap().target.unwrap());
-        let has_astroid_target = match target {
-            Some(target) => match target.mass_type {
-                MassType::Astroid{..} => true,
-                _ => false,
-            },
-            None => false,
-        };
+        match ship.mass_type {
+            MassType::Ship{ref modules, ..} => {
+                let mut mining_range = 0.0;
+                let mut mining_status = false;
 
-        let is_within_range = match has_astroid_target {
-            true => match target {
-                Some(target) => mining.range > distance(ship.position, target.position),
-                _ => false,
-            }
-            _ => false,
-        };
+                match modules.get("Mining").unwrap().module_type {
+                    ModuleType::Mining{ref range, ref status, ..} => {
+                        mining_range = range.clone();
+                        mining_status = status.clone();
+                    }
+                    _ => (),
+                }
 
-        let send = serde_json::to_string(&ServerData {
-                                            has_astroid_target  : has_astroid_target,
-                                            is_within_range     : is_within_range,
-                                            mining_range        : mining.range,
-                                            mining_status       : mining.status,
-                                         }).unwrap() + "\n";
+                match modules.get("Navigation").unwrap().module_type {
+                    ModuleType::Navigation{ref target_name, ..} => {
+                        let mut has_astroid_target = false;
+                        let mut is_within_range = false;
+                        match target_name.clone() {
+                            Some(name) => {
+                                let target = masses_clone.get(&name);
+                                has_astroid_target = match target {
+                                    Some(target) => match target.mass_type {
+                                        MassType::Astroid{..} => true,
+                                        _ => false,
+                                    },
+                                    None => false,
+                                };
+                                is_within_range = match has_astroid_target {
+                                    true => match target {
+                                        Some(target) => mining_range > distance(ship.position, target.position),
+                                        _ => false,
+                                    }
+                                    _ => false,
+                                };
+                            }
+                            _ => (),
+                        }
 
-        match self.stream.write(send.as_bytes()) {
-            Ok(_result) => (),
-            Err(_error) => return false,
-        }
+                        let send = serde_json::to_string(&ServerData {
+                                                            has_astroid_target  : has_astroid_target,
+                                                            is_within_range     : is_within_range,
+                                                            mining_range        : mining_range,
+                                                            mining_status       : mining_status,
+                                                         }).unwrap() + "\n";
 
-        let mut recv = String::new();
-        match self.buff_r.read_line(&mut recv) {
-            Ok(result) => match recv.as_bytes() {
-                b"F\n" => {
-                    if is_within_range {
-                        match mining.status {
-                            true => mining.stop(),
-                            false => mining.start(),
+                        match self.stream.write(send.as_bytes()) {
+                            Ok(_result) => (),
+                            Err(_error) => return false,
                         }
                     }
-                },
-                _ => {
-                    if result == 0 {
-                        return false
+                    _ => (),
+                }
+
+                match modules.get("Mining").unwrap().module_type {
+                    ModuleType::Mining{ref range, ref status, ..} => {
+                        let mut recv = String::new();
+                        match self.buff_r.read_line(&mut recv) {
+                            Ok(result) => match recv.as_bytes() {
+                                b"F\n" => {
+                                    /*
+                                    if is_within_range {
+                                        match mining.status {
+                                            true => mining.stop(),
+                                            false => mining.start(),
+                                        }
+                                    }
+                                    */
+                                },
+                                _ => {
+                                    if result == 0 {
+                                        return false
+                                    }
+                                },
+                            }
+                            Err(_error) => (),
+                        }
                     }
-                },
+                    _ => (),
+                }
             }
-            Err(_error) => (),
+            _ => (),
         }
+
         true
     }
 }

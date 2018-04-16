@@ -9,7 +9,7 @@ use connection::Connection;
 impl Connection {
     pub fn server_dashboard(&mut self, masses : &mut HashMap<String, Mass>) -> bool {
         let ship = masses.get(&self.name).unwrap();
-        let send = serde_json::to_string(&ship).unwrap();
+        let send = serde_json::to_string(&ship).unwrap() + "\n";
         match self.stream.write(send.as_bytes()) {
             Ok(_result) => true,
             Err(_error) => false,
