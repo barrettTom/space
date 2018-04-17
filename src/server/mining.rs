@@ -30,8 +30,8 @@ impl ServerConnection {
 
                 match modules.get("Mining").unwrap().module_type {
                     ModuleType::Mining{ref range, ref status, ..} => {
-                        mining_range = range.clone();
-                        mining_status = status.clone();
+                        mining_range = *range;
+                        mining_status = *status;
                     }
                     _ => (),
                 }

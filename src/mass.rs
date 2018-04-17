@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use self::rand::distributions::Range;
 use self::rand::distributions::Sample;
 
+use item::Item;
 use storage::Storage;
 use module::Module;
 
@@ -35,8 +36,15 @@ impl Mass {
         let mut vr = Range::new(-0.5, 0.5);
         let velocity = (vr.sample(&mut rng), vr.sample(&mut rng), vr.sample(&mut rng));
 
+        let mut rr = Range::new(0, 20);
+        let mut resources = Vec::new();
+        for _ in 0..rr.sample(&mut rng) {
+            resources.push(Item::new("Iron", 1));
+        }
+
+
         let astroid = MassType::Astroid {
-            resources  : Storage::new(Vec::new()),
+            resources  : Storage::new(resources),
         };
 
         Mass {
