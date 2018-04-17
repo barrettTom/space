@@ -16,78 +16,72 @@ impl ServerConnection {
         let ship = masses.get_mut(&self.name).unwrap();
         let mut acceleration = (0.0, 0.0, 0.0);
 
-        match ship.mass_type {
-            MassType::Ship{ref modules, ..} => {
-                match modules.get("Navigation").unwrap().module_type {
-                    ModuleType::Navigation{ref status, ref target_name, ..} => {
-                        let targeted = status == &NavigationStatus::Targeted;
+        if let MassType::Ship{ref modules, ..} = ship.mass_type {
+            if let ModuleType::Navigation{ref status, ref target_name, ..} = modules.get("Navigation").unwrap().module_type {
+                let targeted = status == &NavigationStatus::Targeted;
 
-                        let send = serde_json::to_string(&targeted).unwrap() + "\n";
-                        match self.stream.write(send.as_bytes()) {
-                            Ok(_result) => (),
-                            Err(_error) => return false,
-                        }
-
-                        let mut recv = String::new();
-                        match self.buff_r.read_line(&mut recv) {
-                            Ok(result) => match recv.as_bytes() {
-                                b"5\n" => acceleration.0 += 0.1,
-                                b"0\n" => acceleration.0 -= 0.1,
-                                b"8\n" => acceleration.1 += 0.1,
-                                b"2\n" => acceleration.1 -= 0.1,
-                                b"4\n" => acceleration.2 += 0.1,
-                                b"6\n" => acceleration.2 -= 0.1,
-                                b"+\n" => {
-                                    let m_v = ship.velocity;
-                                    acceleration = (m_v.0 * 0.05,
-                                                    m_v.1 * 0.05,
-                                                    m_v.2 * 0.05);
-                                },
-                                b"-\n" => {
-                                    let m_v = ship.velocity;
-                                    acceleration = (-1.0 * m_v.0 * 0.05,
-                                                    -1.0 * m_v.1 * 0.05,
-                                                    -1.0 * m_v.2 * 0.05);
-                                },
-                                b"c\n" => {
-                                    match target_name {
-                                        &Some(ref name) => {
-                                            let target = masses_clone.get(name).unwrap();
-                                            let d_v = target.velocity;
-                                            let m_v = ship.velocity;
-                                            acceleration = (d_v.0 - m_v.0,
-                                                            d_v.1 - m_v.1,
-                                                            d_v.2 - m_v.2);
-                                        },
-                                        &None => (),
-                                    }
-                                },
-                                b"t\n" => {
-                                    match target_name {
-                                        &Some(ref name) => {
-                                            let target = masses_clone.get(name).unwrap();
-                                            let d_p = target.position;
-                                            let m_p = ship.position;
-                                            acceleration = ((d_p.0 - m_p.0) * 0.01,
-                                                            (d_p.1 - m_p.1) * 0.01,
-                                                            (d_p.2 - m_p.2) * 0.01);
-                                        },
-                                        &None => (),
-                                    }
-                                },
-                                _ => {
-                                    if result == 0 {
-                                        return false
-                                    }
-                                },
-                            },
-                            Err(_error) => (),
-                        }
-                    },
-                    _ => (),
+                let send = serde_json::to_string(&targeted).unwrap() + "\n";
+                match self.stream.write(send.as_bytes()) {
+                    Ok(_result) => (),
+                    Err(_error) => return false,
                 }
-            },
-            _ => (),
+
+                let mut recv = String::new();
+                match self.buff_r.read_line(&mut recv) {
+                    Ok(result) => match recv.as_bytes() {
+                        b"5\n" => acceleration.0 += 0.1,
+                        b"0\n" => acceleration.0 -= 0.1,
+                        b"8\n" => acceleration.1 += 0.1,
+                        b"2\n" => acceleration.1 -= 0.1,
+                        b"4\n" => acceleration.2 += 0.1,
+                        b"6\n" => acceleration.2 -= 0.1,
+                        b"+\n" => {
+                            let m_v = ship.velocity;
+                            acceleration = (m_v.0 * 0.05,
+                                            m_v.1 * 0.05,
+                                            m_v.2 * 0.05);
+                        },
+                        b"-\n" => {
+                            let m_v = ship.velocity;
+                            acceleration = (-1.0 * m_v.0 * 0.05,
+                                            -1.0 * m_v.1 * 0.05,
+                                            -1.0 * m_v.2 * 0.05);
+                        },
+                        b"c\n" => {
+                            match target_name {
+                                &Some(ref name) => {
+                                    let target = masses_clone.get(name).unwrap();
+                                    let d_v = target.velocity;
+                                    let m_v = ship.velocity;
+                                    acceleration = (d_v.0 - m_v.0,
+                                                    d_v.1 - m_v.1,
+                                                    d_v.2 - m_v.2);
+                                },
+                                &None => (),
+                            }
+                        },
+                        b"t\n" => {
+                            match target_name {
+                                &Some(ref name) => {
+                                    let target = masses_clone.get(name).unwrap();
+                                    let d_p = target.position;
+                                    let m_p = ship.position;
+                                    acceleration = ((d_p.0 - m_p.0) * 0.01,
+                                                    (d_p.1 - m_p.1) * 0.01,
+                                                    (d_p.2 - m_p.2) * 0.01);
+                                },
+                                &None => (),
+                            }
+                        },
+                        _ => {
+                            if result == 0 {
+                                return false
+                            }
+                        },
+                    },
+                    Err(_error) => (),
+                }
+            }
         }
 
         ship.accelerate(acceleration);

@@ -7,13 +7,7 @@ use std::io::{BufReader, BufRead};
 use std::io::{stdout, Read, Write};
 use self::termion::raw::IntoRawMode;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct ServerData {
-    has_astroid_target  : bool,
-    is_within_range     : bool,
-    mining_range        : f64,
-    mining_status       : bool,
-}
+use server::mining::MiningData;
 
 pub fn client_mining(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>) {
     let stdout = stdout();
@@ -23,7 +17,7 @@ pub fn client_mining(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>) 
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let data : ServerData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
+        let data : MiningData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
 
         write!(stdout, "{}", termion::clear::All).unwrap();
 
