@@ -84,7 +84,8 @@ impl Module {
                     _ => (),
                 }
             },
-            ModuleType::Mining{..} => (),
+            ModuleType::Mining{..} => {
+            },
             _ => (),
         }
     }

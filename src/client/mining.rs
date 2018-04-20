@@ -23,8 +23,11 @@ pub fn client_mining(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>) 
 
         match data.has_astroid_target {
             true => match data.is_within_range {
-                true => write!(stdout, "{}Press F to begin mining.", termion::cursor::Goto(1,1)).unwrap(),
-                false => write!(stdout, "{}Astroid must be within range of {}.", termion::cursor::Goto(1,1), data.mining_range).unwrap(),
+                true => match data.status {
+                        true => write!(stdout, "{}Press F to stop mining.", termion::cursor::Goto(1,1)).unwrap(),
+                        false => write!(stdout, "{}Press F to begin mining.", termion::cursor::Goto(1,1)).unwrap(),
+                    }
+                false => write!(stdout, "{}Astroid must be within range of {}.", termion::cursor::Goto(1,1), data.range).unwrap(),
             },
             false => write!(stdout, "{}Ship has no astroid targeted.", termion::cursor::Goto(1,1)).unwrap(),
         }
