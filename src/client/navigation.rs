@@ -10,7 +10,7 @@ use self::termion::raw::IntoRawMode;
 
 use math::distance;
 use mass::{Mass, MassType};
-use module::ModuleType;
+use module::Navigation;
 
 pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : BufReader<TcpStream>){
     let stdout = stdout();
@@ -28,54 +28,53 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
 
         let ship = within_range.remove(&name).unwrap();
 
-        if let MassType::Ship{ref modules, ..} = ship.mass_type {
-            if let ModuleType::Navigation{ref status, ref target_name, ..} = modules.get("Navigation").unwrap().module_type {
-                for (i, (mass_name, mass)) in within_range.iter().enumerate() {
-                    let target_data = match target_name.clone() {
-                        Some(target_name) => {
-                            if &target_name == mass_name {
-                                serde_json::to_string(status).unwrap()
-                            }
-                            else {
-                                String::new()
-                            }
-                        }
-                        None => String::new(),
-                    };
+        if let MassType::Ship{ref navigation, ..} = ship.mass_type {
+            let navigation = navigation.clone().unwrap();
+            for (i, (mass_name, mass)) in within_range.iter().enumerate() {
+                let target_data = get_target_status(&navigation, &mass_name);
+                write!(stdout, "{}{}) {} ({:.2}, {:.2}, {:.2}) Distance : {:.2} {}",
+                       termion::cursor::Goto(1, 2 + i as u16),
+                       i,
+                       mass_name,
+                       mass.position.0,
+                       mass.position.1,
+                       mass.position.2,
+                       distance(mass.position, ship.position),
+                       target_data
+                       ).unwrap();
+            }
 
-                    write!(stdout, "{}{}) {} ({:.2}, {:.2}, {:.2}) Distance : {:.2} {}",
-                           termion::cursor::Goto(1, 2 + i as u16),
-                           i,
-                           mass_name,
-                           mass.position.0,
-                           mass.position.1,
-                           mass.position.2,
-                           distance(mass.position, ship.position),
-                           target_data
-                           ).unwrap();
-                }
-
-                match stdin.next() {
-                    Some(c) => {
-                        let c = c.unwrap() as char;
-                        if c == 'q' {
-                            break;
-                        }
-                        else {
-                            let i = c.to_digit(10).unwrap() as usize;
-                            if i < within_range.len() {
-                                let mut send = String::new();
-                                send.push_str(within_range.iter().nth(i).unwrap().0);
-                                send.push_str("\n");
-                                stream.write(send.as_bytes()).unwrap();
-                            }
+            match stdin.next() {
+                Some(c) => {
+                    let c = c.unwrap() as char;
+                    if c == 'q' {
+                        break;
+                    }
+                    else {
+                        let i = c.to_digit(10).unwrap() as usize;
+                        if i < within_range.len() {
+                            let mut send = String::new();
+                            send.push_str(within_range.iter().nth(i).unwrap().0);
+                            send.push_str("\n");
+                            stream.write(send.as_bytes()).unwrap();
                         }
                     }
-                    None => ()
-                }
+                },
+                None => (),
             }
         }
-
         stdout.flush().unwrap();
+    }
+}
+
+fn get_target_status(navigation : &Navigation, mass_name : &String) -> String {
+    match navigation.target_name.clone() {
+        Some(name) => {
+            match &name == mass_name {
+                true => serde_json::to_string(&navigation.status).unwrap(),
+                false => String::new()
+            }
+        },
+        _ => String::new(),
     }
 }

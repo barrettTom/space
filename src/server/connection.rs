@@ -5,12 +5,12 @@ use std::io::prelude::*;
 use std::net::TcpStream;
 use std::collections::HashMap;
 
-use module::{Module, ModuleType};
-use mass::{Mass, MassType};
+use mass::Mass;
+use module::ModuleType;
 
 pub struct ServerConnection {
     pub name        : String,
-    pub module      : Module,
+    pub module_type : ModuleType,
     pub stream      : TcpStream,
     pub buff_r      : BufReader<TcpStream>,
     pub open        : bool,
@@ -26,20 +26,17 @@ impl ServerConnection {
 
         let ship = masses.entry(name.to_string()).or_insert(Mass::new_ship());
 
-        let send = match ship.mass_type {
-            MassType::Ship{ref modules, ..} => serde_json::to_string(modules).unwrap() + "\n",
-            _ => String::new(),
-        };
+        let send = serde_json::to_string(&ship.get_modules()).unwrap() + "\n";
         stream.write(send.as_bytes()).unwrap();
 
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let module : Module = serde_json::from_str(&recv.replace("\n","")).unwrap();
+        let module_type : ModuleType = serde_json::from_str(&recv.replace("\n","")).unwrap();
 
         stream.set_nonblocking(true).unwrap();
         ServerConnection { 
             name        : String::from(name),
-            module      : module,
+            module_type : module_type,
             stream      : stream,
             buff_r      : buff_r,
             open        : true,
@@ -47,11 +44,11 @@ impl ServerConnection {
     }
 
     pub fn process(&mut self, mut masses : &mut HashMap<String, Mass>) {
-        self.open = match self.module.module_type {
+        self.open = match self.module_type {
             ModuleType::Dashboard => self.server_dashboard(&mut masses),
             ModuleType::Engines => self.server_engines(&mut masses),
-            ModuleType::Mining{..} => self.server_mining(&mut masses),
-            ModuleType::Navigation{..} => self.server_navigation(&mut masses),
+            ModuleType::Mining => self.server_mining(&mut masses),
+            ModuleType::Navigation => self.server_navigation(&mut masses),
         };
     }
 }

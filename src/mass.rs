@@ -1,12 +1,11 @@
 extern crate rand;
 
-use std::collections::HashMap;
 use self::rand::distributions::Range;
 use self::rand::distributions::Sample;
 
 use item::Item;
 use storage::Storage;
-use module::Module;
+use module::{Mining, Navigation, Dashboard, Engines, ModuleType};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mass {
@@ -18,7 +17,10 @@ pub struct Mass {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum MassType {
     Ship {
-        modules     : HashMap<String, Module>,
+        mining      : Option<Mining>,
+        navigation  : Option<Navigation>,
+        engines     : Option<Engines>,
+        dashboard   : Option<Dashboard>,
         storage     : Storage,
     },
     Astroid{
@@ -55,15 +57,11 @@ impl Mass {
     }
 
     pub fn new_ship() -> Mass {
-        let mut modules = HashMap::new();
-
-        modules.insert("Mining".to_string(), Module::new_mining());
-        modules.insert("Engines".to_string(), Module::new_engines());
-        modules.insert("Dashboard".to_string(), Module::new_dashboard());
-        modules.insert("Navigation".to_string(), Module::new_navigation());
-
         let ship = MassType::Ship {
-            modules     : modules,
+            mining      : Some(Mining::new()),
+            engines     : Some(Engines::new()),
+            dashboard   : Some(Dashboard::new()),
+            navigation  : Some(Navigation::new()),
             storage     : Storage::new(Vec::new()),
         };
 
@@ -74,18 +72,28 @@ impl Mass {
         }
     }
 
+    pub fn get_modules(&self) -> Vec<ModuleType> {
+        let mut modules = Vec::new();
+        modules.push(ModuleType::Mining);
+        modules.push(ModuleType::Engines);
+        modules.push(ModuleType::Dashboard);
+        modules.push(ModuleType::Navigation);
+        modules
+    }
+
     pub fn process(&mut self) {
-        self.position.0 += self.velocity.0;
-        self.position.1 += self.velocity.1;
-        self.position.2 += self.velocity.2;
+        let mut acceleration = (0.0, 0.0, 0.0);
         match self.mass_type {
-            MassType::Ship{ref mut modules, ..} => {
-                for module in modules.values_mut() {
-                    module.process();
-                }
+            MassType::Ship{ref mut navigation, ref mut engines, ..} => {
+                navigation.as_mut().unwrap().process();
+                acceleration = engines.as_mut().unwrap().recv_acceleration();
             },
             _ => (),
         }
+        self.accelerate(acceleration);
+        self.position.0 += self.velocity.0;
+        self.position.1 += self.velocity.1;
+        self.position.2 += self.velocity.2;
     }
 
     pub fn accelerate(&mut self, acceleration : (f64, f64, f64)) {
