@@ -5,7 +5,7 @@ use std::io::BufRead;
 use std::collections::HashMap;
 
 use mass::{Mass, MassType};
-use module::NavigationStatus;
+use modules::navigation::NavigationStatus;
 use server::connection::ServerConnection;
 
 impl ServerConnection {

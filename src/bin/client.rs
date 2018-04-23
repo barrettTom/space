@@ -6,9 +6,9 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use std::net::TcpStream;
 
-use space::module::ModuleType;
 use space::client::mining::client_mining;
 use space::client::engines::client_engines;
+use space::modules::types::ModuleType;
 use space::client::dashboard::client_dashboard;
 use space::client::navigation::client_navigation;
 

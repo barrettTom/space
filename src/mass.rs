@@ -5,7 +5,11 @@ use self::rand::distributions::Sample;
 
 use item::Item;
 use storage::Storage;
-use module::{Mining, Navigation, Dashboard, Engines, ModuleType};
+use modules::mining::Mining;
+use modules::engines::Engines;
+use modules::types::ModuleType;
+use modules::dashboard::Dashboard;
+use modules::navigation::Navigation;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mass {

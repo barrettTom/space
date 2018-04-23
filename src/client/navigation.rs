@@ -10,7 +10,7 @@ use self::termion::raw::IntoRawMode;
 
 use math::distance;
 use mass::{Mass, MassType};
-use module::Navigation;
+use modules::navigation::Navigation;
 
 pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : BufReader<TcpStream>){
     let stdout = stdout();

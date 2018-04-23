@@ -6,7 +6,7 @@ use std::net::TcpStream;
 use std::collections::HashMap;
 
 use mass::Mass;
-use module::ModuleType;
+use modules::types::ModuleType;
 
 pub struct ServerConnection {
     pub name        : String,

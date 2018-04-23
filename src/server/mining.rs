@@ -6,8 +6,9 @@ use std::collections::HashMap;
 
 use math::distance;
 use mass::{Mass, MassType};
+use modules::mining::Mining;
+use modules::navigation::Navigation;
 use server::connection::ServerConnection;
-use module::{Navigation, Mining};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MiningData {
