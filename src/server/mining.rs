@@ -20,20 +20,19 @@ pub struct MiningData {
 
 impl ServerConnection {
     pub fn server_mining(&mut self, masses : &mut HashMap<String, Mass>) -> bool {
-        let masses_clone = masses.clone();
-        let ship = masses.get_mut(&self.name).unwrap();
+        let mut ship = masses.remove(&self.name).unwrap();
         let ship_clone = ship.clone();
-
+        let mut connection_good = true;
 
         if let MassType::Ship{ref mut mining, ref navigation, ..} = ship.mass_type {
             let mut mining = mining.as_mut().unwrap();
             let mut navigation = navigation.as_ref().unwrap();
-            let mining_data = get_mining_data(ship_clone, mining, navigation, masses_clone);
+            let mining_data = get_mining_data(ship_clone, mining, navigation, masses);
 
             let send = serde_json::to_string(&mining_data).unwrap() + "\n";
             match self.stream.write(send.as_bytes()) {
                 Ok(_result) => (),
-                Err(_error) => return false,
+                Err(_error) => connection_good = false,
             }
 
             let mut recv = String::new();
@@ -46,21 +45,23 @@ impl ServerConnection {
                     },
                     _ => {
                         if result == 0 {
-                            return false
+                            connection_good = false;
                         }
                     },
                 }
                 Err(_error) => (),
             }
         }
-        true
+
+        masses.insert(self.name.clone(), ship);
+        connection_good
     }
 }
 
-fn get_mining_data(ship : Mass, mining : &Mining, navigation : &Navigation, masses_clone : HashMap<String, Mass>) -> MiningData {
+fn get_mining_data(ship : Mass, mining : &Mining, navigation : &Navigation, masses : &mut HashMap<String, Mass>) -> MiningData {
     match navigation.target_name.clone() {
         Some(name) => {
-            let target = masses_clone.get(&name);
+            let target = masses.get(&name);
             let has_astroid_target = match target {
                 Some(target) => match target.mass_type {
                     MassType::Astroid{..} => true,
