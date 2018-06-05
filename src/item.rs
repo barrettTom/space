@@ -1,6 +1,6 @@
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Item {
-    name : String,
+    pub name : String,
     size : usize,
 }
 

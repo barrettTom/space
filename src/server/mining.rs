@@ -14,8 +14,8 @@ use server::connection::ServerConnection;
 pub struct MiningData {
     pub has_astroid_target  : bool,
     pub is_within_range     : bool,
-    pub range               : f64,
     pub status              : bool,
+    pub range               : f64,
 }
 
 impl ServerConnection {
@@ -23,6 +23,7 @@ impl ServerConnection {
         let mut ship = masses.remove(&self.name).unwrap();
         let ship_clone = ship.clone();
         let mut connection_good = true;
+        let mut item = None;
 
         if let MassType::Ship{ref mut mining, ref navigation, ..} = ship.mass_type {
             let mut mining = mining.as_mut().unwrap();
@@ -51,6 +52,27 @@ impl ServerConnection {
                 }
                 Err(_error) => (),
             }
+
+            if !mining_data.is_within_range {
+                mining.off();
+            }
+            else {
+                if mining.status && mining.ready {
+                    mining.take();
+                    match navigation.target_name.clone() {
+                        Some(name) => {
+                            let target = masses.get_mut(&name).unwrap();
+                            item = target.take("Iron");
+                        }
+                        _ => (),
+                    }
+                }
+            }
+        }
+
+        match item {
+            Some(item) => ship.give(item),
+            None => (),
         }
 
         masses.insert(self.name.clone(), ship);

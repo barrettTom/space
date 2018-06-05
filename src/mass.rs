@@ -48,7 +48,6 @@ impl Mass {
             resources.push(Item::new("Iron", 1));
         }
 
-
         let astroid = MassType::Astroid {
             resources  : Storage::new(resources),
         };
@@ -88,7 +87,8 @@ impl Mass {
     pub fn process(&mut self) {
         let mut acceleration = (0.0, 0.0, 0.0);
         match self.mass_type {
-            MassType::Ship{ref mut navigation, ref mut engines, ..} => {
+            MassType::Ship{ref mut navigation, ref mut engines, ref mut mining, ..} => {
+                mining.as_mut().unwrap().process();
                 navigation.as_mut().unwrap().process();
                 acceleration = engines.as_mut().unwrap().recv_acceleration();
             },
@@ -104,5 +104,19 @@ impl Mass {
         self.velocity.0 += acceleration.0;
         self.velocity.1 += acceleration.1;
         self.velocity.2 += acceleration.2;
+    }
+
+    pub fn take(&mut self, name : &str) -> Option<Item> {
+        match self.mass_type {
+            MassType::Ship{ref mut storage, ..} => storage.take(name),
+            MassType::Astroid{ref mut resources, ..} => resources.take(name),
+        }
+    }
+
+    pub fn give(&mut self, item : Item) {
+        match self.mass_type {
+            MassType::Ship{ref mut storage, ..} => storage.give(item),
+            MassType::Astroid{ref mut resources, ..} => resources.give(item),
+        }
     }
 }
