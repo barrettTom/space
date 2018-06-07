@@ -6,9 +6,10 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use std::net::TcpStream;
 
+use space::modules::types::ModuleType;
 use space::client::mining::client_mining;
 use space::client::engines::client_engines;
-use space::modules::types::ModuleType;
+use space::client::refinery::client_refinery;
 use space::client::dashboard::client_dashboard;
 use space::client::navigation::client_navigation;
 
@@ -47,8 +48,9 @@ fn main() {
 
     match module_type {
         ModuleType::Dashboard => client_dashboard(buff_r),
-        ModuleType::Engines => client_engines(stream, buff_r),
         ModuleType::Mining => client_mining(stream, buff_r),
+        ModuleType::Engines => client_engines(stream, buff_r),
+        ModuleType::Refinery => client_refinery(stream, buff_r),
         ModuleType::Navigation => client_navigation(name, stream, buff_r),
     }
 }

@@ -8,6 +8,7 @@ use storage::Storage;
 use modules::mining::Mining;
 use modules::engines::Engines;
 use modules::types::ModuleType;
+use modules::refinery::Refinery;
 use modules::dashboard::Dashboard;
 use modules::navigation::Navigation;
 
@@ -21,11 +22,12 @@ pub struct Mass {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum MassType {
     Ship {
-        mining      : Option<Mining>,
-        navigation  : Option<Navigation>,
-        engines     : Option<Engines>,
-        dashboard   : Option<Dashboard>,
         storage     : Storage,
+        mining      : Option<Mining>,
+        engines     : Option<Engines>,
+        refinery    : Option<Refinery>,
+        dashboard   : Option<Dashboard>,
+        navigation  : Option<Navigation>,
     },
     Astroid{
         resources   : Storage,
@@ -63,6 +65,7 @@ impl Mass {
         let ship = MassType::Ship {
             mining      : Some(Mining::new()),
             engines     : Some(Engines::new()),
+            refinery    : Some(Refinery::new()),
             dashboard   : Some(Dashboard::new()),
             navigation  : Some(Navigation::new()),
             storage     : Storage::new(Vec::new()),
@@ -79,6 +82,7 @@ impl Mass {
         let mut modules = Vec::new();
         modules.push(ModuleType::Mining);
         modules.push(ModuleType::Engines);
+        modules.push(ModuleType::Refinery);
         modules.push(ModuleType::Dashboard);
         modules.push(ModuleType::Navigation);
         modules
@@ -87,8 +91,9 @@ impl Mass {
     pub fn process(&mut self) {
         let mut acceleration = (0.0, 0.0, 0.0);
         match self.mass_type {
-            MassType::Ship{ref mut navigation, ref mut engines, ref mut mining, ..} => {
+            MassType::Ship{ref mut navigation, ref mut engines, ref mut mining, ref mut refinery, ..} => {
                 mining.as_mut().unwrap().process();
+                refinery.as_mut().unwrap().process();
                 navigation.as_mut().unwrap().process();
                 acceleration = engines.as_mut().unwrap().recv_acceleration();
             },
@@ -104,6 +109,13 @@ impl Mass {
         self.velocity.0 += acceleration.0;
         self.velocity.1 += acceleration.1;
         self.velocity.2 += acceleration.2;
+    }
+
+    pub fn has_minerals(&self) -> bool {
+        match self.mass_type {
+            MassType::Ship{ref storage, ..} => storage.has_minerals(),
+            MassType::Astroid{ref resources, ..} => resources.has_minerals(),
+        }
     }
 
     pub fn take(&mut self, name : &str) -> Option<Item> {

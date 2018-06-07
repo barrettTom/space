@@ -14,6 +14,13 @@ impl Storage {
         }
     }
 
+    pub fn has_minerals(&self) -> bool {
+        match self.items.iter().position(|item| item.name == "Iron") {
+            Some(_) => true,
+            None => false,
+        }
+    }
+
     pub fn take(&mut self, name : &str) -> Option<Item> {
         match self.items.iter().position(|item| item.name == name) {
             Some(index) => Some(self.items.remove(index)),
