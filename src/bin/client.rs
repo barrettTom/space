@@ -1,7 +1,12 @@
 extern crate space;
+extern crate toml;
 extern crate serde_json;
 
+#[macro_use]
+extern crate serde_derive;
+
 use std::io;
+use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
 use std::net::TcpStream;
@@ -13,19 +18,43 @@ use space::client::refinery::client_refinery;
 use space::client::dashboard::client_dashboard;
 use space::client::navigation::client_navigation;
 
+#[derive(Debug, Deserialize)]
+struct Config {
+    username    : Option<String>,
+    password    : Option<String>,
+    server      : Option<String>,
+}
+
 fn main() {
+    let send;
+    let server;
     let mut name = String::new();
-    println!("Ship Name:");
-    io::stdin().read_line(&mut name).expect("Failed");
-    name = name.replace("\n", "");
 
-    let mut password = String::new();
-    println!("Password:");
-    io::stdin().read_line(&mut password).expect("Failed");
+    match File::open(".space") {
+        Ok(mut config_file) => {
+            let mut config_string = String::new();
+            config_file.read_to_string(&mut config_string).unwrap();
+            let config : Config = toml::from_str(&config_string).unwrap();
 
-    let send = name.clone() + ":" + &password;
+            server = config.server.unwrap();
+            name = config.username.unwrap();
+            send = name.clone() + ":" + &config.password.unwrap() + "\n";
+        },
+        Err(_err) => {
+            println!("Ship Name:");
+            io::stdin().read_line(&mut name).expect("Failed");
+            name = name.replace("\n", "");
 
-    let mut stream = TcpStream::connect("localhost:6000").unwrap();
+            let mut password = String::new();
+            println!("Password:");
+            io::stdin().read_line(&mut password).expect("Failed");
+
+            server = "localhost:6000".to_string();
+            send = name.clone() + ":" + &password;
+        },
+    }
+
+    let mut stream = TcpStream::connect(&server).unwrap();
     let mut buff_r = BufReader::new(stream.try_clone().unwrap());
 
     stream.write(send.as_bytes()).unwrap();
