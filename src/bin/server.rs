@@ -25,22 +25,31 @@ fn main() {
 
     let mut masses = populate();
 
-    let mut connections = Vec::new();
+    let mut connections : Vec<ServerConnection> = Vec::new();
     for stream in listener.incoming() {
         match stream {
-            Ok(stream) => connections.push(ServerConnection::new(stream, &mut masses)),
+            Ok(stream) => {
+                let new_connection = ServerConnection::new(stream, &mut masses);
+                let exists = connections.iter().position(|connection|
+                                                         connection.name == new_connection.name &&
+                                                         connection.module_type == new_connection.module_type);
+                match exists {
+                    Some(index) => { connections.remove(index); },
+                    _ => (),
+                }
+                connections.push(new_connection);
+            },
             _ => {
                 for i in 0..connections.len() {
                     connections[i].process(&mut masses);
                 }
-                connections.retain(|connection| connection.open);
 
                 for mass in masses.values_mut() {
                     mass.process();
                 }
 
                 sleep(Duration::from_millis(100));
-            }
+            },
         }
     }
 }

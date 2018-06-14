@@ -10,3 +10,4 @@ ideas
 - some sort of energy / fuel mechanic
 - server ability to quit and import/export all data
 - collisions
+- figure how position floats overflow and how to improve it

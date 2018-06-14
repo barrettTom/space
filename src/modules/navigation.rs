@@ -41,6 +41,11 @@ impl Navigation {
             }
             _ => (),
         }
+
+        match self.target_name {
+            None => self.status = NavigationStatus::None,
+            _ => (),
+        }
     }
 
     pub fn give_target(&mut self, target_name : String) {

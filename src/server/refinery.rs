@@ -15,11 +15,10 @@ pub struct RefineryData {
 }
 
 impl ServerConnection {
-    pub fn server_refinery(&mut self, masses : &mut HashMap<String, Mass>) -> bool {
+    pub fn server_refinery(&mut self, masses : &mut HashMap<String, Mass>) {
         let mut ship = masses.remove(&self.name).unwrap();
         let ship_clone = ship.clone();
         let mut refine = false;
-        let mut connection_good = true;
 
         if let MassType::Ship{ref mut refinery, ..} = ship.mass_type {
             let mut refinery = refinery.as_mut().unwrap();
@@ -29,27 +28,10 @@ impl ServerConnection {
                 status          : refinery.status,
             };
 
-            let send = serde_json::to_string(&refinery_data).unwrap() + "\n";
-            match self.stream.write(send.as_bytes()) {
-                Ok(_result) => (),
-                Err(_error) => connection_good = false,
-            }
-
-            let mut recv = String::new();
-            match self.buff_r.read_line(&mut recv) {
-                Ok(result) => match recv.as_bytes() {
-                    b"R\n" => {
-                        if refinery_data.has_minerals {
-                            refinery.toggle();
-                        }
-                    },
-                    _ => {
-                        if result == 0 {
-                            connection_good = false;
-                        }
-                    },
+            if self.open {
+                if self.txrx_refinery(&refinery_data) {
+                    refinery.toggle();
                 }
-                Err(_error) => (),
             }
 
             if !refinery_data.has_minerals {
@@ -68,6 +50,33 @@ impl ServerConnection {
         }
 
         masses.insert(self.name.clone(), ship);
-        connection_good
+    }
+
+    fn txrx_refinery(&mut self, refinery_data : &RefineryData) -> bool {
+        let send = serde_json::to_string(refinery_data).unwrap() + "\n";
+        match self.stream.write(send.as_bytes()) {
+            Err(_error) => self.open = false,
+            _ => (),
+        }
+
+        let mut recv = String::new();
+        match self.buff_r.read_line(&mut recv) {
+            Ok(result) => match recv.as_bytes() {
+                b"R\n" => {
+                    if refinery_data.has_minerals {
+                        return true
+                    }
+                },
+                _ => {
+                    if result == 0 {
+                        self.open = false;
+                    }
+                },
+            }
+            _ => (),
+        }
+
+        false
     }
 }
+

@@ -19,10 +19,9 @@ pub struct MiningData {
 }
 
 impl ServerConnection {
-    pub fn server_mining(&mut self, masses : &mut HashMap<String, Mass>) -> bool {
+    pub fn server_mining(&mut self, masses : &mut HashMap<String, Mass>) {
         let mut ship = masses.remove(&self.name).unwrap();
         let ship_clone = ship.clone();
-        let mut connection_good = true;
         let mut item = None;
 
         if let MassType::Ship{ref mut mining, ref navigation, ..} = ship.mass_type {
@@ -30,27 +29,13 @@ impl ServerConnection {
             let mut navigation = navigation.as_ref().unwrap();
             let mining_data = get_mining_data(ship_clone, mining, navigation, masses);
 
-            let send = serde_json::to_string(&mining_data).unwrap() + "\n";
-            match self.stream.write(send.as_bytes()) {
-                Ok(_result) => (),
-                Err(_error) => connection_good = false,
-            }
 
-            let mut recv = String::new();
-            match self.buff_r.read_line(&mut recv) {
-                Ok(result) => match recv.as_bytes() {
-                    b"F\n" => {
-                        if mining_data.is_within_range {
-                            mining.toggle();
-                        }
-                    },
-                    _ => {
-                        if result == 0 {
-                            connection_good = false;
-                        }
-                    },
+            if self.open {
+                if self.txrx_mining(&mining_data) {
+                    if mining_data.is_within_range {
+                        mining.toggle();
+                    }
                 }
-                Err(_error) => (),
             }
 
             if !mining_data.is_within_range {
@@ -76,7 +61,31 @@ impl ServerConnection {
         }
 
         masses.insert(self.name.clone(), ship);
-        connection_good
+    }
+
+    fn txrx_mining(&mut self, mining_data : &MiningData) -> bool {
+        let send = serde_json::to_string(mining_data).unwrap() + "\n";
+        match self.stream.write(send.as_bytes()) {
+            Err(_error) => self.open = false,
+            _ => (),
+        }
+
+        let mut recv = String::new();
+        match self.buff_r.read_line(&mut recv) {
+            Ok(result) => match recv.as_bytes() {
+                b"F\n" => {
+                        return true;
+                },
+                _ => {
+                    if result == 0 {
+                        self.open = false;
+                    }
+                },
+            }
+            _ => (),
+        }
+
+        false
     }
 }
 

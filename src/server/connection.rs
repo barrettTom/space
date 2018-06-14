@@ -44,12 +44,12 @@ impl ServerConnection {
     }
 
     pub fn process(&mut self, mut masses : &mut HashMap<String, Mass>) {
-        self.open = match self.module_type {
+        match self.module_type {
             ModuleType::Mining => self.server_mining(&mut masses),
             ModuleType::Engines => self.server_engines(&mut masses),
             ModuleType::Refinery => self.server_refinery(&mut masses),
             ModuleType::Dashboard => self.server_dashboard(&mut masses),
             ModuleType::Navigation => self.server_navigation(&mut masses),
-        };
+        }
     }
 }
