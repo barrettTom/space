@@ -39,6 +39,12 @@ impl Engines {
                                 -1.0 * m_v.1 * 0.05,
                                 -1.0 * m_v.2 * 0.05);
             },
+            b"s\n" => {
+                let m_v = ship.velocity;
+                acceleration = (-1.0 * m_v.0,
+                                -1.0 * m_v.1,
+                                -1.0 * m_v.2);
+            },
             b"c\n" => {
                 match target {
                     Some(target) => {

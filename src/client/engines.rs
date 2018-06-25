@@ -22,11 +22,12 @@ pub fn client_engines(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>)
         write!(stdout, "{}{}use numpad to freely move\n", termion::clear::All, termion::cursor::Goto(1, 1)).unwrap();
         write!(stdout, "{}+ : speedup", termion::cursor::Goto(1, 2)).unwrap();
         write!(stdout, "{}- : slowdown", termion::cursor::Goto(1, 3)).unwrap();
-        write!(stdout, "{}q : quit", termion::cursor::Goto(1, 4)).unwrap();
+        write!(stdout, "{}s : stop", termion::cursor::Goto(1, 4)).unwrap();
+        write!(stdout, "{}q : quit", termion::cursor::Goto(1, 5)).unwrap();
 
         if has_target {
-            write!(stdout, "{}c : mimic targets velocity vector", termion::cursor::Goto(1,5)).unwrap();
-            write!(stdout, "{}t : accelerate torwards target", termion::cursor::Goto(1,6)).unwrap();
+            write!(stdout, "{}c : mimic targets velocity vector", termion::cursor::Goto(1, 6)).unwrap();
+            write!(stdout, "{}t : accelerate torwards target", termion::cursor::Goto(1, 7)).unwrap();
         }
 
         match stdin.next() {

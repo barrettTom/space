@@ -29,9 +29,12 @@ pub enum MassType {
         dashboard   : Option<Dashboard>,
         navigation  : Option<Navigation>,
     },
-    Astroid{
+    Astroid {
         resources   : Storage,
     },
+    Item {
+        item : Item,
+    }
 }
 
 impl Mass {
@@ -78,6 +81,14 @@ impl Mass {
         }
     }
 
+    pub fn new_item(item : Item, position : (f64, f64, f64), velocity : (f64, f64, f64)) -> Mass {
+        Mass {
+            mass_type   : MassType::Item{item : item},
+            position    : position,
+            velocity    : velocity,
+        }
+    }
+
     pub fn get_modules(&self) -> Vec<ModuleType> {
         let mut modules = Vec::new();
         modules.push(ModuleType::Mining);
@@ -115,6 +126,7 @@ impl Mass {
         match self.mass_type {
             MassType::Ship{ref storage, ..} => storage.has_minerals(),
             MassType::Astroid{ref resources, ..} => resources.has_minerals(),
+            _ => false,
         }
     }
 
@@ -122,13 +134,15 @@ impl Mass {
         match self.mass_type {
             MassType::Ship{ref mut storage, ..} => storage.take(name),
             MassType::Astroid{ref mut resources, ..} => resources.take(name),
+            _ => None,
         }
     }
 
-    pub fn give(&mut self, item : Item) {
+    pub fn give(&mut self, item : Item) -> bool {
         match self.mass_type {
             MassType::Ship{ref mut storage, ..} => storage.give(item),
             MassType::Astroid{ref mut resources, ..} => resources.give(item),
+            _ => false,
         }
     }
 }

@@ -56,7 +56,13 @@ impl ServerConnection {
         }
 
         match item {
-            Some(item) => ship.give(item),
+            Some(item) => match ship.give(item.clone()) {
+                false => {
+                    let mass = Mass::new_item(item.clone(), ship.position, ship.velocity);
+                    masses.insert(item.name.clone(), mass);
+                }
+                true => (),
+            }
             None => (),
         }
 
@@ -84,7 +90,6 @@ impl ServerConnection {
             }
             _ => (),
         }
-
         false
     }
 }

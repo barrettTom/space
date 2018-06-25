@@ -1,7 +1,7 @@
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Item {
     pub name : String,
-    size : usize,
+    pub size : usize,
 }
 
 impl Item {
@@ -9,6 +9,15 @@ impl Item {
         Item {
             name : String::from(name),
             size : size,
+        }
+    }
+
+    pub fn is_mineral(&self) -> bool {
+        if self.name == "Iron" {
+            true
+        }
+        else {
+            false
         }
     }
 }
