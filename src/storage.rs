@@ -29,7 +29,11 @@ impl Storage {
 
     pub fn take(&mut self, name : &str) -> Option<Item> {
         match self.items.iter().position(|item| item.name == name) {
-            Some(index) => Some(self.items.remove(index)),
+            Some(index) => {
+                let item = self.items.remove(index);
+                self.carrying -= item.size;
+                Some(item)
+            }
             None => None,
         }
     }
