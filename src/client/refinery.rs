@@ -8,6 +8,7 @@ use std::io::{stdout, Read, Write};
 use self::termion::raw::IntoRawMode;
 
 use server::refinery::RefineryData;
+use modules::refinery::RefineryStatus;
 
 pub fn client_refinery(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>) {
     let stdout = stdout();
@@ -25,8 +26,8 @@ pub fn client_refinery(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>
 
         match data.has_minerals {
             true => match data.status {
-                    true => write!(stdout, "{}Press R to stop refining.", clear).unwrap(),
-                    false => write!(stdout, "{}Press R to begin refining.", clear).unwrap(),
+                    RefineryStatus::None => write!(stdout, "{}Press R to begin refining.", clear).unwrap(),
+                    _ => write!(stdout, "{}Press R to stop refining.", clear).unwrap(),
             },
             false => write!(stdout, "{}You have no refinable minerals.", clear).unwrap(),
         }

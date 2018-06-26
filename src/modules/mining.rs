@@ -1,55 +1,64 @@
 use std::time::SystemTime;
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum MiningStatus {
+    None,
+    Mining,
+    Mined,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mining {
     pub range       : f64,
-    pub status      : bool,
+    pub status      : MiningStatus,
     time            : u64,
     start           : Option<SystemTime>,
-    pub ready       : bool,
 }
-
 
 impl Mining {
     pub fn new() -> Mining {
         Mining {
             range   : 10.0,
-            status  : false,
+            status  : MiningStatus::None,
             time    : 5,
             start   : None,
-            ready   : false,
         }
-    }
-
-    pub fn toggle(&mut self) {
-        self.status = !self.status;
-        self.start = match self.status {
-            true => Some(SystemTime::now()),
-            false => None,
-        };
-    }
-
-    pub fn off(&mut self) {
-        self.status = false;
-    }
-
-    pub fn take(&mut self) {
-        self.ready = false;
     }
 
     pub fn process(&mut self) {
         match self.start.clone() {
             Some(timer) => {
                 if timer.elapsed().unwrap().as_secs() > self.time {
+                    self.status = MiningStatus::Mined;
                     self.start = Some(SystemTime::now());
-                    self.ready = true;
                 }
             }
             _ => (),
         }
-        if !self.status {
+        if self.status == MiningStatus::None {
             self.start = None;
-            self.ready = false;
         }
     }
+
+    pub fn toggle(&mut self) {
+        self.status = match self.status {
+            MiningStatus::None => {
+                self.start = Some(SystemTime::now());
+                MiningStatus::Mining
+            }
+            _ => {
+                self.start = None;
+                MiningStatus::None
+            }
+        };
+    }
+
+    pub fn off(&mut self) {
+        self.status = MiningStatus::None;
+    }
+
+    pub fn take(&mut self) {
+        self.status = MiningStatus::Mining;
+    }
+
 }

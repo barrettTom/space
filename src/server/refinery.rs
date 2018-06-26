@@ -7,11 +7,12 @@ use std::collections::HashMap;
 use item::Item;
 use mass::{Mass, MassType};
 use server::connection::ServerConnection;
+use modules::refinery::RefineryStatus;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RefineryData {
     pub has_minerals    : bool,
-    pub status          : bool,
+    pub status          : RefineryStatus,
 }
 
 impl ServerConnection {
@@ -25,7 +26,7 @@ impl ServerConnection {
 
             let refinery_data = RefineryData {
                 has_minerals    : ship_clone.has_minerals(),
-                status          : refinery.status,
+                status          : refinery.status.clone(),
             };
 
             if self.open {
@@ -38,7 +39,7 @@ impl ServerConnection {
                 refinery.off();
             }
 
-            if refinery.status && refinery.ready {
+            if refinery.status == RefineryStatus::Refined {
                 refinery.take();
                 refine = true;
             }

@@ -6,15 +6,16 @@ use std::collections::HashMap;
 
 use math::distance;
 use mass::{Mass, MassType};
-use modules::mining::Mining;
 use modules::navigation::Navigation;
 use server::connection::ServerConnection;
+use modules::mining::{Mining, MiningStatus};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MiningData {
     pub has_astroid_target  : bool,
+    pub astroid_has_minerals: bool,
     pub is_within_range     : bool,
-    pub status              : bool,
+    pub status              : MiningStatus,
     pub range               : f64,
 }
 
@@ -29,7 +30,6 @@ impl ServerConnection {
             let mut navigation = navigation.as_ref().unwrap();
             let mining_data = get_mining_data(ship_clone, mining, navigation, masses);
 
-
             if self.open {
                 if self.txrx_mining(&mining_data) {
                     if mining_data.is_within_range {
@@ -42,7 +42,7 @@ impl ServerConnection {
                 mining.off();
             }
             else {
-                if mining.status && mining.ready {
+                if mining.status == MiningStatus::Mined {
                     mining.take();
                     match navigation.target_name.clone() {
                         Some(name) => {
@@ -98,13 +98,19 @@ fn get_mining_data(ship : Mass, mining : &Mining, navigation : &Navigation, mass
     match navigation.target_name.clone() {
         Some(name) => {
             let target = masses.get(&name);
+
+            let mut astroid_has_minerals = false;
             let has_astroid_target = match target {
-                Some(target) => match target.mass_type {
-                    MassType::Astroid{..} => true,
-                    _ => false,
+                Some(target) => {
+                    astroid_has_minerals = target.has_minerals();
+                    match target.mass_type {
+                        MassType::Astroid{..} => true,
+                        _ => false,
+                    }
                 },
                 None => false,
             };
+
             let is_within_range = match has_astroid_target {
                 true => match target {
                     Some(target) => mining.range > distance(ship.position, target.position),
@@ -115,17 +121,19 @@ fn get_mining_data(ship : Mass, mining : &Mining, navigation : &Navigation, mass
 
             MiningData {
                 has_astroid_target  : has_astroid_target,
+                astroid_has_minerals: astroid_has_minerals,
                 is_within_range     : is_within_range,
                 range               : mining.range,
-                status              : mining.status,
+                status              : mining.status.clone(),
             }
         }
         _ => {
             MiningData {
                 has_astroid_target  : false,
+                astroid_has_minerals: false,
                 is_within_range     : false,
                 range               : mining.range,
-                status              : mining.status,
+                status              : mining.status.clone(),
             }
         }
     }

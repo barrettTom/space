@@ -8,6 +8,7 @@ use std::io::{stdout, Read, Write};
 use self::termion::raw::IntoRawMode;
 
 use server::mining::MiningData;
+use modules::mining::MiningStatus;
 
 pub fn client_mining(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>) {
     let stdout = stdout();
@@ -25,10 +26,13 @@ pub fn client_mining(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>) 
 
         match data.has_astroid_target {
             true => match data.is_within_range {
-                true => match data.status {
-                        true => write!(stdout, "{}Press F to stop mining.", clear).unwrap(),
-                        false => write!(stdout, "{}Press F to begin mining.", clear).unwrap(),
-                    }
+                true => match data.astroid_has_minerals {
+                    true => match data.status {
+                            MiningStatus::None => write!(stdout, "{}Press F to begin mining.", clear).unwrap(),
+                            _ => write!(stdout, "{}Press F to stop mining.", clear).unwrap(),
+                    },
+                    false => write!(stdout, "{}Astroid has ran out of minerals.", clear).unwrap(),
+                }
                 false => write!(stdout, "{}Astroid must be within range of {}.", clear, data.range).unwrap(),
             },
             false => write!(stdout, "{}Ship has no astroid targeted.", clear).unwrap(),

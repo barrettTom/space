@@ -1,11 +1,17 @@
 use std::time::SystemTime;
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum RefineryStatus {
+    None,
+    Refining,
+    Refined,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Refinery {
     time        : u64,
     start       : Option<SystemTime>,
-    pub status  : bool,
-    pub ready   : bool,
+    pub status  : RefineryStatus,
 }
 
 impl Refinery {
@@ -13,8 +19,7 @@ impl Refinery {
         Refinery {
             time    : 5,
             start   : None,
-            status  : false,
-            ready   : false,
+            status  : RefineryStatus::None,
         }
     }
 
@@ -22,31 +27,35 @@ impl Refinery {
         match self.start.clone() {
             Some(timer) => {
                 if timer.elapsed().unwrap().as_secs() > self.time {
+                    self.status = RefineryStatus::Refined;
                     self.start = Some(SystemTime::now());
-                    self.ready = true;
                 }
             }
             _ => (),
         }
-        if !self.status {
+        if self.status == RefineryStatus::None {
             self.start = None;
-            self.ready = false;
         }
     }
 
     pub fn toggle(&mut self) {
-        self.status = !self.status;
-        self.start = match self.status {
-            true => Some(SystemTime::now()),
-            false => None,
+        self.status = match self.status {
+            RefineryStatus::None => {
+                self.start = Some(SystemTime::now());
+                RefineryStatus::Refining
+            },
+            _ => {
+                self.start = None;
+                RefineryStatus::None
+            }
         };
     }
 
     pub fn off(&mut self) {
-        self.status = false;
+        self.status = RefineryStatus::None;
     }
 
     pub fn take(&mut self) {
-        self.ready = false;
+        self.status = RefineryStatus::Refining;
     }
 }
