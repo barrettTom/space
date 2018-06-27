@@ -17,6 +17,7 @@ use space::client::engines::client_engines;
 use space::client::refinery::client_refinery;
 use space::client::dashboard::client_dashboard;
 use space::client::navigation::client_navigation;
+use space::client::construction::client_construction;
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -81,5 +82,6 @@ fn main() {
         ModuleType::Engines => client_engines(stream, buff_r),
         ModuleType::Refinery => client_refinery(stream, buff_r),
         ModuleType::Navigation => client_navigation(name, stream, buff_r),
+        ModuleType::Construction => client_construction(stream, buff_r),
     }
 }

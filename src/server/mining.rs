@@ -32,9 +32,7 @@ impl ServerConnection {
 
             if self.open {
                 if self.txrx_mining(&mining_data) {
-                    if mining_data.is_within_range {
-                        mining.toggle();
-                    }
+                    mining.toggle();
                 }
             }
 
@@ -47,7 +45,7 @@ impl ServerConnection {
                     match navigation.target_name.clone() {
                         Some(name) => {
                             let target = masses.get_mut(&name).unwrap();
-                            item = target.take("Iron");
+                            item = target.take("Mineral");
                         }
                         _ => (),
                     }
@@ -80,7 +78,9 @@ impl ServerConnection {
         match self.buff_r.read_line(&mut recv) {
             Ok(result) => match recv.as_bytes() {
                 b"F\n" => {
+                    if mining_data.is_within_range {
                         return true;
+                    }
                 },
                 _ => {
                     if result == 0 {

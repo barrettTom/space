@@ -46,8 +46,8 @@ impl ServerConnection {
         }
     
         if refine {
-            ship.take("Iron");
-            ship.give(Item::new("Refined Iron", 1));
+            ship.take("Mineral");
+            ship.give(Item::new("Refined Mineral", 1));
         }
 
         masses.insert(self.name.clone(), ship);

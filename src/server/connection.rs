@@ -50,6 +50,7 @@ impl ServerConnection {
             ModuleType::Refinery => self.server_refinery(&mut masses),
             ModuleType::Dashboard => self.server_dashboard(&mut masses),
             ModuleType::Navigation => self.server_navigation(&mut masses),
+            ModuleType::Construction => self.server_construction(&mut masses),
         }
     }
 }

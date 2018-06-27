@@ -13,7 +13,7 @@ impl Item {
     }
 
     pub fn is_mineral(&self) -> bool {
-        if self.name == "Iron" {
+        if self.name == "Mineral" {
             true
         }
         else {

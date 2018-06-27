@@ -11,6 +11,7 @@ use modules::types::ModuleType;
 use modules::refinery::Refinery;
 use modules::dashboard::Dashboard;
 use modules::navigation::Navigation;
+use modules::construction::Construction;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mass {
@@ -28,13 +29,17 @@ pub enum MassType {
         refinery    : Option<Refinery>,
         dashboard   : Option<Dashboard>,
         navigation  : Option<Navigation>,
+        construction: Option<Construction>,
     },
     Astroid {
         resources   : Storage,
     },
     Item {
         item : Item,
-    }
+    },
+    Station {
+        module_type : ModuleType,
+    },
 }
 
 impl Mass {
@@ -50,7 +55,7 @@ impl Mass {
         let mut rr = Range::new(0, 20);
         let mut resources = Vec::new();
         for _ in 0..rr.sample(&mut rng) {
-            resources.push(Item::new("Iron", 1));
+            resources.push(Item::new("Mineral", 1));
         }
 
         let astroid = MassType::Astroid {
@@ -71,6 +76,7 @@ impl Mass {
             refinery    : Some(Refinery::new()),
             dashboard   : Some(Dashboard::new()),
             navigation  : Some(Navigation::new()),
+            construction: Some(Construction::new()),
             storage     : Storage::new(Vec::new()),
         };
 
@@ -89,6 +95,18 @@ impl Mass {
         }
     }
 
+    pub fn new_station(module_type : ModuleType, position : (f64, f64, f64), velocity : (f64, f64, f64)) -> Mass {
+        let mass_type = MassType::Station {
+            module_type : module_type
+        };
+
+        Mass {
+            mass_type   : mass_type,
+            position    : position,
+            velocity    : velocity,
+        }
+    }
+
     pub fn get_modules(&self) -> Vec<ModuleType> {
         let mut modules = Vec::new();
         modules.push(ModuleType::Mining);
@@ -96,16 +114,18 @@ impl Mass {
         modules.push(ModuleType::Refinery);
         modules.push(ModuleType::Dashboard);
         modules.push(ModuleType::Navigation);
+        modules.push(ModuleType::Construction);
         modules
     }
 
     pub fn process(&mut self) {
         let mut acceleration = (0.0, 0.0, 0.0);
         match self.mass_type {
-            MassType::Ship{ref mut navigation, ref mut engines, ref mut mining, ref mut refinery, ..} => {
+            MassType::Ship{ref mut navigation, ref mut engines, ref mut mining, ref mut refinery, ref mut construction, ..} => {
                 mining.as_mut().unwrap().process();
                 refinery.as_mut().unwrap().process();
                 navigation.as_mut().unwrap().process();
+                construction.as_mut().unwrap().process();
                 acceleration = engines.as_mut().unwrap().recv_acceleration();
             },
             _ => (),
@@ -127,6 +147,13 @@ impl Mass {
             MassType::Ship{ref storage, ..} => storage.has_minerals(),
             MassType::Astroid{ref resources, ..} => resources.has_minerals(),
             _ => false,
+        }
+    }
+
+    pub fn refined_count(&self) -> usize {
+        match self.mass_type {
+            MassType::Ship{ref storage, ..} => storage.refined_count(),
+            _ => 0,
         }
     }
 

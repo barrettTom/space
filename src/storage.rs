@@ -27,6 +27,12 @@ impl Storage {
         }
     }
 
+    pub fn refined_count(&self) -> usize {
+        let mut items = self.items.clone();
+        items.retain(|item| item.name == "Refined Mineral");
+        items.len()
+    }
+
     pub fn take(&mut self, name : &str) -> Option<Item> {
         match self.items.iter().position(|item| item.name == name) {
             Some(index) => {

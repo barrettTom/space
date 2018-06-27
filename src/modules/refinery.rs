@@ -33,25 +33,22 @@ impl Refinery {
             }
             _ => (),
         }
-        if self.status == RefineryStatus::None {
-            self.start = None;
-        }
     }
 
     pub fn toggle(&mut self) {
-        self.status = match self.status {
-            RefineryStatus::None => {
-                self.start = Some(SystemTime::now());
-                RefineryStatus::Refining
-            },
-            _ => {
-                self.start = None;
-                RefineryStatus::None
-            }
+        match self.status {
+            RefineryStatus::None => self.on(),
+            _ => self.off(),
         };
     }
 
+    pub fn on(&mut self) {
+        self.start = Some(SystemTime::now());
+        self.status = RefineryStatus::Refining;
+    }
+
     pub fn off(&mut self) {
+        self.start = None;
         self.status = RefineryStatus::None;
     }
 

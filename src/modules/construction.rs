@@ -1,25 +1,26 @@
 use std::time::SystemTime;
+use modules::types::ModuleType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum MiningStatus {
+pub enum ConstructionStatus {
     None,
-    Mining,
-    Mined,
+    Constructing,
+    Constructed,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Mining {
-    pub range       : f64,
-    pub status      : MiningStatus,
+pub struct Construction {
+    pub status      : ConstructionStatus,
+    construction    : Option<ModuleType>,
     time            : u64,
     start           : Option<SystemTime>,
 }
 
-impl Mining {
-    pub fn new() -> Mining {
-        Mining {
-            range   : 10.0,
-            status  : MiningStatus::None,
+impl Construction {
+    pub fn new() -> Construction {
+        Construction {
+            status  : ConstructionStatus::None,
+            construction : None,
             time    : 5,
             start   : None,
         }
@@ -29,8 +30,8 @@ impl Mining {
         match self.start.clone() {
             Some(timer) => {
                 if timer.elapsed().unwrap().as_secs() > self.time {
-                    self.status = MiningStatus::Mined;
                     self.start = Some(SystemTime::now());
+                    self.status = ConstructionStatus::Constructed;
                 }
             }
             _ => (),
@@ -39,22 +40,22 @@ impl Mining {
 
     pub fn toggle(&mut self) {
         match self.status {
-            MiningStatus::None => self.on(),
+            ConstructionStatus::None => self.on(),
             _ => self.off(),
         };
     }
 
     pub fn on(&mut self) {
         self.start = Some(SystemTime::now());
-        self.status = MiningStatus::Mining;
+        self.status = ConstructionStatus::Constructing;
     }
 
     pub fn off(&mut self) {
         self.start = None;
-        self.status = MiningStatus::None;
+        self.status = ConstructionStatus::None;
     }
 
     pub fn take(&mut self) {
-        self.status = MiningStatus::Mining;
+        self.status = ConstructionStatus::None;
     }
 }
