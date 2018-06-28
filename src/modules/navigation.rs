@@ -32,19 +32,11 @@ impl Navigation {
     }
 
     pub fn process(&mut self) {
-        match self.start.clone() {
-            Some(timer) => {
-                if timer.elapsed().unwrap().as_secs() > self.time {
-                    self.status = NavigationStatus::Targeted;
-                    self.start = None;
-                }
+        if let Some(timer) = self.start.clone() {
+            if timer.elapsed().unwrap().as_secs() > self.time {
+                self.status = NavigationStatus::Targeted;
+                self.start = None;
             }
-            _ => (),
-        }
-
-        match self.target_name {
-            None => self.status = NavigationStatus::None,
-            _ => (),
         }
     }
 
@@ -55,15 +47,12 @@ impl Navigation {
     }
 
     pub fn verify_target(&mut self, ship_position : (f64, f64, f64), masses : &HashMap<String, Mass>) {
-        match self.target_name.clone() {
-            Some(name) => {
-                let target = masses.get(&name).unwrap();
-                if distance(target.position, ship_position) > self.range {
-                    self.target_name = None;
-                    self.status = NavigationStatus::None;
-                }
+        if let Some(name) = self.target_name.clone() {
+            let target = masses.get(&name).unwrap();
+            if distance(target.position, ship_position) > self.range {
+                self.target_name = None;
+                self.status = NavigationStatus::None;
             }
-            _ => (),
         }
     }
 }

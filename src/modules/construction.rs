@@ -27,14 +27,11 @@ impl Construction {
     }
 
     pub fn process(&mut self) {
-        match self.start.clone() {
-            Some(timer) => {
-                if timer.elapsed().unwrap().as_secs() > self.time {
-                    self.start = Some(SystemTime::now());
-                    self.status = ConstructionStatus::Constructed;
-                }
+        if let Some(timer) = self.start.clone() {
+            if timer.elapsed().unwrap().as_secs() > self.time {
+                self.start = Some(SystemTime::now());
+                self.status = ConstructionStatus::Constructed;
             }
-            _ => (),
         }
     }
 
@@ -56,6 +53,6 @@ impl Construction {
     }
 
     pub fn take(&mut self) {
-        self.status = ConstructionStatus::None;
+        self.off()
     }
 }

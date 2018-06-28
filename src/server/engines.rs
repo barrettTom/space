@@ -20,24 +20,21 @@ impl ServerConnection {
                 let targeted = navigation.status == NavigationStatus::Targeted;
 
                 let send = serde_json::to_string(&targeted).unwrap() + "\n";
-                match self.stream.write(send.as_bytes()) {
-                    Ok(_result) => (),
-                    Err(_error) => self.open = false,
+                if let Err(_err) = self.stream.write(send.as_bytes()) {
+                    self.open = false;
                 }
 
                 let target = match navigation.target_name {
                     Some(name) => masses.get(&name),
                     None => None,
                 };
+
                 let mut recv = String::new();
-                match self.buff_r.read_line(&mut recv) {
-                    Ok(result) => {
-                        engines.give_client_data(&ship_clone, target, recv);
-                        if result == 0 {
-                            self.open = false;
-                        }
-                    },
-                    Err(_error) => (),
+                if let Ok(result) = self.buff_r.read_line(&mut recv) {
+                    engines.give_client_data(&ship_clone, target, recv);
+                    if result == 0 {
+                        self.open = false;
+                    }
                 }
             }
 

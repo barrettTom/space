@@ -23,14 +23,11 @@ pub fn client_dashboard(mut buff_r : BufReader<TcpStream>) {
                termion::cursor::Goto(1,1),
                ship).unwrap();
 
-        match stdin.next() {
-            Some(c) => {
-                let c  = c.unwrap() as char;
-                if c == 'q' {
-                    break;
-                }
+        if let Some(c) = stdin.next() {
+            let c  = c.unwrap() as char;
+            if c == 'q' {
+                break;
             }
-            None => (),
         }
         stdout.flush().unwrap();
     }

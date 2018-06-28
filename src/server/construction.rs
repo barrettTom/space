@@ -32,6 +32,7 @@ impl ServerConnection {
             }
 
             if construction_data.status == ConstructionStatus::Constructed {
+                println!("inserted");
                 construction.take();
                 masses.insert("Station".to_string(), Mass::new_station(ModuleType::Refinery, ship_clone.position, ship_clone.velocity));
             }
@@ -42,14 +43,13 @@ impl ServerConnection {
 
     fn txrx_construction(&mut self, construction_data : &ConstructionData) -> bool {
         let send = serde_json::to_string(construction_data).unwrap() + "\n";
-        match self.stream.write(send.as_bytes()) {
-            Err(_error) => self.open = false,
-            _ => (),
+        if let Err(_err) = self.stream.write(send.as_bytes()) {
+            self.open = false;
         }
 
         let mut recv = String::new();
-        match self.buff_r.read_line(&mut recv) {
-            Ok(result) => match recv.as_bytes() {
+        if let Ok(result) = self.buff_r.read_line(&mut recv) {
+            match recv.as_bytes() {
                 b"c\n" => {
                     if construction_data.has_refined {
                         return true
@@ -61,7 +61,6 @@ impl ServerConnection {
                     }
                 },
             }
-            _ => (),
         }
 
         false

@@ -32,18 +32,15 @@ pub fn client_refinery(mut stream : TcpStream, mut buff_r : BufReader<TcpStream>
             false => write!(stdout, "{}You have no refinable minerals.", clear).unwrap(),
         }
 
-        match stdin.next() {
-            Some(c) => {
-                let c = c.unwrap();
-                let mut send = String::new();
-                send.push(c as char);
-                if send.as_bytes() == b"q" {
-                    break;
-                }
-                send.push_str("\n");
-                stream.write(send.as_bytes()).unwrap();
+        if let Some(c) =  stdin.next() {
+            let c = c.unwrap();
+            let mut send = String::new();
+            send.push(c as char);
+            if send.as_bytes() == b"q" {
+                break;
             }
-            None => ()
+            send.push_str("\n");
+            stream.write(send.as_bytes()).unwrap();
         }
 
         stdout.flush().unwrap();

@@ -26,14 +26,11 @@ impl Mining {
     }
 
     pub fn process(&mut self) {
-        match self.start.clone() {
-            Some(timer) => {
-                if timer.elapsed().unwrap().as_secs() > self.time {
-                    self.status = MiningStatus::Mined;
-                    self.start = Some(SystemTime::now());
-                }
+        if let Some(timer) = self.start.clone() {
+            if timer.elapsed().unwrap().as_secs() > self.time {
+                self.status = MiningStatus::Mined;
+                self.start = Some(SystemTime::now());
             }
-            _ => (),
         }
     }
 

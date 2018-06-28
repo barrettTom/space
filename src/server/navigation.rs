@@ -24,18 +24,18 @@ impl ServerConnection {
             if self.open {
                 let send = serde_json::to_string(&within_range).unwrap() + "\n";
 
-                match self.stream.write(send.as_bytes()) {
-                    Ok(_result) => (),
-                    Err(_error) => self.open = false,
+                if let Err(_err) = self.stream.write(send.as_bytes()) {
+                    self.open = false;
                 };
 
                 let mut recv = String::new();
-                match self.buff_r.read_line(&mut recv) {
-                    Ok(_result) => (),
-                    Err(_error) => (),
-                }
-                if !recv.is_empty() {
-                    navigation.give_target(recv.replace("\n", ""));
+                if let Ok(result) = self.buff_r.read_line(&mut recv) {
+                    if result == 0 {
+                        self.open = false;
+                    }
+                    if !recv.is_empty() {
+                        navigation.give_target(recv.replace("\n", ""));
+                    }
                 }
             }
         }

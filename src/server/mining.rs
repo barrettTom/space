@@ -42,26 +42,19 @@ impl ServerConnection {
             else {
                 if mining.status == MiningStatus::Mined {
                     mining.take();
-                    match navigation.target_name.clone() {
-                        Some(name) => {
-                            let target = masses.get_mut(&name).unwrap();
-                            item = target.take("Mineral");
-                        }
-                        _ => (),
+                    if let Some(name) = navigation.target_name.clone() {
+                        let target = masses.get_mut(&name).unwrap();
+                        item = target.take("Mineral");
                     }
                 }
             }
         }
 
-        match item {
-            Some(item) => match ship.give(item.clone()) {
-                false => {
-                    let mass = Mass::new_item(item.clone(), ship.position, ship.velocity);
-                    masses.insert(item.name.clone(), mass);
-                }
-                true => (),
+        if let Some(item) = item {
+            if !ship.give(item.clone()) {
+                let mass = Mass::new_item(item.clone(), ship.position, ship.velocity);
+                masses.insert(item.name.clone(), mass);
             }
-            None => (),
         }
 
         masses.insert(self.name.clone(), ship);
@@ -69,14 +62,13 @@ impl ServerConnection {
 
     fn txrx_mining(&mut self, mining_data : &MiningData) -> bool {
         let send = serde_json::to_string(mining_data).unwrap() + "\n";
-        match self.stream.write(send.as_bytes()) {
-            Err(_error) => self.open = false,
-            _ => (),
+        if let Err(_err) = self.stream.write(send.as_bytes()) {
+            self.open = false;
         }
 
         let mut recv = String::new();
-        match self.buff_r.read_line(&mut recv) {
-            Ok(result) => match recv.as_bytes() {
+        if let Ok(result) = self.buff_r.read_line(&mut recv) {
+            match recv.as_bytes() {
                 b"F\n" => {
                     if mining_data.is_within_range {
                         return true;
@@ -88,7 +80,6 @@ impl ServerConnection {
                     }
                 },
             }
-            _ => (),
         }
         false
     }

@@ -44,23 +44,20 @@ pub fn client_navigation(name : String, mut stream : TcpStream, mut buff_r : Buf
                        ).unwrap();
             }
 
-            match stdin.next() {
-                Some(c) => {
-                    let c = c.unwrap() as char;
-                    if c == 'q' {
-                        break;
+            if let Some(c) = stdin.next() {
+                let c = c.unwrap() as char;
+                if c == 'q' {
+                    break;
+                }
+                else {
+                    let i = c.to_digit(10).unwrap() as usize;
+                    if i < within_range.len() {
+                        let mut send = String::new();
+                        send.push_str(within_range.iter().nth(i).unwrap().0);
+                        send.push_str("\n");
+                        stream.write(send.as_bytes()).unwrap();
                     }
-                    else {
-                        let i = c.to_digit(10).unwrap() as usize;
-                        if i < within_range.len() {
-                            let mut send = String::new();
-                            send.push_str(within_range.iter().nth(i).unwrap().0);
-                            send.push_str("\n");
-                            stream.write(send.as_bytes()).unwrap();
-                        }
-                    }
-                },
-                None => (),
+                }
             }
         }
         stdout.flush().unwrap();

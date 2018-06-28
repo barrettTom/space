@@ -55,14 +55,13 @@ impl ServerConnection {
 
     fn txrx_refinery(&mut self, refinery_data : &RefineryData) -> bool {
         let send = serde_json::to_string(refinery_data).unwrap() + "\n";
-        match self.stream.write(send.as_bytes()) {
-            Err(_error) => self.open = false,
-            _ => (),
+        if let Err(_err) = self.stream.write(send.as_bytes()) {
+            self.open = false;
         }
 
         let mut recv = String::new();
-        match self.buff_r.read_line(&mut recv) {
-            Ok(result) => match recv.as_bytes() {
+        if let Ok(result) = self.buff_r.read_line(&mut recv) {
+            match recv.as_bytes() {
                 b"R\n" => {
                     if refinery_data.has_minerals {
                         return true
@@ -74,7 +73,6 @@ impl ServerConnection {
                     }
                 },
             }
-            _ => (),
         }
 
         false
