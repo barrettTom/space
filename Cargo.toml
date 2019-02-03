@@ -2,11 +2,12 @@
 name = "space"
 version = "0.1.0"
 authors = ["tom barrett <spalf0@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-termion = "1.5.1"
-rand = "0.4"
+termion = "*"
+rand = "0.6"
 toml = "0.4"

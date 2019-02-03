@@ -1,24 +1,30 @@
 extern crate serde_json;
 
-use std::io::Write;
-use std::io::BufRead;
 use std::collections::HashMap;
+use std::io::BufRead;
+use std::io::Write;
 
-use math::distance;
-use mass::{Mass, MassType};
-use server::connection::ServerConnection;
+use crate::mass::{Mass, MassType};
+use crate::math::distance;
+use crate::server::connection::ServerConnection;
 
 impl ServerConnection {
-    pub fn server_navigation(&mut self, masses : &mut HashMap<String, Mass>) {
+    pub fn server_navigation(&mut self, masses: &mut HashMap<String, Mass>) {
         let mut ship = masses.remove(&self.name).unwrap();
         let ship_clone = ship.clone();
 
-        if let MassType::Ship{ref mut navigation, ..} = ship.mass_type {
-            let mut navigation = navigation.as_mut().unwrap();
+        if let MassType::Ship {
+            ref mut navigation, ..
+        } = ship.mass_type
+        {
+            let navigation = navigation.as_mut().unwrap();
             navigation.verify_target(ship_clone.position, &masses);
-            let mut within_range : HashMap<&String, &Mass> = masses.iter().filter(|&(_, mass)|
-                                                                                  distance(ship_clone.position, mass.position) < navigation.range)
-                                                                                  .collect();
+            let mut within_range: HashMap<&String, &Mass> = masses
+                .iter()
+                .filter(|&(_, mass)| {
+                    distance(ship_clone.position, mass.position) < navigation.range
+                })
+                .collect();
             within_range.insert(&self.name, &ship_clone);
 
             if self.open {

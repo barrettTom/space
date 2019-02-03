@@ -7,24 +7,30 @@ pub enum RefineryStatus {
     Refined,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+impl Default for RefineryStatus {
+    fn default() -> Self {
+        RefineryStatus::None
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Refinery {
-    time        : u64,
-    start       : Option<SystemTime>,
-    pub status  : RefineryStatus,
+    time: u64,
+    start: Option<SystemTime>,
+    pub status: RefineryStatus,
 }
 
 impl Refinery {
     pub fn new() -> Refinery {
         Refinery {
-            time    : 5,
-            start   : None,
-            status  : RefineryStatus::None,
+            time: 5,
+            start: None,
+            status: RefineryStatus::None,
         }
     }
 
     pub fn process(&mut self) {
-        if let Some(timer) = self.start.clone() {
+        if let Some(timer) = self.start {
             if timer.elapsed().unwrap().as_secs() > self.time {
                 self.status = RefineryStatus::Refined;
                 self.start = Some(SystemTime::now());

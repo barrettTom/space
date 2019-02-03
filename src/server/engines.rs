@@ -1,20 +1,25 @@
 extern crate serde_json;
 
-use std::io::Write;
-use std::io::BufRead;
 use std::collections::HashMap;
+use std::io::BufRead;
+use std::io::Write;
 
-use mass::{Mass, MassType};
-use modules::navigation::NavigationStatus;
-use server::connection::ServerConnection;
+use crate::mass::{Mass, MassType};
+use crate::modules::navigation::NavigationStatus;
+use crate::server::connection::ServerConnection;
 
 impl ServerConnection {
-    pub fn server_engines(&mut self, masses : &mut HashMap<String, Mass>) {
+    pub fn server_engines(&mut self, masses: &mut HashMap<String, Mass>) {
         if self.open {
             let mut ship = masses.remove(&self.name).unwrap();
             let ship_clone = ship.clone();
 
-            if let MassType::Ship{ref mut engines, ref navigation, ..} = ship.mass_type {
+            if let MassType::Ship {
+                ref mut engines,
+                ref navigation,
+                ..
+            } = ship.mass_type
+            {
                 let navigation = navigation.clone().unwrap();
                 let engines = engines.as_mut().unwrap();
                 let targeted = navigation.status == NavigationStatus::Targeted;

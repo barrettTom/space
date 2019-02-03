@@ -1,8 +1,8 @@
-use std::time::SystemTime;
 use std::collections::HashMap;
+use std::time::SystemTime;
 
-use mass::Mass;
-use math::distance;
+use crate::mass::Mass;
+use crate::math::distance;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum NavigationStatus {
@@ -11,28 +11,34 @@ pub enum NavigationStatus {
     Targeted,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+impl Default for NavigationStatus {
+    fn default() -> Self {
+        NavigationStatus::None
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Navigation {
-    pub range       : f64,
-    pub status      : NavigationStatus,
-    pub target_name : Option<String>,
-    time            : u64,
-    start           : Option<SystemTime>,
+    pub range: f64,
+    pub status: NavigationStatus,
+    pub target_name: Option<String>,
+    time: u64,
+    start: Option<SystemTime>,
 }
 
 impl Navigation {
     pub fn new() -> Navigation {
         Navigation {
-            target_name : None,
-            range       : 100.0,
-            status      : NavigationStatus::None,
-            time        : 3,
-            start       : None,
+            target_name: None,
+            range: 100.0,
+            status: NavigationStatus::None,
+            time: 3,
+            start: None,
         }
     }
 
     pub fn process(&mut self) {
-        if let Some(timer) = self.start.clone() {
+        if let Some(timer) = self.start {
             if timer.elapsed().unwrap().as_secs() > self.time {
                 self.status = NavigationStatus::Targeted;
                 self.start = None;
@@ -40,13 +46,17 @@ impl Navigation {
         }
     }
 
-    pub fn give_target(&mut self, target_name : String) {
+    pub fn give_target(&mut self, target_name: String) {
         self.start = Some(SystemTime::now());
         self.status = NavigationStatus::Targeting;
         self.target_name = Some(target_name);
     }
 
-    pub fn verify_target(&mut self, ship_position : (f64, f64, f64), masses : &HashMap<String, Mass>) {
+    pub fn verify_target(
+        &mut self,
+        ship_position: (f64, f64, f64),
+        masses: &HashMap<String, Mass>,
+    ) {
         if let Some(name) = self.target_name.clone() {
             let target = masses.get(&name).unwrap();
             if distance(target.position, ship_position) > self.range {
