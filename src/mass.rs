@@ -4,20 +4,46 @@ use self::rand::distributions::Uniform;
 use self::rand::Rng;
 
 use crate::item::Item;
+use crate::math::Vector;
 use crate::modules::construction::Construction;
 use crate::modules::dashboard::Dashboard;
 use crate::modules::engines::Engines;
 use crate::modules::mining::Mining;
 use crate::modules::navigation::Navigation;
 use crate::modules::refinery::Refinery;
+use crate::modules::tractorbeam::Tractorbeam;
 use crate::modules::types::ModuleType;
 use crate::storage::Storage;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mass {
     pub mass_type: MassType,
-    pub position: (f64, f64, f64),
-    pub velocity: (f64, f64, f64),
+    pub position: Vector,
+    pub velocity: Vector,
+    pub effects: Effects,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct Effects {
+    acceleration: Vector,
+}
+
+impl Effects {
+    pub fn new() -> Effects {
+        Effects {
+            acceleration: Vector::default(),
+        }
+    }
+
+    pub fn give_acceleration(&mut self, acceleration: Vector) {
+        self.acceleration += acceleration;
+    }
+
+    pub fn take_acceleration(&mut self) -> Vector {
+        let acceleration = self.acceleration.clone();
+        self.acceleration = Vector::default();
+        acceleration
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -29,6 +55,7 @@ pub enum MassType {
         refinery: Option<Refinery>,
         dashboard: Option<Dashboard>,
         navigation: Option<Navigation>,
+        tractorbeam: Option<Tractorbeam>,
         construction: Option<Construction>,
     },
     Astroid {
@@ -47,18 +74,7 @@ impl Mass {
         let mut rng = rand::thread_rng();
 
         let p_range = Uniform::new(-50.0, 50.0);
-        let position = (
-            rng.sample(p_range),
-            rng.sample(p_range),
-            rng.sample(p_range),
-        );
-
         let v_range = Uniform::new(-0.5, 0.5);
-        let velocity = (
-            rng.sample(v_range),
-            rng.sample(v_range),
-            rng.sample(v_range),
-        );
 
         let mut resources = Vec::new();
         for _ in 0..rng.gen_range(0, 20) {
@@ -71,8 +87,17 @@ impl Mass {
 
         Mass {
             mass_type: astroid,
-            position,
-            velocity,
+            position: Vector::new((
+                rng.sample(p_range),
+                rng.sample(p_range),
+                rng.sample(p_range),
+            )),
+            velocity: Vector::new((
+                rng.sample(v_range),
+                rng.sample(v_range),
+                rng.sample(v_range),
+            )),
+            effects: Effects::new(),
         }
     }
 
@@ -83,36 +108,36 @@ impl Mass {
             refinery: Some(Refinery::new()),
             dashboard: Some(Dashboard::new()),
             navigation: Some(Navigation::new()),
+            tractorbeam: Some(Tractorbeam::new()),
             construction: Some(Construction::new()),
             storage: Storage::new(Vec::new()),
         };
 
         Mass {
             mass_type: ship,
-            position: (0.0, 0.0, 0.0),
-            velocity: (0.0, 0.0, 0.0),
+            position: Vector::default(),
+            velocity: Vector::default(),
+            effects: Effects::new(),
         }
     }
 
-    pub fn new_item(item: Item, position: (f64, f64, f64), velocity: (f64, f64, f64)) -> Mass {
+    pub fn new_item(item: Item, position: Vector, velocity: Vector) -> Mass {
         Mass {
             mass_type: MassType::Item { item },
             position,
             velocity,
+            effects: Effects::new(),
         }
     }
 
-    pub fn new_station(
-        module_type: ModuleType,
-        position: (f64, f64, f64),
-        velocity: (f64, f64, f64),
-    ) -> Mass {
+    pub fn new_station(module_type: ModuleType, position: Vector, velocity: Vector) -> Mass {
         let mass_type = MassType::Station { module_type };
 
         Mass {
             mass_type,
             position,
             velocity,
+            effects: Effects::new(),
         }
     }
 
@@ -123,12 +148,12 @@ impl Mass {
         modules.push(ModuleType::Refinery);
         modules.push(ModuleType::Dashboard);
         modules.push(ModuleType::Navigation);
+        modules.push(ModuleType::Tractorbeam);
         modules.push(ModuleType::Construction);
         modules
     }
 
     pub fn process(&mut self) {
-        let mut acceleration = (0.0, 0.0, 0.0);
         if let MassType::Ship {
             ref mut navigation,
             ref mut engines,
@@ -142,18 +167,12 @@ impl Mass {
             refinery.as_mut().unwrap().process();
             navigation.as_mut().unwrap().process();
             construction.as_mut().unwrap().process();
-            acceleration = engines.as_mut().unwrap().recv_acceleration();
+            self.effects
+                .give_acceleration(engines.as_mut().unwrap().recv_acceleration())
         }
-        self.accelerate(acceleration);
-        self.position.0 += self.velocity.0;
-        self.position.1 += self.velocity.1;
-        self.position.2 += self.velocity.2;
-    }
 
-    pub fn accelerate(&mut self, acceleration: (f64, f64, f64)) {
-        self.velocity.0 += acceleration.0;
-        self.velocity.1 += acceleration.1;
-        self.velocity.2 += acceleration.2;
+        self.velocity += self.effects.take_acceleration();
+        self.position += self.velocity.clone();
     }
 
     pub fn has_minerals(&self) -> bool {

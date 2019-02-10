@@ -9,7 +9,6 @@ use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
 use crate::mass::{Mass, MassType};
-use crate::math::distance;
 use crate::modules::navigation::Navigation;
 
 pub fn client_navigation(name: String, mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
@@ -38,14 +37,12 @@ pub fn client_navigation(name: String, mut stream: TcpStream, mut buff_r: BufRea
                 let target_data = get_target_status(&navigation, &mass_name);
                 write!(
                     stdout,
-                    "{}{}) {} ({:.2}, {:.2}, {:.2}) Distance : {:.2} {}",
+                    "{}{}) {} {} Distance : {:.2} {}",
                     termion::cursor::Goto(1, 2 + i as u16),
                     i,
                     mass_name,
-                    mass.position.0,
-                    mass.position.1,
-                    mass.position.2,
-                    distance(mass.position, ship.position),
+                    mass.position,
+                    mass.position.distance_from(ship.position.clone()),
                     target_data
                 )
                 .unwrap();
@@ -79,6 +76,6 @@ fn get_target_status(navigation: &Navigation, mass_name: &str) -> String {
                 String::new()
             }
         }
-        _ => String::new(),
+        None => String::new(),
     }
 }

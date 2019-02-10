@@ -5,5 +5,6 @@ pub enum ModuleType {
     Refinery,
     Dashboard,
     Navigation,
+    Tractorbeam,
     Construction,
 }

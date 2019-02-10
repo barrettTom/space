@@ -5,7 +5,6 @@ use std::io::BufRead;
 use std::io::Write;
 
 use crate::mass::{Mass, MassType};
-use crate::math::distance;
 use crate::server::connection::ServerConnection;
 
 impl ServerConnection {
@@ -18,11 +17,11 @@ impl ServerConnection {
         } = ship.mass_type
         {
             let navigation = navigation.as_mut().unwrap();
-            navigation.verify_target(ship_clone.position, &masses);
+            navigation.verify_target(ship_clone.position.clone(), &masses);
             let mut within_range: HashMap<&String, &Mass> = masses
                 .iter()
                 .filter(|&(_, mass)| {
-                    distance(ship_clone.position, mass.position) < navigation.range
+                    ship_clone.position.distance_from(mass.position.clone()) < navigation.range
                 })
                 .collect();
             within_range.insert(&self.name, &ship_clone);

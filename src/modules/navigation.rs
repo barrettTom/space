@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::time::SystemTime;
 
 use crate::mass::Mass;
-use crate::math::distance;
+use crate::math::Vector;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum NavigationStatus {
@@ -52,14 +52,10 @@ impl Navigation {
         self.target_name = Some(target_name);
     }
 
-    pub fn verify_target(
-        &mut self,
-        ship_position: (f64, f64, f64),
-        masses: &HashMap<String, Mass>,
-    ) {
+    pub fn verify_target(&mut self, ship_position: Vector, masses: &HashMap<String, Mass>) {
         if let Some(name) = self.target_name.clone() {
             let target = masses.get(&name).unwrap();
-            if distance(target.position, ship_position) > self.range {
+            if target.position.distance_from(ship_position) > self.range {
                 self.target_name = None;
                 self.status = NavigationStatus::None;
             }

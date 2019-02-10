@@ -17,6 +17,7 @@ use space::client::engines::client_engines;
 use space::client::mining::client_mining;
 use space::client::navigation::client_navigation;
 use space::client::refinery::client_refinery;
+use space::client::tractorbeam::client_tractorbeam;
 use space::modules::types::ModuleType;
 
 #[derive(Debug, Deserialize)]
@@ -85,6 +86,7 @@ fn main() {
         ModuleType::Engines => client_engines(stream, buff_r),
         ModuleType::Refinery => client_refinery(stream, buff_r),
         ModuleType::Navigation => client_navigation(name, stream, buff_r),
+        ModuleType::Tractorbeam => client_tractorbeam(stream, buff_r),
         ModuleType::Construction => client_construction(stream, buff_r),
     }
 }

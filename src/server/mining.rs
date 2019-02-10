@@ -5,7 +5,6 @@ use std::io::BufRead;
 use std::io::Write;
 
 use crate::mass::{Mass, MassType};
-use crate::math::distance;
 use crate::modules::mining::{Mining, MiningStatus};
 use crate::modules::navigation::Navigation;
 use crate::server::connection::ServerConnection;
@@ -52,7 +51,8 @@ impl ServerConnection {
 
         if let Some(item) = item {
             if !ship.give(item.clone()) {
-                let mass = Mass::new_item(item.clone(), ship.position, ship.velocity);
+                let mass =
+                    Mass::new_item(item.clone(), ship.position.clone(), ship.velocity.clone());
                 masses.insert(item.name.clone(), mass);
             }
         }
@@ -109,7 +109,9 @@ fn get_mining_data(
 
             let is_within_range = if has_astroid_target {
                 match target {
-                    Some(target) => mining.range > distance(ship.position, target.position),
+                    Some(target) => {
+                        mining.range > ship.position.distance_from(target.position.clone())
+                    }
                     _ => false,
                 }
             } else {

@@ -4,4 +4,5 @@ pub mod engines;
 pub mod mining;
 pub mod navigation;
 pub mod refinery;
+pub mod tractorbeam;
 pub mod types;
