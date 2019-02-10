@@ -1,3 +1,4 @@
+extern crate clap;
 extern crate serde_json;
 extern crate space;
 extern crate toml;
@@ -5,6 +6,7 @@ extern crate toml;
 #[macro_use]
 extern crate serde_derive;
 
+use clap::{App, SubCommand};
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
@@ -31,6 +33,16 @@ fn main() {
     let send;
     let server;
     let mut name = String::new();
+
+    let matches = App::new("space")
+        .subcommand(SubCommand::with_name("mining"))
+        .subcommand(SubCommand::with_name("engines"))
+        .subcommand(SubCommand::with_name("refinery"))
+        .subcommand(SubCommand::with_name("dashboard"))
+        .subcommand(SubCommand::with_name("navigation"))
+        .subcommand(SubCommand::with_name("tractorbeam"))
+        .subcommand(SubCommand::with_name("construction"))
+        .get_matches();
 
     match File::open(".space") {
         Ok(mut config_file) => {
@@ -65,17 +77,28 @@ fn main() {
     buff_r.read_line(&mut recv).unwrap();
     let modules: Vec<ModuleType> = serde_json::from_str(&recv.replace("\n", "")).unwrap();
 
-    println!("Choose your module:");
-    for (i, module) in modules.iter().enumerate() {
-        println!("{}) {:?}", i, module);
-    }
+    let module_type = match matches.subcommand_name() {
+        Some("mining") => ModuleType::Mining,
+        Some("engines") => ModuleType::Engines,
+        Some("refinery") => ModuleType::Refinery,
+        Some("dashboard") => ModuleType::Dashboard,
+        Some("navigation") => ModuleType::Navigation,
+        Some("tractorbeam") => ModuleType::Tractorbeam,
+        Some("construction") => ModuleType::Construction,
+        _ => {
+            println!("Choose your module:");
+            for (i, module) in modules.iter().enumerate() {
+                println!("{}) {:?}", i, module);
+            }
 
-    let mut choice = String::new();
-    io::stdin().read_line(&mut choice).expect("Failed");
-    let module_type = modules
-        .into_iter()
-        .nth(choice.replace("\n", "").parse::<usize>().unwrap())
-        .unwrap();
+            let mut choice = String::new();
+            io::stdin().read_line(&mut choice).expect("Failed");
+            modules
+                .into_iter()
+                .nth(choice.replace("\n", "").parse::<usize>().unwrap())
+                .unwrap()
+        }
+    };
 
     let send = serde_json::to_string(&module_type).unwrap() + "\n";
     stream.write_all(send.as_bytes()).unwrap();
@@ -85,8 +108,8 @@ fn main() {
         ModuleType::Mining => client_mining(stream, buff_r),
         ModuleType::Engines => client_engines(stream, buff_r),
         ModuleType::Refinery => client_refinery(stream, buff_r),
-        ModuleType::Navigation => client_navigation(name, stream, buff_r),
         ModuleType::Tractorbeam => client_tractorbeam(stream, buff_r),
         ModuleType::Construction => client_construction(stream, buff_r),
+        ModuleType::Navigation => client_navigation(name, stream, buff_r),
     }
 }
