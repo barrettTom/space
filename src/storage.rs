@@ -1,37 +1,27 @@
-use crate::item::Item;
+use crate::item::{Item, ItemType};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Storage {
-    items: Vec<Item>,
+    pub items: Vec<Item>,
     carrying: usize,
     capacity: usize,
 }
 
 impl Storage {
-    pub fn new(items: Vec<Item>) -> Storage {
+    pub fn new(items: Vec<Item>, capacity: usize) -> Storage {
         let mut carrying = 0;
         for item in items.iter() {
             carrying += item.size;
         }
         Storage {
             items,
-            capacity: 10,
+            capacity,
             carrying,
         }
     }
 
-    pub fn has_minerals(&self) -> bool {
-        self.items.iter().any(|item| item.is_mineral())
-    }
-
-    pub fn refined_count(&self) -> usize {
-        let mut items = self.items.clone();
-        items.retain(|item| item.name == "Refined Mineral");
-        items.len()
-    }
-
-    pub fn take(&mut self, name: &str) -> Option<Item> {
-        match self.items.iter().position(|item| item.name == name) {
+    pub fn take_item(&mut self, itemtype: ItemType) -> Option<Item> {
+        match self.items.iter().position(|item| item.itemtype == itemtype) {
             Some(index) => {
                 let item = self.items.remove(index);
                 self.carrying -= item.size;
@@ -41,7 +31,32 @@ impl Storage {
         }
     }
 
-    pub fn give(&mut self, item: Item) -> bool {
+    pub fn take_items(&mut self, itemtype: ItemType, count: usize) -> Option<Vec<Item>> {
+        if self
+            .items
+            .iter()
+            .filter(|item| item.itemtype == itemtype)
+            .count()
+            >= count
+        {
+            let mut items = Vec::new();
+            for _ in 0..count {
+                let index = self
+                    .items
+                    .iter()
+                    .position(|item| item.itemtype == itemtype)
+                    .unwrap();
+                let item = self.items.remove(index);
+                self.carrying -= item.size;
+                items.push(item);
+            }
+            Some(items)
+        } else {
+            None
+        }
+    }
+
+    pub fn give_item(&mut self, item: Item) -> bool {
         if self.capacity >= self.carrying + item.size {
             self.carrying += item.size;
             self.items.push(item);

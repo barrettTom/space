@@ -19,7 +19,13 @@ impl Engines {
         acceleration
     }
 
-    pub fn give_client_data(&mut self, ship: &Mass, target: Option<&Mass>, data: String) {
+    pub fn give_client_data(
+        &mut self,
+        position: Vector,
+        velocity: Vector,
+        target: Option<&Mass>,
+        data: String,
+    ) {
         let mut acceleration = Vector::default();
         match data.as_bytes() {
             b"5\n" => acceleration.a += 0.1,
@@ -28,21 +34,21 @@ impl Engines {
             b"2\n" => acceleration.b -= 0.1,
             b"4\n" => acceleration.c += 0.1,
             b"6\n" => acceleration.c -= 0.1,
-            b"+\n" => acceleration = ship.velocity.clone() * 0.05,
+            b"+\n" => acceleration = velocity * 0.05,
             b"-\n" => {
-                acceleration = ship.velocity.clone() * -1.05;
+                acceleration = velocity * -1.05;
             }
             b"s\n" => {
-                acceleration = ship.velocity.clone() * -1.0;
+                acceleration = velocity * -1.0;
             }
             b"c\n" => {
                 if let Some(target) = target {
-                    acceleration = target.velocity.clone() - ship.velocity.clone();
+                    acceleration = target.velocity.clone() - velocity;
                 }
             }
             b"t\n" => {
                 if let Some(target) = target {
-                    acceleration = (target.position.clone() - ship.position.clone()) * 0.01;
+                    acceleration = (target.position.clone() - position) * 0.01;
                 }
             }
             _ => (),

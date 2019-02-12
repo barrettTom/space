@@ -1,5 +1,7 @@
 use std::time::SystemTime;
 
+use crate::constants;
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum RefineryStatus {
     None,
@@ -23,7 +25,7 @@ pub struct Refinery {
 impl Refinery {
     pub fn new() -> Refinery {
         Refinery {
-            time: 5,
+            time: constants::SHIP_REFINERY_TIME,
             start: None,
             status: RefineryStatus::None,
         }
@@ -55,7 +57,7 @@ impl Refinery {
         self.status = RefineryStatus::None;
     }
 
-    pub fn take(&mut self) {
+    pub fn taken(&mut self) {
         self.status = RefineryStatus::Refining;
     }
 }

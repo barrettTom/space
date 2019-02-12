@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::time::SystemTime;
 
+use crate::constants;
 use crate::mass::Mass;
 use crate::math::Vector;
 
@@ -30,9 +31,9 @@ impl Navigation {
     pub fn new() -> Navigation {
         Navigation {
             target_name: None,
-            range: 100.0,
+            range: constants::SHIP_NAVIGATION_RANGE,
             status: NavigationStatus::None,
-            time: 3,
+            time: constants::SHIP_NAVIGATION_TIME,
             start: None,
         }
     }

@@ -3,7 +3,8 @@ extern crate rand;
 use self::rand::distributions::Uniform;
 use self::rand::Rng;
 
-use crate::item::Item;
+use crate::constants;
+use crate::item::{Item, ItemType};
 use crate::math::Vector;
 use crate::modules::construction::Construction;
 use crate::modules::dashboard::Dashboard;
@@ -73,16 +74,22 @@ impl Mass {
     pub fn new_astroid() -> Mass {
         let mut rng = rand::thread_rng();
 
-        let p_range = Uniform::new(-50.0, 50.0);
-        let v_range = Uniform::new(-0.5, 0.5);
+        let p_range = Uniform::new(
+            constants::ASTROID_STARTING_POSITION_MAX * -1.0,
+            constants::ASTROID_STARTING_POSITION_MAX,
+        );
+        let v_range = Uniform::new(
+            constants::ASTROID_STARTING_VELOCITY_MAX * -1.0,
+            constants::ASTROID_STARTING_VELOCITY_MAX,
+        );
 
         let mut resources = Vec::new();
-        for _ in 0..rng.gen_range(0, 20) {
-            resources.push(Item::new("Mineral", 1));
+        for _ in 0..rng.gen_range(0, constants::ASTROID_STARTING_MINERALS_MAX) {
+            resources.push(Item::new(ItemType::CrudeMinerals));
         }
 
         let astroid = MassType::Astroid {
-            resources: Storage::new(resources),
+            resources: Storage::new(resources, constants::ASTROID_STORAGE_CAPACITY),
         };
 
         Mass {
@@ -110,7 +117,7 @@ impl Mass {
             navigation: Some(Navigation::new()),
             tractorbeam: Some(Tractorbeam::new()),
             construction: Some(Construction::new()),
-            storage: Storage::new(Vec::new()),
+            storage: Storage::new(Vec::new(), constants::SHIP_STORAGE_CAPACITY),
         };
 
         Mass {
@@ -173,44 +180,5 @@ impl Mass {
 
         self.velocity += self.effects.take_acceleration();
         self.position += self.velocity.clone();
-    }
-
-    pub fn has_minerals(&self) -> bool {
-        match self.mass_type {
-            MassType::Ship { ref storage, .. } => storage.has_minerals(),
-            MassType::Astroid { ref resources, .. } => resources.has_minerals(),
-            _ => false,
-        }
-    }
-
-    pub fn refined_count(&self) -> usize {
-        match self.mass_type {
-            MassType::Ship { ref storage, .. } => storage.refined_count(),
-            _ => 0,
-        }
-    }
-
-    pub fn take(&mut self, name: &str) -> Option<Item> {
-        match self.mass_type {
-            MassType::Ship {
-                ref mut storage, ..
-            } => storage.take(name),
-            MassType::Astroid {
-                ref mut resources, ..
-            } => resources.take(name),
-            _ => None,
-        }
-    }
-
-    pub fn give(&mut self, item: Item) -> bool {
-        match self.mass_type {
-            MassType::Ship {
-                ref mut storage, ..
-            } => storage.give(item),
-            MassType::Astroid {
-                ref mut resources, ..
-            } => resources.give(item),
-            _ => false,
-        }
     }
 }

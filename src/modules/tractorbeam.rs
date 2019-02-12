@@ -1,3 +1,4 @@
+use crate::constants;
 use crate::mass::Mass;
 use crate::math::Vector;
 
@@ -26,7 +27,7 @@ impl Tractorbeam {
     pub fn new() -> Tractorbeam {
         Tractorbeam {
             status: TractorbeamStatus::None,
-            strength: 0.1,
+            strength: constants::SHIP_TRACTORBEAM_STRENGTH,
             desired_distance: None,
         }
     }
@@ -63,14 +64,14 @@ impl Tractorbeam {
         self.status = TractorbeamStatus::None;
     }
 
-    pub fn get_acceleration(&self, ship: Mass, target: Mass) -> Vector {
-        let acceleration = ship.position.clone() - target.position.clone();
+    pub fn get_acceleration(&self, position: Vector, target: Mass) -> Vector {
+        let acceleration = position.clone() - target.position.clone();
         match self.status {
             TractorbeamStatus::Push => acceleration.unitize() * -0.05,
             TractorbeamStatus::Pull => acceleration.unitize() * 0.05,
             TractorbeamStatus::Bring => match self.desired_distance {
                 Some(desired_distance) => {
-                    if desired_distance > ship.position.distance_from(target.position) {
+                    if desired_distance > position.distance_from(target.position) {
                         acceleration.unitize() * -0.05
                     //some sort of velocity limiter
                     //if target.speed_torwards(ship) < 10.0 {

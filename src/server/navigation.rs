@@ -17,7 +17,7 @@ impl ServerConnection {
         } = ship.mass_type
         {
             let navigation = navigation.as_mut().unwrap();
-            navigation.verify_target(ship_clone.position.clone(), &masses);
+            navigation.verify_target(ship.position.clone(), &masses);
             let mut within_range: HashMap<&String, &Mass> = masses
                 .iter()
                 .filter(|&(_, mass)| {

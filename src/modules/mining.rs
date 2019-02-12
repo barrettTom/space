@@ -1,5 +1,7 @@
 use std::time::SystemTime;
 
+use crate::constants;
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum MiningStatus {
     None,
@@ -24,9 +26,9 @@ pub struct Mining {
 impl Mining {
     pub fn new() -> Mining {
         Mining {
-            range: 10.0,
+            range: constants::SHIP_MINING_RANGE,
             status: MiningStatus::None,
-            time: 5,
+            time: constants::SHIP_MINING_TIME,
             start: None,
         }
     }
@@ -57,7 +59,7 @@ impl Mining {
         self.status = MiningStatus::None;
     }
 
-    pub fn take(&mut self) {
+    pub fn taken(&mut self) {
         self.status = MiningStatus::Mining;
     }
 }

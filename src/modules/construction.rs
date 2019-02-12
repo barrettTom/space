@@ -1,5 +1,7 @@
-use crate::modules::types::ModuleType;
 use std::time::SystemTime;
+
+use crate::constants;
+use crate::modules::types::ModuleType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ConstructionStatus {
@@ -27,7 +29,7 @@ impl Construction {
         Construction {
             status: ConstructionStatus::None,
             construction: None,
-            time: 5,
+            time: constants::SHIP_CONSTRUCTION_TIME,
             start: None,
         }
     }
@@ -58,7 +60,7 @@ impl Construction {
         self.status = ConstructionStatus::None;
     }
 
-    pub fn take(&mut self) {
+    pub fn taken(&mut self) {
         self.off()
     }
 }

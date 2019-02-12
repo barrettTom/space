@@ -7,6 +7,7 @@ use std::io::{stdout, Read, Write};
 use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
+use crate::constants;
 use crate::modules::construction::ConstructionStatus;
 use crate::server::construction::ConstructionData;
 
@@ -24,7 +25,7 @@ pub fn client_construction(mut stream: TcpStream, mut buff_r: BufReader<TcpStrea
 
         let clear = termion::cursor::Goto(1, 1);
 
-        if data.has_refined {
+        if data.has_enough {
             match data.status {
                 ConstructionStatus::None => {
                     write!(stdout, "{}Press c to create a refinery.", clear).unwrap()
@@ -34,8 +35,9 @@ pub fn client_construction(mut stream: TcpStream, mut buff_r: BufReader<TcpStrea
         } else {
             write!(
                 stdout,
-                "{}You need 5 refined minerals to create a refinery.",
-                clear
+                "{}You need {} iron to create a refinery.",
+                clear,
+                constants::SHIP_CONSTRUCTION_IRON_COST
             )
             .unwrap();
         }

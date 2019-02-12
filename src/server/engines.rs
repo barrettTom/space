@@ -12,7 +12,6 @@ impl ServerConnection {
     pub fn server_engines(&mut self, masses: &mut HashMap<String, Mass>) {
         if self.open {
             let mut ship = masses.remove(&self.name).unwrap();
-            let ship_clone = ship.clone();
 
             if let MassType::Ship {
                 ref mut engines,
@@ -36,7 +35,12 @@ impl ServerConnection {
 
                 let mut recv = String::new();
                 if let Ok(result) = self.buff_r.read_line(&mut recv) {
-                    engines.give_client_data(&ship_clone, target, recv);
+                    engines.give_client_data(
+                        ship.position.clone(),
+                        ship.velocity.clone(),
+                        target,
+                        recv,
+                    );
                     if result == 0 {
                         self.open = false;
                     }

@@ -24,7 +24,7 @@ pub fn client_refinery(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) 
 
         let clear = termion::cursor::Goto(1, 1);
 
-        if data.has_minerals {
+        if data.has_crude_minerals {
             match data.status {
                 RefineryStatus::None => {
                     write!(stdout, "{}Press R to begin refining.", clear).unwrap()
@@ -32,7 +32,7 @@ pub fn client_refinery(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) 
                 _ => write!(stdout, "{}Press R to stop refining.", clear).unwrap(),
             };
         } else {
-            write!(stdout, "{}You have no refinable minerals.", clear).unwrap();
+            write!(stdout, "{}You have no crude minerals.", clear).unwrap();
         }
 
         if let Some(c) = stdin.next() {

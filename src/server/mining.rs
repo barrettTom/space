@@ -4,7 +4,9 @@ use std::collections::HashMap;
 use std::io::BufRead;
 use std::io::Write;
 
+use crate::item::ItemType;
 use crate::mass::{Mass, MassType};
+use crate::math::Vector;
 use crate::modules::mining::{Mining, MiningStatus};
 use crate::modules::navigation::Navigation;
 use crate::server::connection::ServerConnection;
@@ -21,18 +23,17 @@ pub struct MiningData {
 impl ServerConnection {
     pub fn server_mining(&mut self, masses: &mut HashMap<String, Mass>) {
         let mut ship = masses.remove(&self.name).unwrap();
-        let ship_clone = ship.clone();
-        let mut item = None;
 
         if let MassType::Ship {
             ref mut mining,
+            ref mut storage,
             ref navigation,
             ..
         } = ship.mass_type
         {
             let mining = mining.as_mut().unwrap();
             let navigation = navigation.as_ref().unwrap();
-            let mining_data = get_mining_data(ship_clone, mining, navigation, masses);
+            let mining_data = get_mining_data(ship.position.clone(), mining, navigation, masses);
 
             if self.open && self.txrx_mining(&mining_data) {
                 mining.toggle();
@@ -41,19 +42,28 @@ impl ServerConnection {
             if !mining_data.is_within_range {
                 mining.off();
             } else if mining.status == MiningStatus::Mined {
-                mining.take();
                 if let Some(name) = navigation.target_name.clone() {
                     let target = masses.get_mut(&name).unwrap();
-                    item = target.take("Mineral");
+                    if let MassType::Astroid {
+                        ref mut resources, ..
+                    } = target.mass_type
+                    {
+                        match resources.take_item(ItemType::CrudeMinerals) {
+                            Some(item) => {
+                                if !storage.give_item(item.clone()) {
+                                    let mass = Mass::new_item(
+                                        item.clone(),
+                                        ship.position.clone(),
+                                        ship.velocity.clone(),
+                                    );
+                                    masses.insert(item.name.clone(), mass);
+                                }
+                            }
+                            None => mining.off(),
+                        }
+                    }
                 }
-            }
-        }
-
-        if let Some(item) = item {
-            if !ship.give(item.clone()) {
-                let mass =
-                    Mass::new_item(item.clone(), ship.position.clone(), ship.velocity.clone());
-                masses.insert(item.name.clone(), mass);
+                mining.taken();
             }
         }
 
@@ -86,7 +96,7 @@ impl ServerConnection {
 }
 
 fn get_mining_data(
-    ship: Mass,
+    position: Vector,
     mining: &Mining,
     navigation: &Navigation,
     masses: &mut HashMap<String, Mass>,
@@ -97,21 +107,22 @@ fn get_mining_data(
 
             let mut astroid_has_minerals = false;
             let has_astroid_target = match target {
-                Some(target) => {
-                    astroid_has_minerals = target.has_minerals();
-                    match target.mass_type {
-                        MassType::Astroid { .. } => true,
-                        _ => false,
+                Some(target) => match target.mass_type {
+                    MassType::Astroid { ref resources, .. } => {
+                        astroid_has_minerals = resources
+                            .items
+                            .iter()
+                            .any(|item| item.itemtype == ItemType::CrudeMinerals);
+                        true
                     }
-                }
+                    _ => false,
+                },
                 None => false,
             };
 
             let is_within_range = if has_astroid_target {
                 match target {
-                    Some(target) => {
-                        mining.range > ship.position.distance_from(target.position.clone())
-                    }
+                    Some(target) => mining.range > position.distance_from(target.position.clone()),
                     _ => false,
                 }
             } else {

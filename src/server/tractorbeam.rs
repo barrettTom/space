@@ -18,7 +18,6 @@ pub struct TractorbeamData {
 impl ServerConnection {
     pub fn server_tractorbeam(&mut self, masses: &mut HashMap<String, Mass>) {
         let mut ship = masses.remove(&self.name).unwrap();
-        let ship_clone = ship.clone();
 
         if let MassType::Ship {
             ref mut tractorbeam,
@@ -58,7 +57,8 @@ impl ServerConnection {
 
             if let Some(name) = navigation.target_name.clone() {
                 let target = masses.get_mut(&name).unwrap();
-                let acceleration = tractorbeam.get_acceleration(ship_clone, target.clone());
+                let acceleration =
+                    tractorbeam.get_acceleration(ship.position.clone(), target.clone());
                 target.effects.give_acceleration(acceleration);
             } else {
                 tractorbeam.off();
