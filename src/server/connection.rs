@@ -57,3 +57,17 @@ impl ServerConnection {
         }
     }
 }
+
+pub fn receive(buff_r: &mut BufReader<TcpStream>) -> Option<String> {
+    let mut recv = String::new();
+    match buff_r.read_line(&mut recv) {
+        Ok(result) => {
+            if result == 0 {
+                None
+            } else {
+                Some(recv.replace("\n", ""))
+            }
+        }
+        Err(_) => Some(String::new()),
+    }
+}

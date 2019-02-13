@@ -1,7 +1,6 @@
 extern crate serde_json;
 
 use std::collections::HashMap;
-use std::io::BufRead;
 use std::io::Write;
 
 use crate::item::ItemType;
@@ -9,7 +8,7 @@ use crate::mass::{Mass, MassType};
 use crate::math::Vector;
 use crate::modules::mining::{Mining, MiningStatus};
 use crate::modules::navigation::Navigation;
-use crate::server::connection::ServerConnection;
+use crate::server::connection::{receive, ServerConnection};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MiningData {
@@ -35,8 +34,18 @@ impl ServerConnection {
             let navigation = navigation.as_ref().unwrap();
             let mining_data = get_mining_data(ship.position.clone(), mining, navigation, masses);
 
-            if self.open && self.txrx_mining(&mining_data) {
-                mining.toggle();
+            let send = serde_json::to_string(&mining_data).unwrap() + "\n";
+            self.open = self.stream.write(send.as_bytes()).is_ok();
+
+            match receive(&mut self.buff_r) {
+                Some(recv) => {
+                    if let "F" = recv.as_str() {
+                        if mining_data.is_within_range {
+                            mining.toggle();
+                        }
+                    }
+                }
+                None => self.open = false,
             }
 
             if !mining_data.is_within_range {
@@ -68,30 +77,6 @@ impl ServerConnection {
         }
 
         masses.insert(self.name.clone(), ship);
-    }
-
-    fn txrx_mining(&mut self, mining_data: &MiningData) -> bool {
-        let send = serde_json::to_string(mining_data).unwrap() + "\n";
-        if let Err(_err) = self.stream.write(send.as_bytes()) {
-            self.open = false;
-        }
-
-        let mut recv = String::new();
-        if let Ok(result) = self.buff_r.read_line(&mut recv) {
-            match recv.as_bytes() {
-                b"F\n" => {
-                    if mining_data.is_within_range {
-                        return true;
-                    }
-                }
-                _ => {
-                    if result == 0 {
-                        self.open = false;
-                    }
-                }
-            }
-        }
-        false
     }
 }
 

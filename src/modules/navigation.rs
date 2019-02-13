@@ -48,9 +48,11 @@ impl Navigation {
     }
 
     pub fn give_target(&mut self, target_name: String) {
-        self.start = Some(SystemTime::now());
-        self.status = NavigationStatus::Targeting;
-        self.target_name = Some(target_name);
+        if !target_name.is_empty() {
+            self.start = Some(SystemTime::now());
+            self.status = NavigationStatus::Targeting;
+            self.target_name = Some(target_name);
+        }
     }
 
     pub fn verify_target(&mut self, ship_position: Vector, masses: &HashMap<String, Mass>) {

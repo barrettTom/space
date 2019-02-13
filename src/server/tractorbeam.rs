@@ -1,13 +1,12 @@
 extern crate serde_json;
 
 use std::collections::HashMap;
-use std::io::BufRead;
 use std::io::Write;
 
 use crate::mass::{Mass, MassType};
 use crate::modules::navigation::NavigationStatus;
 use crate::modules::tractorbeam::TractorbeamStatus;
-use crate::server::connection::ServerConnection;
+use crate::server::connection::{receive, ServerConnection};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TractorbeamData {
@@ -35,23 +34,16 @@ impl ServerConnection {
                 };
 
                 let send = serde_json::to_string(&tractorbeam_data).unwrap() + "\n";
-                self.open = match self.stream.write(send.as_bytes()) {
-                    Ok(_result) => true,
-                    Err(_error) => false,
-                };
+                self.open = self.stream.write(send.as_bytes()).is_ok();
 
-                let mut recv = String::new();
-                if let Ok(result) = self.buff_r.read_line(&mut recv) {
-                    match recv.as_bytes() {
-                        b"o\n" => tractorbeam.toggle_pull(),
-                        b"p\n" => tractorbeam.toggle_push(),
-                        b"t\n" => tractorbeam.toggle_bring(5.0),
-                        _ => {
-                            if result == 0 {
-                                self.open = false;
-                            }
-                        }
-                    }
+                match receive(&mut self.buff_r) {
+                    Some(recv) => match recv.as_str() {
+                        "o" => tractorbeam.toggle_pull(),
+                        "p" => tractorbeam.toggle_push(),
+                        "t" => tractorbeam.toggle_bring(5.0),
+                        _ => (),
+                    },
+                    None => self.open = false,
                 }
             }
 

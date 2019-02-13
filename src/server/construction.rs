@@ -1,7 +1,6 @@
 extern crate serde_json;
 
 use std::collections::HashMap;
-use std::io::BufRead;
 use std::io::Write;
 
 use crate::constants;
@@ -10,7 +9,7 @@ use crate::mass::{Mass, MassType};
 use crate::modules::construction::Construction;
 use crate::modules::construction::ConstructionStatus;
 use crate::modules::types::ModuleType;
-use crate::server::connection::ServerConnection;
+use crate::server::connection::{receive, ServerConnection};
 use crate::storage::Storage;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -32,8 +31,18 @@ impl ServerConnection {
             let construction = construction.as_mut().unwrap();
             let construction_data = get_construction_data(storage, construction);
 
-            if self.open && self.txrx_construction(&construction_data) {
-                construction.toggle();
+            let send = serde_json::to_string(&construction_data).unwrap() + "\n";
+            self.open = self.stream.write(send.as_bytes()).is_ok();
+
+            match receive(&mut self.buff_r) {
+                Some(recv) => {
+                    if let "c" = recv.as_str() {
+                        if construction_data.has_enough {
+                            construction.toggle();
+                        }
+                    }
+                }
+                None => self.open = false,
             }
 
             if construction_data.status == ConstructionStatus::Constructed {
@@ -51,31 +60,6 @@ impl ServerConnection {
         }
 
         masses.insert(self.name.clone(), ship);
-    }
-
-    fn txrx_construction(&mut self, construction_data: &ConstructionData) -> bool {
-        let send = serde_json::to_string(construction_data).unwrap() + "\n";
-        if let Err(_err) = self.stream.write(send.as_bytes()) {
-            self.open = false;
-        }
-
-        let mut recv = String::new();
-        if let Ok(result) = self.buff_r.read_line(&mut recv) {
-            match recv.as_bytes() {
-                b"c\n" => {
-                    if construction_data.has_enough {
-                        return true;
-                    }
-                }
-                _ => {
-                    if result == 0 {
-                        self.open = false;
-                    }
-                }
-            }
-        }
-
-        false
     }
 }
 

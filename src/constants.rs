@@ -13,8 +13,10 @@ pub const SHIP_NAVIGATION_TIME: u64 = 3;
 pub const SHIP_NAVIGATION_RANGE: f64 = 100.0;
 pub const SHIP_REFINERY_TIME: u64 = 5;
 pub const SHIP_TRACTORBEAM_STRENGTH: f64 = 0.1;
+pub const SHIP_ENGINES_FUEL_START: f64 = 100.0;
 
 pub const IRON_SIZE: usize = 1;
+pub const HYDROGEN_SIZE: usize = 1;
 pub const CRUDE_MINERALS_SIZE: usize = 10;
 
 pub const SLEEP_DURATION: u64 = 100;

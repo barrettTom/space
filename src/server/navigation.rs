@@ -1,11 +1,10 @@
 extern crate serde_json;
 
 use std::collections::HashMap;
-use std::io::BufRead;
 use std::io::Write;
 
 use crate::mass::{Mass, MassType};
-use crate::server::connection::ServerConnection;
+use crate::server::connection::{receive, ServerConnection};
 
 impl ServerConnection {
     pub fn server_navigation(&mut self, masses: &mut HashMap<String, Mass>) {
@@ -28,19 +27,13 @@ impl ServerConnection {
 
             if self.open {
                 let send = serde_json::to_string(&within_range).unwrap() + "\n";
+                self.open = self.stream.write(send.as_bytes()).is_ok();
 
-                if let Err(_err) = self.stream.write(send.as_bytes()) {
-                    self.open = false;
-                };
-
-                let mut recv = String::new();
-                if let Ok(result) = self.buff_r.read_line(&mut recv) {
-                    if result == 0 {
-                        self.open = false;
+                match receive(&mut self.buff_r) {
+                    Some(recv) => {
+                        navigation.give_target(recv);
                     }
-                    if !recv.is_empty() {
-                        navigation.give_target(recv.replace("\n", ""));
-                    }
+                    None => self.open = false,
                 }
             }
         }

@@ -11,11 +11,7 @@ impl ServerConnection {
         if self.open {
             let ship = masses.get(&self.name).unwrap();
             let send = serde_json::to_string(&ship).unwrap() + "\n";
-
-            self.open = match self.stream.write(send.as_bytes()) {
-                Ok(_result) => true,
-                Err(_error) => false,
-            };
+            self.open = self.stream.write(send.as_bytes()).is_ok();
         }
     }
 }

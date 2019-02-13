@@ -13,42 +13,42 @@ pub fn rand_name() -> String {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Vector {
-    pub a: f64,
-    pub b: f64,
-    pub c: f64,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 impl Vector {
     pub fn new(v: (f64, f64, f64)) -> Vector {
         Vector {
-            a: v.0,
-            b: v.1,
-            c: v.2,
+            x: v.0,
+            y: v.1,
+            z: v.2,
         }
     }
 
     pub fn distance_from(&self, other: Vector) -> f64 {
-        ((self.a - other.a).powf(2.0) + (self.b - other.b).powf(2.0) + (self.c - other.c).powf(2.0))
+        ((self.x - other.x).powf(2.0) + (self.y - other.y).powf(2.0) + (self.z - other.z).powf(2.0))
             .sqrt()
     }
 
     pub fn unitize(&self) -> Vector {
         let denominator = self.magnitude();
         Vector {
-            a: self.a / denominator,
-            b: self.b / denominator,
-            c: self.c / denominator,
+            x: self.x / denominator,
+            y: self.y / denominator,
+            z: self.z / denominator,
         }
     }
 
     pub fn magnitude(&self) -> f64 {
-        (self.a.powf(2.0) + self.b.powf(2.0) + self.c.powf(2.0)).sqrt()
+        (self.x.powf(2.0) + self.y.powf(2.0) + self.z.powf(2.0)).sqrt()
     }
 }
 
 impl std::fmt::Display for Vector {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "({:.2}, {:.2}, {:.2})", self.a, self.b, self.c)
+        write!(f, "({:.2}, {:.2}, {:.2})", self.x, self.y, self.z)
     }
 }
 
@@ -57,9 +57,9 @@ impl std::ops::Add for Vector {
 
     fn add(self, other: Vector) -> Vector {
         Vector {
-            a: self.a + other.a,
-            b: self.b + other.b,
-            c: self.c + other.c,
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
         }
     }
 }
@@ -69,9 +69,9 @@ impl std::ops::Sub for Vector {
 
     fn sub(self, other: Vector) -> Vector {
         Vector {
-            a: self.a - other.a,
-            b: self.b - other.b,
-            c: self.c - other.c,
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
         }
     }
 }
@@ -81,9 +81,9 @@ impl std::ops::Mul<f64> for Vector {
 
     fn mul(self, other: f64) -> Vector {
         Vector {
-            a: self.a * other,
-            b: self.b * other,
-            c: self.c * other,
+            x: self.x * other,
+            y: self.y * other,
+            z: self.z * other,
         }
     }
 }
@@ -91,9 +91,9 @@ impl std::ops::Mul<f64> for Vector {
 impl std::ops::AddAssign for Vector {
     fn add_assign(&mut self, other: Vector) {
         *self = Vector {
-            a: self.a + other.a,
-            b: self.b + other.b,
-            c: self.c + other.c,
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
         }
     }
 }

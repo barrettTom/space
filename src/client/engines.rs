@@ -9,6 +9,8 @@ use std::net::TcpStream;
 use std::thread::sleep;
 use std::time::Duration;
 
+use crate::server::engines::EnginesData;
+
 pub fn client_engines(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
@@ -17,13 +19,14 @@ pub fn client_engines(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let has_target = serde_json::from_str(&recv.replace("\n", "")).unwrap();
+        let engines_data: EnginesData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
 
         writeln!(
             stdout,
-            "{}{}use numpad to freely move",
+            "{}{}{}Fuel\nuse numpad to freely move",
             termion::clear::All,
-            termion::cursor::Goto(1, 1)
+            termion::cursor::Goto(1, 1),
+            engines_data.fuel
         )
         .unwrap();
         write!(stdout, "{}+ : speedup", termion::cursor::Goto(1, 2)).unwrap();
@@ -31,7 +34,7 @@ pub fn client_engines(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
         write!(stdout, "{}s : stop", termion::cursor::Goto(1, 4)).unwrap();
         write!(stdout, "{}q : quit", termion::cursor::Goto(1, 5)).unwrap();
 
-        if has_target {
+        if engines_data.has_target {
             write!(
                 stdout,
                 "{}c : mimic targets velocity vector",

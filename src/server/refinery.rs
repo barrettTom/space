@@ -1,13 +1,12 @@
 extern crate serde_json;
 
 use std::collections::HashMap;
-use std::io::BufRead;
 use std::io::Write;
 
 use crate::item::{Item, ItemType};
 use crate::mass::{Mass, MassType};
 use crate::modules::refinery::RefineryStatus;
-use crate::server::connection::ServerConnection;
+use crate::server::connection::{receive, ServerConnection};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RefineryData {
@@ -35,8 +34,18 @@ impl ServerConnection {
                 status: refinery.status.clone(),
             };
 
-            if self.open && self.txrx_refinery(&refinery_data) {
-                refinery.toggle();
+            let send = serde_json::to_string(&refinery_data).unwrap() + "\n";
+            self.open = self.stream.write(send.as_bytes()).is_ok();
+
+            match receive(&mut self.buff_r) {
+                Some(recv) => {
+                    if let "R" = recv.as_str() {
+                        if refinery_data.has_crude_minerals {
+                            refinery.toggle();
+                        }
+                    }
+                }
+                None => self.open = false,
             }
 
             if !refinery_data.has_crude_minerals {
@@ -46,35 +55,11 @@ impl ServerConnection {
             if refinery.status == RefineryStatus::Refined {
                 storage.take_item(ItemType::CrudeMinerals);
                 storage.give_item(Item::new(ItemType::Iron));
+                storage.give_item(Item::new(ItemType::Hydrogen));
                 refinery.taken();
             }
         }
 
         masses.insert(self.name.clone(), ship);
-    }
-
-    fn txrx_refinery(&mut self, refinery_data: &RefineryData) -> bool {
-        let send = serde_json::to_string(refinery_data).unwrap() + "\n";
-        if let Err(_err) = self.stream.write(send.as_bytes()) {
-            self.open = false;
-        }
-
-        let mut recv = String::new();
-        if let Ok(result) = self.buff_r.read_line(&mut recv) {
-            match recv.as_bytes() {
-                b"R\n" => {
-                    if refinery_data.has_crude_minerals {
-                        return true;
-                    }
-                }
-                _ => {
-                    if result == 0 {
-                        self.open = false;
-                    }
-                }
-            }
-        }
-
-        false
     }
 }
