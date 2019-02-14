@@ -7,7 +7,6 @@ use crate::item::ItemType;
 use crate::mass::{Mass, MassType};
 use crate::math::Vector;
 use crate::modules::mining::{Mining, MiningStatus};
-use crate::modules::navigation::Navigation;
 use crate::server::connection::ServerConnection;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -30,17 +29,18 @@ impl ServerConnection {
             ..
         } = ship.mass_type
         {
-            let mining_data = get_mining_data(ship.position.clone(), mining, navigation, masses);
+            if let Some(target_name) = navigation.target_name.clone() {
+                let mut target = masses.remove(&target_name).unwrap();
 
-            let send = serde_json::to_string(&mining_data).unwrap() + "\n";
-            self.open = self.stream.write(send.as_bytes()).is_ok();
+                let mining_data = get_mining_data(ship.position.clone(), mining, target.clone());
 
-            let recv = self.receive();
-            mining.give_recv(recv, mining_data);
+                let send = serde_json::to_string(&mining_data).unwrap() + "\n";
+                self.open = self.stream.write(send.as_bytes()).is_ok();
 
-            if mining.status == MiningStatus::Mined {
-                if let Some(name) = navigation.target_name.clone() {
-                    let target = masses.get_mut(&name).unwrap();
+                let recv = self.receive();
+                mining.give_recv(recv, mining_data);
+
+                if mining.status == MiningStatus::Mined {
                     if let MassType::Astroid {
                         ref mut resources, ..
                     } = target.mass_type
@@ -59,8 +59,9 @@ impl ServerConnection {
                             None => mining.off(),
                         }
                     }
+                    mining.mined();
                 }
-                mining.taken();
+                masses.insert(target_name, target);
             }
         }
 
@@ -68,54 +69,26 @@ impl ServerConnection {
     }
 }
 
-fn get_mining_data(
-    position: Vector,
-    mining: &Mining,
-    navigation: &Navigation,
-    masses: &mut HashMap<String, Mass>,
-) -> MiningData {
-    match navigation.target_name.clone() {
-        Some(name) => {
-            let target = masses.get(&name);
-
-            let mut astroid_has_minerals = false;
-            let has_astroid_target = match target {
-                Some(target) => match target.mass_type {
-                    MassType::Astroid { ref resources, .. } => {
-                        astroid_has_minerals = resources
-                            .items
-                            .iter()
-                            .any(|item| item.itemtype == ItemType::CrudeMinerals);
-                        true
-                    }
-                    _ => false,
-                },
-                None => false,
-            };
-
-            let is_within_range = if has_astroid_target {
-                match target {
-                    Some(target) => mining.range > position.distance_from(target.position.clone()),
-                    _ => false,
-                }
-            } else {
-                false
-            };
-
-            MiningData {
-                has_astroid_target,
-                astroid_has_minerals,
-                is_within_range,
-                range: mining.range,
-                status: mining.status.clone(),
-            }
+fn get_mining_data(position: Vector, mining: &Mining, target: Mass) -> MiningData {
+    let mut astroid_has_minerals = false;
+    let mut is_within_range = false;
+    let has_astroid_target = match target.mass_type {
+        MassType::Astroid { ref resources, .. } => {
+            astroid_has_minerals = resources
+                .items
+                .iter()
+                .any(|item| item.itemtype == ItemType::CrudeMinerals);
+            is_within_range = mining.range > position.distance_from(target.position.clone());
+            true
         }
-        _ => MiningData {
-            has_astroid_target: false,
-            astroid_has_minerals: false,
-            is_within_range: false,
-            range: mining.range,
-            status: mining.status.clone(),
-        },
+        _ => false,
+    };
+
+    MiningData {
+        has_astroid_target,
+        astroid_has_minerals,
+        is_within_range,
+        range: mining.range,
+        status: mining.status.clone(),
     }
 }

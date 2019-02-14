@@ -37,7 +37,9 @@ impl ServerConnection {
             construction.give_recv(recv, &construction_data);
 
             if construction_data.status == ConstructionStatus::Constructed {
-                storage.take_items(ItemType::Iron, constants::SHIP_CONSTRUCTION_IRON_COST);
+                storage
+                    .take_items(ItemType::Iron, constants::SHIP_CONSTRUCTION_IRON_COST)
+                    .unwrap();
                 masses.insert(
                     "Station".to_string(),
                     Mass::new_station(
@@ -46,7 +48,7 @@ impl ServerConnection {
                         ship.velocity.clone(),
                     ),
                 );
-                construction.taken();
+                construction.constructed();
             }
         }
 

@@ -69,7 +69,7 @@ impl Construction {
         self.status = ConstructionStatus::None;
     }
 
-    pub fn taken(&mut self) {
+    pub fn constructed(&mut self) {
         self.off()
     }
 }

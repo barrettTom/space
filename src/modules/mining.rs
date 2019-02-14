@@ -68,7 +68,7 @@ impl Mining {
         self.status = MiningStatus::None;
     }
 
-    pub fn taken(&mut self) {
+    pub fn mined(&mut self) {
         self.status = MiningStatus::Mining;
     }
 }
