@@ -8,7 +8,7 @@ use crate::mass::{Mass, MassType};
 use crate::math::Vector;
 use crate::modules::mining::{Mining, MiningStatus};
 use crate::modules::navigation::Navigation;
-use crate::server::connection::{receive, ServerConnection};
+use crate::server::connection::ServerConnection;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MiningData {
@@ -30,27 +30,15 @@ impl ServerConnection {
             ..
         } = ship.mass_type
         {
-            let mining = mining.as_mut().unwrap();
-            let navigation = navigation.as_ref().unwrap();
             let mining_data = get_mining_data(ship.position.clone(), mining, navigation, masses);
 
             let send = serde_json::to_string(&mining_data).unwrap() + "\n";
             self.open = self.stream.write(send.as_bytes()).is_ok();
 
-            match receive(&mut self.buff_r) {
-                Some(recv) => {
-                    if let "F" = recv.as_str() {
-                        if mining_data.is_within_range {
-                            mining.toggle();
-                        }
-                    }
-                }
-                None => self.open = false,
-            }
+            let recv = self.receive();
+            mining.give_recv(recv, mining_data);
 
-            if !mining_data.is_within_range {
-                mining.off();
-            } else if mining.status == MiningStatus::Mined {
+            if mining.status == MiningStatus::Mined {
                 if let Some(name) = navigation.target_name.clone() {
                     let target = masses.get_mut(&name).unwrap();
                     if let MassType::Astroid {

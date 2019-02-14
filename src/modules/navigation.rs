@@ -47,11 +47,11 @@ impl Navigation {
         }
     }
 
-    pub fn give_target(&mut self, target_name: String) {
-        if !target_name.is_empty() {
+    pub fn give_recv(&mut self, recv: String) {
+        if !recv.is_empty() {
             self.start = Some(SystemTime::now());
             self.status = NavigationStatus::Targeting;
-            self.target_name = Some(target_name);
+            self.target_name = Some(recv);
         }
     }
 

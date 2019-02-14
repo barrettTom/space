@@ -5,7 +5,7 @@ use std::io::Write;
 
 use crate::mass::{Mass, MassType};
 use crate::modules::navigation::NavigationStatus;
-use crate::server::connection::{receive, ServerConnection};
+use crate::server::connection::ServerConnection;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EnginesData {
@@ -24,30 +24,21 @@ impl ServerConnection {
                 ..
             } = ship.mass_type
             {
-                let navigation = navigation.clone().unwrap();
-                let engines = engines.as_mut().unwrap();
-
                 let engines_data = EnginesData {
                     has_target: navigation.status == NavigationStatus::Targeted,
                     fuel: engines.fuel,
                 };
-                let send = serde_json::to_string(&engines_data).unwrap() + "\n";
-                self.open = self.stream.write(send.as_bytes()).is_ok();
 
-                let target = match navigation.target_name {
-                    Some(name) => masses.get(&name),
+                let target = match &navigation.target_name {
+                    Some(name) => masses.get(name),
                     None => None,
                 };
 
-                match receive(&mut self.buff_r) {
-                    Some(recv) => engines.give_client_data(
-                        ship.position.clone(),
-                        ship.velocity.clone(),
-                        target,
-                        recv,
-                    ),
-                    None => self.open = false,
-                }
+                let send = serde_json::to_string(&engines_data).unwrap() + "\n";
+                self.open = self.stream.write(send.as_bytes()).is_ok();
+
+                let recv = self.receive();
+                engines.give_recv(recv, ship.position.clone(), ship.velocity.clone(), target);
             }
 
             masses.insert(self.name.clone(), ship);

@@ -23,7 +23,7 @@ pub fn client_engines(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
 
         writeln!(
             stdout,
-            "{}{}{}Fuel\nuse numpad to freely move",
+            "{}{}Fuel: {:.2}\nuse numpad to freely move",
             termion::clear::All,
             termion::cursor::Goto(1, 1),
             engines_data.fuel

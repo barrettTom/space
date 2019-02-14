@@ -1,6 +1,7 @@
 use std::time::SystemTime;
 
 use crate::constants;
+use crate::server::mining::MiningData;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum MiningStatus {
@@ -39,6 +40,14 @@ impl Mining {
                 self.status = MiningStatus::Mined;
                 self.start = Some(SystemTime::now());
             }
+        }
+    }
+
+    pub fn give_recv(&mut self, recv: String, mining_data: MiningData) {
+        if !mining_data.is_within_range {
+            self.off();
+        } else if let "F" = recv.as_str() {
+            self.toggle()
         }
     }
 

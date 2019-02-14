@@ -32,6 +32,15 @@ impl Tractorbeam {
         }
     }
 
+    pub fn give_recv(&mut self, recv: String) {
+        match recv.as_str() {
+            "o" => self.toggle_pull(),
+            "p" => self.toggle_push(),
+            "b" => self.toggle_bring(5.0),
+            _ => (),
+        }
+    }
+
     pub fn toggle_pull(&mut self) {
         self.status = match self.status {
             TractorbeamStatus::None => TractorbeamStatus::Pull,

@@ -2,6 +2,7 @@ use std::time::SystemTime;
 
 use crate::constants;
 use crate::modules::types::ModuleType;
+use crate::server::construction::ConstructionData;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ConstructionStatus {
@@ -39,6 +40,14 @@ impl Construction {
             if timer.elapsed().unwrap().as_secs() > self.time {
                 self.start = Some(SystemTime::now());
                 self.status = ConstructionStatus::Constructed;
+            }
+        }
+    }
+
+    pub fn give_recv(&mut self, recv: String, construction_data: &ConstructionData) {
+        if let "c" = recv.as_str() {
+            if construction_data.has_enough {
+                self.toggle()
             }
         }
     }

@@ -1,6 +1,7 @@
 use std::time::SystemTime;
 
 use crate::constants;
+use crate::server::refinery::RefineryData;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum RefineryStatus {
@@ -37,6 +38,14 @@ impl Refinery {
                 self.status = RefineryStatus::Refined;
                 self.start = Some(SystemTime::now());
             }
+        }
+    }
+
+    pub fn give_recv(&mut self, recv: String, refinery_data: RefineryData) {
+        if !refinery_data.has_crude_minerals {
+            self.off();
+        } else if let "R" = recv.as_str() {
+            self.toggle();
         }
     }
 

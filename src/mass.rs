@@ -51,13 +51,13 @@ impl Effects {
 pub enum MassType {
     Ship {
         storage: Storage,
-        mining: Option<Mining>,
-        engines: Option<Engines>,
-        refinery: Option<Refinery>,
-        dashboard: Option<Dashboard>,
-        navigation: Option<Navigation>,
-        tractorbeam: Option<Tractorbeam>,
-        construction: Option<Construction>,
+        mining: Mining,
+        engines: Engines,
+        refinery: Refinery,
+        dashboard: Dashboard,
+        navigation: Navigation,
+        tractorbeam: Tractorbeam,
+        construction: Construction,
     },
     Astroid {
         resources: Storage,
@@ -110,13 +110,13 @@ impl Mass {
 
     pub fn new_ship() -> Mass {
         let ship = MassType::Ship {
-            mining: Some(Mining::new()),
-            engines: Some(Engines::new()),
-            refinery: Some(Refinery::new()),
-            dashboard: Some(Dashboard::new()),
-            navigation: Some(Navigation::new()),
-            tractorbeam: Some(Tractorbeam::new()),
-            construction: Some(Construction::new()),
+            mining: Mining::new(),
+            engines: Engines::new(),
+            refinery: Refinery::new(),
+            dashboard: Dashboard::new(),
+            navigation: Navigation::new(),
+            tractorbeam: Tractorbeam::new(),
+            construction: Construction::new(),
             storage: Storage::new(Vec::new(), constants::SHIP_STORAGE_CAPACITY),
         };
 
@@ -170,12 +170,11 @@ impl Mass {
             ..
         } = self.mass_type
         {
-            mining.as_mut().unwrap().process();
-            refinery.as_mut().unwrap().process();
-            navigation.as_mut().unwrap().process();
-            construction.as_mut().unwrap().process();
-            self.effects
-                .give_acceleration(engines.as_mut().unwrap().recv_acceleration())
+            mining.process();
+            refinery.process();
+            navigation.process();
+            construction.process();
+            self.effects.give_acceleration(engines.take_acceleration())
         }
 
         self.velocity += self.effects.take_acceleration();

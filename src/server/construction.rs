@@ -9,7 +9,7 @@ use crate::mass::{Mass, MassType};
 use crate::modules::construction::Construction;
 use crate::modules::construction::ConstructionStatus;
 use crate::modules::types::ModuleType;
-use crate::server::connection::{receive, ServerConnection};
+use crate::server::connection::ServerConnection;
 use crate::storage::Storage;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -28,22 +28,13 @@ impl ServerConnection {
             ..
         } = ship.mass_type
         {
-            let construction = construction.as_mut().unwrap();
             let construction_data = get_construction_data(storage, construction);
 
             let send = serde_json::to_string(&construction_data).unwrap() + "\n";
             self.open = self.stream.write(send.as_bytes()).is_ok();
 
-            match receive(&mut self.buff_r) {
-                Some(recv) => {
-                    if let "c" = recv.as_str() {
-                        if construction_data.has_enough {
-                            construction.toggle();
-                        }
-                    }
-                }
-                None => self.open = false,
-            }
+            let recv = self.receive();
+            construction.give_recv(recv, &construction_data);
 
             if construction_data.status == ConstructionStatus::Constructed {
                 storage.take_items(ItemType::Iron, constants::SHIP_CONSTRUCTION_IRON_COST);

@@ -32,7 +32,6 @@ pub fn client_navigation(name: String, mut stream: TcpStream, mut buff_r: BufRea
         let ship = within_range.remove(&name).unwrap();
 
         if let MassType::Ship { ref navigation, .. } = ship.mass_type {
-            let navigation = navigation.clone().unwrap();
             for (i, (mass_name, mass)) in within_range.iter().enumerate() {
                 let target_data = get_target_status(&navigation, &mass_name);
                 write!(

@@ -56,18 +56,19 @@ impl ServerConnection {
             ModuleType::Construction => self.server_construction(&mut masses),
         }
     }
-}
 
-pub fn receive(buff_r: &mut BufReader<TcpStream>) -> Option<String> {
-    let mut recv = String::new();
-    match buff_r.read_line(&mut recv) {
-        Ok(result) => {
-            if result == 0 {
-                None
-            } else {
-                Some(recv.replace("\n", ""))
+    pub fn receive(&mut self) -> String {
+        let mut recv = String::new();
+        match self.buff_r.read_line(&mut recv) {
+            Ok(result) => {
+                if result == 0 {
+                    self.open = false;
+                    String::new()
+                } else {
+                    recv.replace("\n", "")
+                }
             }
+            Err(_) => String::new(),
         }
-        Err(_) => Some(String::new()),
     }
 }

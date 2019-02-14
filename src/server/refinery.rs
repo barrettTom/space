@@ -6,7 +6,7 @@ use std::io::Write;
 use crate::item::{Item, ItemType};
 use crate::mass::{Mass, MassType};
 use crate::modules::refinery::RefineryStatus;
-use crate::server::connection::{receive, ServerConnection};
+use crate::server::connection::ServerConnection;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RefineryData {
@@ -24,8 +24,6 @@ impl ServerConnection {
             ..
         } = ship.mass_type
         {
-            let refinery = refinery.as_mut().unwrap();
-
             let refinery_data = RefineryData {
                 has_crude_minerals: storage
                     .items
@@ -37,20 +35,8 @@ impl ServerConnection {
             let send = serde_json::to_string(&refinery_data).unwrap() + "\n";
             self.open = self.stream.write(send.as_bytes()).is_ok();
 
-            match receive(&mut self.buff_r) {
-                Some(recv) => {
-                    if let "R" = recv.as_str() {
-                        if refinery_data.has_crude_minerals {
-                            refinery.toggle();
-                        }
-                    }
-                }
-                None => self.open = false,
-            }
-
-            if !refinery_data.has_crude_minerals {
-                refinery.off();
-            }
+            let recv = self.receive();
+            refinery.give_recv(recv, refinery_data);
 
             if refinery.status == RefineryStatus::Refined {
                 storage.take_item(ItemType::CrudeMinerals);

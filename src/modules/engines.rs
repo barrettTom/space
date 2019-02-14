@@ -30,27 +30,15 @@ impl Engines {
         }
     }
 
-    pub fn recv_acceleration(&mut self) -> Vector {
-        let acceleration = self.acceleration.clone();
-        self.acceleration = Vector::default();
-
-        if self.fuel - acceleration.magnitude() >= 0.0 {
-            self.fuel -= acceleration.magnitude();
-            acceleration
-        } else {
-            Vector::default()
-        }
-    }
-
-    pub fn give_client_data(
+    pub fn give_recv(
         &mut self,
+        recv: String,
         position: Vector,
         velocity: Vector,
         target: Option<&Mass>,
-        data: String,
     ) {
         let mut acceleration = Vector::default();
-        match data.as_str() {
+        match recv.as_str() {
             "5" => acceleration.x += 0.1,
             "0" => acceleration.x -= 0.1,
             "8" => acceleration.y += 0.1,
@@ -77,5 +65,17 @@ impl Engines {
             _ => (),
         }
         self.acceleration = acceleration;
+    }
+
+    pub fn take_acceleration(&mut self) -> Vector {
+        let acceleration = self.acceleration.clone();
+        self.acceleration = Vector::default();
+
+        if self.fuel - acceleration.magnitude() >= 0.0 {
+            self.fuel -= acceleration.magnitude();
+            acceleration
+        } else {
+            Vector::default()
+        }
     }
 }
