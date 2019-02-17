@@ -174,6 +174,7 @@ impl Mass {
             refinery.process();
             navigation.process();
             construction.process();
+            engines.process(self.velocity.clone());
             self.effects.give_acceleration(engines.take_acceleration())
         }
 

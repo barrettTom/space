@@ -2,18 +2,6 @@ use crate::constants;
 use crate::mass::Mass;
 use crate::math::Vector;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum EnginesStatus {
-    None,
-    ApproachingTargetVelocity,
-}
-
-impl Default for EnginesStatus {
-    fn default() -> Self {
-        EnginesStatus::None
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Engines {
     acceleration: Vector,
@@ -30,6 +18,15 @@ impl Engines {
         }
     }
 
+    pub fn process(&mut self, velocity: Vector) {
+        if let Some(target_velocity) = self.target_velocity.clone() {
+            self.acceleration += target_velocity - velocity;
+            if self.acceleration == Vector::default() {
+                self.target_velocity = None
+            }
+        }
+    }
+
     pub fn give_recv(
         &mut self,
         recv: String,
@@ -39,27 +36,24 @@ impl Engines {
     ) {
         let mut acceleration = Vector::default();
         match recv.as_str() {
-            "5" => acceleration.x += 0.1,
-            "0" => acceleration.x -= 0.1,
-            "8" => acceleration.y += 0.1,
-            "2" => acceleration.y -= 0.1,
-            "4" => acceleration.z += 0.1,
-            "6" => acceleration.z -= 0.1,
-            "+" => acceleration = velocity * 0.05,
-            "-" => {
-                acceleration = velocity * -1.05;
-            }
-            "s" => {
-                acceleration = velocity * -1.0;
-            }
+            "5" => acceleration.x += constants::SHIP_ENGINES_ACCELERATION,
+            "0" => acceleration.x -= constants::SHIP_ENGINES_ACCELERATION,
+            "8" => acceleration.y += constants::SHIP_ENGINES_ACCELERATION,
+            "2" => acceleration.y -= constants::SHIP_ENGINES_ACCELERATION,
+            "4" => acceleration.z += constants::SHIP_ENGINES_ACCELERATION,
+            "6" => acceleration.z -= constants::SHIP_ENGINES_ACCELERATION,
+            "+" => acceleration = velocity.unitize() * constants::SHIP_ENGINES_ACCELERATION,
+            "-" => acceleration = velocity.unitize() * -1.0 * constants::SHIP_ENGINES_ACCELERATION,
+            "s" => self.target_velocity = Some(Vector::default()),
             "c" => {
                 if let Some(target) = target {
-                    acceleration = target.velocity.clone() - velocity;
+                    self.target_velocity = Some(target.velocity.clone());
                 }
             }
             "t" => {
                 if let Some(target) = target {
-                    acceleration = (target.position.clone() - position) * 0.01;
+                    acceleration = (target.position.clone() - position).unitize()
+                        * constants::SHIP_ENGINES_ACCELERATION;
                 }
             }
             _ => (),
@@ -68,9 +62,12 @@ impl Engines {
     }
 
     pub fn take_acceleration(&mut self) -> Vector {
-        let acceleration = self.acceleration.clone();
+        let mut acceleration = self.acceleration.clone();
         self.acceleration = Vector::default();
 
+        if acceleration.magnitude() >= constants::SHIP_ENGINES_ACCELERATION {
+            acceleration = acceleration.unitize() * constants::SHIP_ENGINES_ACCELERATION;
+        }
         if self.fuel - acceleration.magnitude() >= 0.0 {
             self.fuel -= acceleration.magnitude();
             acceleration

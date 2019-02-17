@@ -14,6 +14,7 @@ pub const SHIP_NAVIGATION_RANGE: f64 = 100.0;
 pub const SHIP_REFINERY_TIME: u64 = 5;
 pub const SHIP_TRACTORBEAM_STRENGTH: f64 = 0.1;
 pub const SHIP_ENGINES_FUEL_START: f64 = 100.0;
+pub const SHIP_ENGINES_ACCELERATION: f64 = 0.1;
 
 pub const IRON_SIZE: usize = 1;
 pub const HYDROGEN_SIZE: usize = 1;

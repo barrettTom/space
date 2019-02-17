@@ -11,7 +11,7 @@ pub fn rand_name() -> String {
         .collect()
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct Vector {
     pub x: f64,
     pub y: f64,
