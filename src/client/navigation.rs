@@ -3,15 +3,13 @@ extern crate termion;
 
 use self::termion::async_stdin;
 use self::termion::raw::IntoRawMode;
-use std::collections::BTreeMap;
 use std::io::{stdout, Read, Write};
 use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
-use crate::mass::{Mass, MassType};
-use crate::modules::navigation::Navigation;
+use crate::modules::navigation::NavigationClientData;
 
-pub fn client_navigation(name: String, mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
+pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
     let mut stdin = async_stdin().bytes();
@@ -19,7 +17,7 @@ pub fn client_navigation(name: String, mut stream: TcpStream, mut buff_r: BufRea
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let mut within_range: BTreeMap<String, Mass> = serde_json::from_str(&recv).unwrap();
+        let navigation_data: NavigationClientData = serde_json::from_str(&recv).unwrap();
 
         write!(
             stdout,
@@ -29,52 +27,44 @@ pub fn client_navigation(name: String, mut stream: TcpStream, mut buff_r: BufRea
         )
         .unwrap();
 
-        let ship = within_range.remove(&name).unwrap();
-
-        if let MassType::Ship { ref navigation, .. } = ship.mass_type {
-            for (i, (mass_name, mass)) in within_range.iter().enumerate() {
-                let target_data = get_target_status(&navigation, &mass_name);
-                write!(
-                    stdout,
-                    "{}{}) {} {} Distance : {:.2} {}",
-                    termion::cursor::Goto(1, 2 + i as u16),
-                    i,
-                    mass_name,
-                    mass.position,
-                    mass.position.distance_from(ship.position.clone()),
-                    target_data
-                )
-                .unwrap();
-            }
-
-            if let Some(c) = stdin.next() {
-                let c = c.unwrap() as char;
-                if c == 'q' {
-                    break;
-                } else {
-                    let i = c.to_digit(10).unwrap() as usize;
-                    if i < within_range.len() {
-                        let mut send = String::new();
-                        send.push_str(within_range.iter().nth(i).unwrap().0);
-                        send.push_str("\n");
-                        stream.write_all(send.as_bytes()).unwrap();
+        for (i, (name, position)) in navigation_data.available_targets.iter().enumerate() {
+            let target_status = match &navigation_data.target_name {
+                Some(target_name) => {
+                    if target_name == name {
+                        serde_json::to_string(&navigation_data.status).unwrap()
+                    } else {
+                        String::new()
                     }
+                }
+                None => String::new(),
+            };
+            write!(
+                stdout,
+                "{}{}) {} {} Distance : {:.2} {}",
+                termion::cursor::Goto(1, 2 + i as u16),
+                i,
+                name,
+                position,
+                position.distance_from(navigation_data.ship_position.clone()),
+                target_status
+            )
+            .unwrap();
+        }
+
+        if let Some(c) = stdin.next() {
+            let c = c.unwrap() as char;
+            if c == 'q' {
+                break;
+            } else {
+                let i = c.to_digit(10).unwrap() as usize;
+                if i < navigation_data.available_targets.len() {
+                    let mut send = String::new();
+                    send.push_str(&navigation_data.available_targets[i].0);
+                    send.push_str("\n");
+                    stream.write_all(send.as_bytes()).unwrap();
                 }
             }
         }
         stdout.flush().unwrap();
-    }
-}
-
-fn get_target_status(navigation: &Navigation, mass_name: &str) -> String {
-    match navigation.target_name.clone() {
-        Some(name) => {
-            if name == mass_name {
-                serde_json::to_string(&navigation.status).unwrap()
-            } else {
-                String::new()
-            }
-        }
-        None => String::new(),
     }
 }

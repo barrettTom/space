@@ -7,8 +7,7 @@ use std::io::{stdout, Read, Write};
 use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
-use crate::modules::tractorbeam::TractorbeamStatus;
-use crate::server::tractorbeam::TractorbeamData;
+use crate::modules::tractorbeam::{TractorbeamClientData, TractorbeamStatus};
 
 pub fn client_tractorbeam(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
@@ -18,7 +17,7 @@ pub fn client_tractorbeam(mut stream: TcpStream, mut buff_r: BufReader<TcpStream
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let data: TractorbeamData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
+        let data: TractorbeamClientData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
 
         write!(stdout, "{}", termion::clear::All).unwrap();
 

@@ -1,6 +1,7 @@
 pub const ASTROID_COUNT: usize = 10;
 pub const ASTROID_STORAGE_CAPACITY: usize = 100;
 pub const ASTROID_STARTING_MINERALS_MAX: usize = 20;
+pub const ASTROID_STARTING_MINERALS_MIN: usize = 5;
 pub const ASTROID_STARTING_VELOCITY_MAX: f64 = 0.5;
 pub const ASTROID_STARTING_POSITION_MAX: f64 = 50.0;
 

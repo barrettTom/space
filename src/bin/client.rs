@@ -108,8 +108,8 @@ fn main() {
         ModuleType::Mining => client_mining(stream, buff_r),
         ModuleType::Engines => client_engines(stream, buff_r),
         ModuleType::Refinery => client_refinery(stream, buff_r),
+        ModuleType::Navigation => client_navigation(stream, buff_r),
         ModuleType::Tractorbeam => client_tractorbeam(stream, buff_r),
         ModuleType::Construction => client_construction(stream, buff_r),
-        ModuleType::Navigation => client_navigation(name, stream, buff_r),
     }
 }

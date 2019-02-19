@@ -7,8 +7,7 @@ use std::io::{stdout, Read, Write};
 use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
-use crate::modules::refinery::RefineryStatus;
-use crate::server::refinery::RefineryData;
+use crate::modules::refinery::{RefineryClientData, RefineryStatus};
 
 pub fn client_refinery(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
@@ -18,7 +17,7 @@ pub fn client_refinery(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) 
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let data: RefineryData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
+        let data: RefineryClientData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
 
         write!(stdout, "{}", termion::clear::All).unwrap();
 

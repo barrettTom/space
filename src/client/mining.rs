@@ -7,8 +7,7 @@ use std::io::{stdout, Read, Write};
 use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
-use crate::modules::mining::MiningStatus;
-use crate::server::mining::MiningData;
+use crate::modules::mining::{MiningClientData, MiningStatus};
 
 pub fn client_mining(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
@@ -18,7 +17,7 @@ pub fn client_mining(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let data: MiningData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
+        let data: MiningClientData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
 
         write!(stdout, "{}", termion::clear::All).unwrap();
 

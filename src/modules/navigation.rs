@@ -5,19 +5,6 @@ use crate::constants;
 use crate::mass::Mass;
 use crate::math::Vector;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum NavigationStatus {
-    None,
-    Targeting,
-    Targeted,
-}
-
-impl Default for NavigationStatus {
-    fn default() -> Self {
-        NavigationStatus::None
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Navigation {
     pub range: f64,
@@ -38,7 +25,8 @@ impl Navigation {
         }
     }
 
-    pub fn process(&mut self) {
+    pub fn process(&mut self, ship_position: Vector, masses: &mut HashMap<String, Mass>) {
+        self.verify_target(ship_position, masses);
         if let Some(timer) = self.start {
             if timer.elapsed().unwrap().as_secs() > self.time {
                 self.status = NavigationStatus::Targeted;
@@ -47,7 +35,7 @@ impl Navigation {
         }
     }
 
-    pub fn give_recv(&mut self, recv: String) {
+    pub fn give_received_data(&mut self, recv: String) {
         if !recv.is_empty() {
             self.start = Some(SystemTime::now());
             self.status = NavigationStatus::Targeting;
@@ -55,7 +43,22 @@ impl Navigation {
         }
     }
 
-    pub fn verify_target(&mut self, ship_position: Vector, masses: &HashMap<String, Mass>) {
+    pub fn get_client_data(&self, ship_position: Vector, masses: &HashMap<String, Mass>) -> String {
+        let client_data = NavigationClientData {
+            ship_position: ship_position.clone(),
+            status: self.status.clone(),
+            target_name: self.target_name.clone(),
+            available_targets: masses
+                .iter()
+                .filter(|(_, mass)| ship_position.distance_from(mass.position.clone()) < self.range)
+                .map(|(name, mass)| (name.to_string(), mass.position.clone()))
+                .collect(),
+        };
+
+        serde_json::to_string(&client_data).unwrap() + "\n"
+    }
+
+    fn verify_target(&mut self, ship_position: Vector, masses: &HashMap<String, Mass>) {
         if let Some(name) = self.target_name.clone() {
             let target = masses.get(&name).unwrap();
             if target.position.distance_from(ship_position) > self.range {
@@ -63,5 +66,26 @@ impl Navigation {
                 self.status = NavigationStatus::None;
             }
         }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NavigationClientData {
+    pub ship_position: Vector,
+    pub available_targets: Vec<(String, Vector)>,
+    pub status: NavigationStatus,
+    pub target_name: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum NavigationStatus {
+    None,
+    Targeting,
+    Targeted,
+}
+
+impl Default for NavigationStatus {
+    fn default() -> Self {
+        NavigationStatus::None
     }
 }

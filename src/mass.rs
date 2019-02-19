@@ -2,6 +2,7 @@ extern crate rand;
 
 use self::rand::distributions::Uniform;
 use self::rand::Rng;
+use std::collections::HashMap;
 
 use crate::constants;
 use crate::item::{Item, ItemType};
@@ -84,7 +85,10 @@ impl Mass {
         );
 
         let mut resources = Vec::new();
-        for _ in 0..rng.gen_range(0, constants::ASTROID_STARTING_MINERALS_MAX) {
+        for _ in 0..rng.gen_range(
+            constants::ASTROID_STARTING_MINERALS_MIN,
+            constants::ASTROID_STARTING_MINERALS_MAX,
+        ) {
             resources.push(Item::new(ItemType::CrudeMinerals));
         }
 
@@ -160,25 +164,112 @@ impl Mass {
         modules
     }
 
-    pub fn process(&mut self) {
+    pub fn process(&mut self, masses: &mut HashMap<String, Mass>) {
         if let MassType::Ship {
             ref mut navigation,
             ref mut engines,
             ref mut mining,
             ref mut refinery,
             ref mut construction,
+            ref mut storage,
+            ref mut tractorbeam,
             ..
         } = self.mass_type
         {
-            mining.process();
-            refinery.process();
-            navigation.process();
-            construction.process();
+            if let Some(target_name) = &navigation.target_name {
+                let mut target = masses.remove(target_name).unwrap();
+                mining.process(self.position.clone(), masses, &mut target, storage);
+                tractorbeam.process();
+                let acceleration =
+                    tractorbeam.get_acceleration(self.position.clone(), target.position.clone());
+                target.effects.give_acceleration(acceleration);
+                masses.insert(target_name.to_string(), target);
+            }
+
+            refinery.process(storage);
+            navigation.process(self.position.clone(), masses);
+            construction.process(
+                self.velocity.clone(),
+                self.position.clone(),
+                masses,
+                storage,
+            );
             engines.process(self.velocity.clone());
-            self.effects.give_acceleration(engines.take_acceleration())
+            self.effects.give_acceleration(engines.take_acceleration());
         }
 
         self.velocity += self.effects.take_acceleration();
         self.position += self.velocity.clone();
+    }
+
+    pub fn get_client_data(
+        &self,
+        module_type: ModuleType,
+        masses: &HashMap<String, Mass>,
+    ) -> String {
+        if let MassType::Ship {
+            ref navigation,
+            ref engines,
+            ref mining,
+            ref refinery,
+            ref construction,
+            ref storage,
+            ref tractorbeam,
+            ..
+        } = self.mass_type
+        {
+            let target = match &navigation.target_name {
+                Some(target_name) => masses.get(target_name),
+                None => None,
+            };
+            match module_type {
+                ModuleType::Navigation => navigation.get_client_data(self.position.clone(), masses),
+                ModuleType::Engines => engines.get_client_data(navigation.status.clone()),
+                ModuleType::Mining => mining.get_client_data(self.position.clone(), target),
+                ModuleType::Dashboard => serde_json::to_string(&self).unwrap() + "\n",
+                ModuleType::Construction => construction.get_client_data(storage),
+                ModuleType::Refinery => refinery.get_client_data(storage),
+                ModuleType::Tractorbeam => tractorbeam.get_client_data(target),
+            }
+        } else {
+            String::new()
+        }
+    }
+
+    pub fn give_received_data(
+        &mut self,
+        module_type: ModuleType,
+        recv: String,
+        masses: &HashMap<String, Mass>,
+    ) {
+        if let MassType::Ship {
+            ref mut navigation,
+            ref mut engines,
+            ref mut mining,
+            ref mut refinery,
+            ref mut construction,
+            ref mut tractorbeam,
+            ..
+        } = self.mass_type
+        {
+            let target = match &navigation.target_name {
+                Some(target_name) => masses.get(target_name),
+                None => None,
+            };
+            match module_type {
+                ModuleType::Navigation => navigation.give_received_data(recv),
+                ModuleType::Engines => engines.give_received_data(
+                    recv,
+                    self.position.clone(),
+                    self.velocity.clone(),
+                    target,
+                ),
+                ModuleType::Mining => mining.give_received_data(recv),
+                ModuleType::Construction => construction.give_received_data(recv),
+                ModuleType::Refinery => refinery.give_received_data(recv),
+                ModuleType::Tractorbeam => tractorbeam.give_received_data(recv),
+                ModuleType::Dashboard => (),
+            }
+        }
     }
 }

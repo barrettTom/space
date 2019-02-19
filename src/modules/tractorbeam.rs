@@ -9,20 +9,6 @@ pub struct Tractorbeam {
     desired_distance: Option<f64>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum TractorbeamStatus {
-    None,
-    Push,
-    Pull,
-    Bring,
-}
-
-impl Default for TractorbeamStatus {
-    fn default() -> Self {
-        TractorbeamStatus::None
-    }
-}
-
 impl Tractorbeam {
     pub fn new() -> Tractorbeam {
         Tractorbeam {
@@ -32,7 +18,18 @@ impl Tractorbeam {
         }
     }
 
-    pub fn give_recv(&mut self, recv: String) {
+    pub fn process(&mut self) {}
+
+    pub fn get_client_data(&self, target: Option<&Mass>) -> String {
+        let client_data = TractorbeamClientData {
+            has_target: target.is_some(),
+            status: self.status.clone(),
+        };
+
+        serde_json::to_string(&client_data).unwrap() + "\n"
+    }
+
+    pub fn give_received_data(&mut self, recv: String) {
         match recv.as_str() {
             "o" => self.toggle_pull(),
             "p" => self.toggle_push(),
@@ -41,46 +38,14 @@ impl Tractorbeam {
         }
     }
 
-    pub fn toggle_pull(&mut self) {
-        self.status = match self.status {
-            TractorbeamStatus::None => TractorbeamStatus::Pull,
-            TractorbeamStatus::Push => TractorbeamStatus::Pull,
-            TractorbeamStatus::Bring => TractorbeamStatus::Pull,
-            TractorbeamStatus::Pull => TractorbeamStatus::None,
-        }
-    }
-
-    pub fn toggle_push(&mut self) {
-        self.status = match self.status {
-            TractorbeamStatus::None => TractorbeamStatus::Push,
-            TractorbeamStatus::Pull => TractorbeamStatus::Push,
-            TractorbeamStatus::Bring => TractorbeamStatus::Push,
-            TractorbeamStatus::Push => TractorbeamStatus::None,
-        }
-    }
-
-    pub fn toggle_bring(&mut self, desired_distance: f64) {
-        self.desired_distance = Some(desired_distance);
-        self.status = match self.status {
-            TractorbeamStatus::None => TractorbeamStatus::Bring,
-            TractorbeamStatus::Pull => TractorbeamStatus::Bring,
-            TractorbeamStatus::Push => TractorbeamStatus::Bring,
-            TractorbeamStatus::Bring => TractorbeamStatus::None,
-        }
-    }
-
-    pub fn off(&mut self) {
-        self.status = TractorbeamStatus::None;
-    }
-
-    pub fn get_acceleration(&self, position: Vector, target: Mass) -> Vector {
-        let acceleration = position.clone() - target.position.clone();
+    pub fn get_acceleration(&self, ship_position: Vector, target_position: Vector) -> Vector {
+        let acceleration = ship_position.clone() - target_position.clone();
         match self.status {
             TractorbeamStatus::Push => acceleration.unitize() * -0.05,
             TractorbeamStatus::Pull => acceleration.unitize() * 0.05,
             TractorbeamStatus::Bring => match self.desired_distance {
                 Some(desired_distance) => {
-                    if desired_distance > position.distance_from(target.position) {
+                    if desired_distance > ship_position.distance_from(target_position) {
                         acceleration.unitize() * -0.05
                     //some sort of velocity limiter
                     //if target.speed_torwards(ship) < 10.0 {
@@ -96,5 +61,53 @@ impl Tractorbeam {
             },
             TractorbeamStatus::None => Vector::default(),
         }
+    }
+
+    fn toggle_pull(&mut self) {
+        self.status = match self.status {
+            TractorbeamStatus::None => TractorbeamStatus::Pull,
+            TractorbeamStatus::Push => TractorbeamStatus::Pull,
+            TractorbeamStatus::Bring => TractorbeamStatus::Pull,
+            TractorbeamStatus::Pull => TractorbeamStatus::None,
+        }
+    }
+
+    fn toggle_push(&mut self) {
+        self.status = match self.status {
+            TractorbeamStatus::None => TractorbeamStatus::Push,
+            TractorbeamStatus::Pull => TractorbeamStatus::Push,
+            TractorbeamStatus::Bring => TractorbeamStatus::Push,
+            TractorbeamStatus::Push => TractorbeamStatus::None,
+        }
+    }
+
+    fn toggle_bring(&mut self, desired_distance: f64) {
+        self.desired_distance = Some(desired_distance);
+        self.status = match self.status {
+            TractorbeamStatus::None => TractorbeamStatus::Bring,
+            TractorbeamStatus::Pull => TractorbeamStatus::Bring,
+            TractorbeamStatus::Push => TractorbeamStatus::Bring,
+            TractorbeamStatus::Bring => TractorbeamStatus::None,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TractorbeamClientData {
+    pub has_target: bool,
+    pub status: TractorbeamStatus,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum TractorbeamStatus {
+    None,
+    Push,
+    Pull,
+    Bring,
+}
+
+impl Default for TractorbeamStatus {
+    fn default() -> Self {
+        TractorbeamStatus::None
     }
 }

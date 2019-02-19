@@ -45,18 +45,6 @@ impl ServerConnection {
         }
     }
 
-    pub fn process(&mut self, mut masses: &mut HashMap<String, Mass>) {
-        match self.module_type {
-            ModuleType::Mining => self.server_mining(&mut masses),
-            ModuleType::Engines => self.server_engines(&mut masses),
-            ModuleType::Refinery => self.server_refinery(&mut masses),
-            ModuleType::Dashboard => self.server_dashboard(&mut masses),
-            ModuleType::Navigation => self.server_navigation(&mut masses),
-            ModuleType::Tractorbeam => self.server_tractorbeam(&mut masses),
-            ModuleType::Construction => self.server_construction(&mut masses),
-        }
-    }
-
     pub fn receive(&mut self) -> String {
         let mut recv = String::new();
         match self.buff_r.read_line(&mut recv) {

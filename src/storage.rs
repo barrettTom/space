@@ -20,8 +20,12 @@ impl Storage {
         }
     }
 
-    pub fn take_item(&mut self, itemtype: ItemType) -> Option<Item> {
-        match self.items.iter().position(|item| item.itemtype == itemtype) {
+    pub fn take_item(&mut self, item_type: ItemType) -> Option<Item> {
+        match self
+            .items
+            .iter()
+            .position(|item| item.item_type == item_type)
+        {
             Some(index) => {
                 let item = self.items.remove(index);
                 self.carrying -= item.size;
@@ -31,11 +35,11 @@ impl Storage {
         }
     }
 
-    pub fn take_items(&mut self, itemtype: ItemType, count: usize) -> Option<Vec<Item>> {
+    pub fn take_items(&mut self, item_type: ItemType, count: usize) -> Option<Vec<Item>> {
         if self
             .items
             .iter()
-            .filter(|item| item.itemtype == itemtype)
+            .filter(|item| item.item_type == item_type)
             .count()
             >= count
         {
@@ -44,7 +48,7 @@ impl Storage {
                 let index = self
                     .items
                     .iter()
-                    .position(|item| item.itemtype == itemtype)
+                    .position(|item| item.item_type == item_type)
                     .unwrap();
                 let item = self.items.remove(index);
                 self.carrying -= item.size;
