@@ -4,7 +4,7 @@ use crate::math::Vector;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Tractorbeam {
-    pub status: TractorbeamStatus,
+    pub status: Status,
     strength: f64,
     desired_distance: Option<f64>,
 }
@@ -12,7 +12,7 @@ pub struct Tractorbeam {
 impl Tractorbeam {
     pub fn new() -> Tractorbeam {
         Tractorbeam {
-            status: TractorbeamStatus::None,
+            status: Status::None,
             strength: constants::SHIP_TRACTORBEAM_STRENGTH,
             desired_distance: None,
         }
@@ -21,7 +21,7 @@ impl Tractorbeam {
     pub fn process(&mut self) {}
 
     pub fn get_client_data(&self, target: Option<&Mass>) -> String {
-        let client_data = TractorbeamClientData {
+        let client_data = ClientData {
             has_target: target.is_some(),
             status: self.status.clone(),
         };
@@ -41,9 +41,9 @@ impl Tractorbeam {
     pub fn get_acceleration(&self, ship_position: Vector, target_position: Vector) -> Vector {
         let acceleration = ship_position.clone() - target_position.clone();
         match self.status {
-            TractorbeamStatus::Push => acceleration.unitize() * -0.05,
-            TractorbeamStatus::Pull => acceleration.unitize() * 0.05,
-            TractorbeamStatus::Bring => match self.desired_distance {
+            Status::Push => acceleration.unitize() * -0.05,
+            Status::Pull => acceleration.unitize() * 0.05,
+            Status::Bring => match self.desired_distance {
                 Some(desired_distance) => {
                     if desired_distance > ship_position.distance_from(target_position) {
                         acceleration.unitize() * -0.05
@@ -59,55 +59,55 @@ impl Tractorbeam {
                 }
                 None => Vector::default(),
             },
-            TractorbeamStatus::None => Vector::default(),
+            Status::None => Vector::default(),
         }
     }
 
     fn toggle_pull(&mut self) {
         self.status = match self.status {
-            TractorbeamStatus::None => TractorbeamStatus::Pull,
-            TractorbeamStatus::Push => TractorbeamStatus::Pull,
-            TractorbeamStatus::Bring => TractorbeamStatus::Pull,
-            TractorbeamStatus::Pull => TractorbeamStatus::None,
+            Status::None => Status::Pull,
+            Status::Push => Status::Pull,
+            Status::Bring => Status::Pull,
+            Status::Pull => Status::None,
         }
     }
 
     fn toggle_push(&mut self) {
         self.status = match self.status {
-            TractorbeamStatus::None => TractorbeamStatus::Push,
-            TractorbeamStatus::Pull => TractorbeamStatus::Push,
-            TractorbeamStatus::Bring => TractorbeamStatus::Push,
-            TractorbeamStatus::Push => TractorbeamStatus::None,
+            Status::None => Status::Push,
+            Status::Pull => Status::Push,
+            Status::Bring => Status::Push,
+            Status::Push => Status::None,
         }
     }
 
     fn toggle_bring(&mut self, desired_distance: f64) {
         self.desired_distance = Some(desired_distance);
         self.status = match self.status {
-            TractorbeamStatus::None => TractorbeamStatus::Bring,
-            TractorbeamStatus::Pull => TractorbeamStatus::Bring,
-            TractorbeamStatus::Push => TractorbeamStatus::Bring,
-            TractorbeamStatus::Bring => TractorbeamStatus::None,
+            Status::None => Status::Bring,
+            Status::Pull => Status::Bring,
+            Status::Push => Status::Bring,
+            Status::Bring => Status::None,
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TractorbeamClientData {
+pub struct ClientData {
     pub has_target: bool,
-    pub status: TractorbeamStatus,
+    pub status: Status,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum TractorbeamStatus {
+pub enum Status {
     None,
     Push,
     Pull,
     Bring,
 }
 
-impl Default for TractorbeamStatus {
+impl Default for Status {
     fn default() -> Self {
-        TractorbeamStatus::None
+        Status::None
     }
 }

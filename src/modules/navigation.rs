@@ -8,7 +8,7 @@ use crate::math::Vector;
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Navigation {
     pub range: f64,
-    pub status: NavigationStatus,
+    pub status: Status,
     pub target_name: Option<String>,
     time: u64,
     start: Option<SystemTime>,
@@ -19,7 +19,7 @@ impl Navigation {
         Navigation {
             target_name: None,
             range: constants::SHIP_NAVIGATION_RANGE,
-            status: NavigationStatus::None,
+            status: Status::None,
             time: constants::SHIP_NAVIGATION_TIME,
             start: None,
         }
@@ -29,7 +29,7 @@ impl Navigation {
         self.verify_target(ship_position, masses);
         if let Some(timer) = self.start {
             if timer.elapsed().unwrap().as_secs() > self.time {
-                self.status = NavigationStatus::Targeted;
+                self.status = Status::Targeted;
                 self.start = None;
             }
         }
@@ -38,13 +38,13 @@ impl Navigation {
     pub fn give_received_data(&mut self, recv: String) {
         if !recv.is_empty() {
             self.start = Some(SystemTime::now());
-            self.status = NavigationStatus::Targeting;
+            self.status = Status::Targeting;
             self.target_name = Some(recv);
         }
     }
 
     pub fn get_client_data(&self, ship_position: Vector, masses: &HashMap<String, Mass>) -> String {
-        let client_data = NavigationClientData {
+        let client_data = ClientData {
             ship_position: ship_position.clone(),
             status: self.status.clone(),
             target_name: self.target_name.clone(),
@@ -63,29 +63,29 @@ impl Navigation {
             let target = masses.get(&name).unwrap();
             if target.position.distance_from(ship_position) > self.range {
                 self.target_name = None;
-                self.status = NavigationStatus::None;
+                self.status = Status::None;
             }
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct NavigationClientData {
+pub struct ClientData {
     pub ship_position: Vector,
     pub available_targets: Vec<(String, Vector)>,
-    pub status: NavigationStatus,
+    pub status: Status,
     pub target_name: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum NavigationStatus {
+pub enum Status {
     None,
     Targeting,
     Targeted,
 }
 
-impl Default for NavigationStatus {
+impl Default for Status {
     fn default() -> Self {
-        NavigationStatus::None
+        Status::None
     }
 }

@@ -9,7 +9,7 @@ use std::net::TcpStream;
 use std::thread::sleep;
 use std::time::Duration;
 
-use crate::modules::engines::EnginesClientData;
+use crate::modules::engines;
 
 pub fn client_engines(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
@@ -19,7 +19,7 @@ pub fn client_engines(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let engines_data: EnginesClientData =
+        let engines_data: engines::ClientData =
             serde_json::from_str(&recv.replace("\n", "")).unwrap();
 
         writeln!(

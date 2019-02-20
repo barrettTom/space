@@ -1,7 +1,7 @@
 use crate::constants;
 use crate::mass::Mass;
 use crate::math::Vector;
-use crate::modules::navigation::NavigationStatus;
+use crate::modules::navigation;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Engines {
@@ -62,9 +62,9 @@ impl Engines {
         self.acceleration = acceleration;
     }
 
-    pub fn get_client_data(&self, status: NavigationStatus) -> String {
-        let client_data = EnginesClientData {
-            has_target: status == NavigationStatus::Targeted,
+    pub fn get_client_data(&self, status: navigation::Status) -> String {
+        let client_data = ClientData {
+            has_target: status == navigation::Status::Targeted,
             fuel: self.fuel,
         };
         serde_json::to_string(&client_data).unwrap() + "\n"
@@ -87,7 +87,7 @@ impl Engines {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct EnginesClientData {
+pub struct ClientData {
     pub has_target: bool,
     pub fuel: f64,
 }

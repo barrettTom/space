@@ -10,7 +10,7 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Mining {
     pub range: f64,
-    pub status: MiningStatus,
+    pub status: Status,
     time: u64,
     start: Option<SystemTime>,
 }
@@ -19,7 +19,7 @@ impl Mining {
     pub fn new() -> Mining {
         Mining {
             range: constants::SHIP_MINING_RANGE,
-            status: MiningStatus::None,
+            status: Status::None,
             time: constants::SHIP_MINING_TIME,
             start: None,
         }
@@ -37,11 +37,11 @@ impl Mining {
         }
         if let Some(timer) = self.start {
             if timer.elapsed().unwrap().as_secs() > self.time {
-                self.status = MiningStatus::Mined;
+                self.status = Status::Mined;
                 self.start = None;
             }
         }
-        if self.status == MiningStatus::Mined {
+        if self.status == Status::Mined {
             if let MassType::Astroid {
                 ref mut resources, ..
             } = target.mass_type
@@ -89,7 +89,7 @@ impl Mining {
             None => false,
         };
 
-        let client_data = MiningClientData {
+        let client_data = ClientData {
             has_astroid_target,
             astroid_has_minerals,
             is_within_range,
@@ -102,45 +102,45 @@ impl Mining {
 
     fn toggle(&mut self) {
         match self.status {
-            MiningStatus::None => self.on(),
+            Status::None => self.on(),
             _ => self.off(),
         };
     }
 
     fn on(&mut self) {
         self.start = Some(SystemTime::now());
-        self.status = MiningStatus::Mining;
+        self.status = Status::Mining;
     }
 
     fn off(&mut self) {
         self.start = None;
-        self.status = MiningStatus::None;
+        self.status = Status::None;
     }
 
     fn mined(&mut self) {
-        self.status = MiningStatus::Mining;
+        self.status = Status::Mining;
         self.start = Some(SystemTime::now());
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct MiningClientData {
+pub struct ClientData {
     pub has_astroid_target: bool,
     pub astroid_has_minerals: bool,
     pub is_within_range: bool,
-    pub status: MiningStatus,
+    pub status: Status,
     pub range: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum MiningStatus {
+pub enum Status {
     None,
     Mining,
     Mined,
 }
 
-impl Default for MiningStatus {
+impl Default for Status {
     fn default() -> Self {
-        MiningStatus::None
+        Status::None
     }
 }

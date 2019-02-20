@@ -8,7 +8,7 @@ use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
 use crate::constants;
-use crate::modules::construction::{ConstructionClientData, ConstructionStatus};
+use crate::modules::construction;
 
 pub fn client_construction(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
@@ -18,7 +18,7 @@ pub fn client_construction(mut stream: TcpStream, mut buff_r: BufReader<TcpStrea
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let data: ConstructionClientData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
+        let data: construction::ClientData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
 
         write!(stdout, "{}", termion::clear::All).unwrap();
 
@@ -26,7 +26,7 @@ pub fn client_construction(mut stream: TcpStream, mut buff_r: BufReader<TcpStrea
 
         if data.has_enough {
             match data.status {
-                ConstructionStatus::None => {
+                construction::Status::None => {
                     write!(stdout, "{}Press c to create a refinery.", clear).unwrap()
                 }
                 _ => write!(stdout, "{}Press c to cancel..", clear).unwrap(),

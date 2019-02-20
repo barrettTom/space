@@ -7,7 +7,7 @@ use std::io::{stdout, Read, Write};
 use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
-use crate::modules::navigation::NavigationClientData;
+use crate::modules::navigation;
 
 pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
@@ -17,7 +17,7 @@ pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let navigation_data: NavigationClientData = serde_json::from_str(&recv).unwrap();
+        let navigation_data: navigation::ClientData = serde_json::from_str(&recv).unwrap();
 
         write!(
             stdout,

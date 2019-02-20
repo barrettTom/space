@@ -8,7 +8,7 @@ use crate::storage::Storage;
 pub struct Refinery {
     time: u64,
     start: Option<SystemTime>,
-    pub status: RefineryStatus,
+    pub status: Status,
 }
 
 impl Refinery {
@@ -16,7 +16,7 @@ impl Refinery {
         Refinery {
             time: constants::SHIP_REFINERY_TIME,
             start: None,
-            status: RefineryStatus::None,
+            status: Status::None,
         }
     }
 
@@ -26,11 +26,11 @@ impl Refinery {
         }
         if let Some(timer) = self.start {
             if timer.elapsed().unwrap().as_secs() > self.time {
-                self.status = RefineryStatus::Refined;
+                self.status = Status::Refined;
                 self.start = None
             }
         }
-        if self.status == RefineryStatus::Refined {
+        if self.status == Status::Refined {
             storage.take_item(ItemType::CrudeMinerals);
             storage.give_item(Item::new(ItemType::Iron));
             storage.give_item(Item::new(ItemType::Hydrogen));
@@ -39,7 +39,7 @@ impl Refinery {
     }
 
     pub fn get_client_data(&self, storage: &Storage) -> String {
-        let client_data = RefineryClientData {
+        let client_data = ClientData {
             has_crude_minerals: self.has_crude_minerals(storage),
             status: self.status.clone(),
         };
@@ -62,42 +62,42 @@ impl Refinery {
 
     fn toggle(&mut self) {
         match self.status {
-            RefineryStatus::None => self.on(),
+            Status::None => self.on(),
             _ => self.off(),
         };
     }
 
     fn on(&mut self) {
         self.start = Some(SystemTime::now());
-        self.status = RefineryStatus::Refining;
+        self.status = Status::Refining;
     }
 
     fn off(&mut self) {
         self.start = None;
-        self.status = RefineryStatus::None;
+        self.status = Status::None;
     }
 
     fn taken(&mut self) {
-        self.status = RefineryStatus::Refining;
+        self.status = Status::Refining;
         self.start = Some(SystemTime::now());
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RefineryClientData {
+pub struct ClientData {
     pub has_crude_minerals: bool,
-    pub status: RefineryStatus,
+    pub status: Status,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum RefineryStatus {
+pub enum Status {
     None,
     Refining,
     Refined,
 }
 
-impl Default for RefineryStatus {
+impl Default for Status {
     fn default() -> Self {
-        RefineryStatus::None
+        Status::None
     }
 }

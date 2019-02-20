@@ -10,7 +10,7 @@ use crate::storage::Storage;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Construction {
-    pub status: ConstructionStatus,
+    pub status: Status,
     construction: Option<ModuleType>,
     time: u64,
     start: Option<SystemTime>,
@@ -19,7 +19,7 @@ pub struct Construction {
 impl Construction {
     pub fn new() -> Construction {
         Construction {
-            status: ConstructionStatus::None,
+            status: Status::None,
             construction: None,
             time: constants::SHIP_CONSTRUCTION_TIME,
             start: None,
@@ -39,10 +39,10 @@ impl Construction {
         if let Some(timer) = self.start {
             if timer.elapsed().unwrap().as_secs() > self.time {
                 self.start = Some(SystemTime::now());
-                self.status = ConstructionStatus::Constructed;
+                self.status = Status::Constructed;
             }
         }
-        if self.status == ConstructionStatus::Constructed {
+        if self.status == Status::Constructed {
             storage
                 .take_items(ItemType::Iron, constants::SHIP_CONSTRUCTION_IRON_COST)
                 .unwrap();
@@ -59,7 +59,7 @@ impl Construction {
     }
 
     pub fn get_client_data(&self, storage: &Storage) -> String {
-        let client_data = ConstructionClientData {
+        let client_data = ClientData {
             has_enough: self.has_enough(storage),
             status: self.status.clone(),
         };
@@ -83,19 +83,19 @@ impl Construction {
 
     fn toggle(&mut self) {
         match self.status {
-            ConstructionStatus::None => self.on(),
+            Status::None => self.on(),
             _ => self.off(),
         };
     }
 
     fn on(&mut self) {
         self.start = Some(SystemTime::now());
-        self.status = ConstructionStatus::Constructing;
+        self.status = Status::Constructing;
     }
 
     fn off(&mut self) {
         self.start = None;
-        self.status = ConstructionStatus::None;
+        self.status = Status::None;
     }
 
     fn constructed(&mut self) {
@@ -104,20 +104,20 @@ impl Construction {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ConstructionClientData {
-    pub status: ConstructionStatus,
+pub struct ClientData {
+    pub status: Status,
     pub has_enough: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum ConstructionStatus {
+pub enum Status {
     None,
     Constructing,
     Constructed,
 }
 
-impl Default for ConstructionStatus {
+impl Default for Status {
     fn default() -> Self {
-        ConstructionStatus::None
+        Status::None
     }
 }
