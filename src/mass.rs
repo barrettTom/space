@@ -272,4 +272,40 @@ impl Mass {
             }
         }
     }
+
+    pub fn take_item(&mut self, item_type: ItemType) -> Option<Item> {
+        match self.mass_type {
+            MassType::Ship {
+                ref mut storage, ..
+            } => storage.take_item(item_type),
+            MassType::Astroid {
+                ref mut resources, ..
+            } => resources.take_item(item_type),
+            _ => None,
+        }
+    }
+
+    pub fn give_item(&mut self, item: Item) -> bool {
+        match self.mass_type {
+            MassType::Ship {
+                ref mut storage, ..
+            } => storage.give_item(item),
+            MassType::Astroid {
+                ref mut resources, ..
+            } => resources.give_item(item),
+            _ => false,
+        }
+    }
+
+    pub fn item_count(&self, item_type: ItemType) -> usize {
+        match &self.mass_type {
+            MassType::Ship {
+                storage, ..
+            } => storage.item_count(item_type),
+            MassType::Astroid {
+                resources, ..
+            } => resources.item_count(item_type),
+            _ => 0,
+        }
+    }
 }

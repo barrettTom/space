@@ -42,23 +42,18 @@ impl Mining {
             }
         }
         if self.status == Status::Mined {
-            if let MassType::Astroid {
-                ref mut resources, ..
-            } = target.mass_type
-            {
-                match resources.take_item(ItemType::CrudeMinerals) {
-                    Some(item) => {
-                        if !storage.give_item(item.clone()) {
-                            let mass = Mass::new_item(
-                                item.clone(),
-                                target.position.clone(),
-                                target.velocity.clone(),
-                            );
-                            masses.insert(item.name.clone(), mass);
-                        }
+            match target.take_item(ItemType::CrudeMinerals) {
+                Some(item) => {
+                    if !storage.give_item(item.clone()) {
+                        let mass = Mass::new_item(
+                            item.clone(),
+                            target.position.clone(),
+                            target.velocity.clone(),
+                        );
+                        masses.insert(item.name.clone(), mass);
                     }
-                    None => self.off(),
                 }
+                None => self.off(),
             }
             self.mined();
         }

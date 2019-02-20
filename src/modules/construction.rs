@@ -33,7 +33,7 @@ impl Construction {
         masses: &mut HashMap<String, Mass>,
         storage: &mut Storage,
     ) {
-        if !self.has_enough(storage) {
+        if storage.item_count(ItemType::Iron) < constants::SHIP_CONSTRUCTION_IRON_COST {
             self.off();
         }
         if let Some(timer) = self.start {
@@ -43,9 +43,10 @@ impl Construction {
             }
         }
         if self.status == Status::Constructed {
-            storage
-                .take_items(ItemType::Iron, constants::SHIP_CONSTRUCTION_IRON_COST)
-                .unwrap();
+            for _ in 0..constants::SHIP_CONSTRUCTION_IRON_COST {
+                storage.take_item(ItemType::Iron).unwrap();
+            }
+
             masses.insert(
                 "Station".to_string(),
                 Mass::new_station(
@@ -60,7 +61,8 @@ impl Construction {
 
     pub fn get_client_data(&self, storage: &Storage) -> String {
         let client_data = ClientData {
-            has_enough: self.has_enough(storage),
+            has_enough: storage.item_count(ItemType::Iron)
+                >= constants::SHIP_CONSTRUCTION_IRON_COST,
             status: self.status.clone(),
         };
         serde_json::to_string(&client_data).unwrap() + "\n"
@@ -70,15 +72,6 @@ impl Construction {
         if let "c" = recv.as_str() {
             self.toggle()
         }
-    }
-
-    fn has_enough(&self, storage: &Storage) -> bool {
-        storage
-            .items
-            .iter()
-            .filter(|item| item.item_type == ItemType::Iron)
-            .count()
-            >= constants::SHIP_CONSTRUCTION_IRON_COST
     }
 
     fn toggle(&mut self) {

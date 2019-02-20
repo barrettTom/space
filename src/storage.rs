@@ -35,31 +35,6 @@ impl Storage {
         }
     }
 
-    pub fn take_items(&mut self, item_type: ItemType, count: usize) -> Option<Vec<Item>> {
-        if self
-            .items
-            .iter()
-            .filter(|item| item.item_type == item_type)
-            .count()
-            >= count
-        {
-            let mut items = Vec::new();
-            for _ in 0..count {
-                let index = self
-                    .items
-                    .iter()
-                    .position(|item| item.item_type == item_type)
-                    .unwrap();
-                let item = self.items.remove(index);
-                self.carrying -= item.size;
-                items.push(item);
-            }
-            Some(items)
-        } else {
-            None
-        }
-    }
-
     pub fn give_item(&mut self, item: Item) -> bool {
         if self.capacity >= self.carrying + item.size {
             self.carrying += item.size;
@@ -68,5 +43,12 @@ impl Storage {
         } else {
             false
         }
+    }
+
+    pub fn item_count(&self, item_type: ItemType) -> usize {
+        self.items
+            .iter()
+            .filter(|item| item.item_type == item_type)
+            .count()
     }
 }
