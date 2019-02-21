@@ -8,7 +8,7 @@ mod test {
 
     use space::constants;
     use space::item::{Item, ItemType};
-    use space::mass::{Mass, MassType};
+    use space::mass::Mass;
     use space::math::Vector;
     use space::modules::construction;
     use space::modules::mining;
@@ -28,7 +28,7 @@ mod test {
     }
 
     fn setup_ship_target(ship: &mut Mass, masses: &mut HashMap<String, Mass>) {
-        ship.give_received_data(ModuleType::Navigation, String::from("astroid"), &masses);
+        ship.give_received_data(ModuleType::Navigation, String::from("astroid"));
         ship.process(masses);
         sleep(Duration::from_secs(constants::SHIP_NAVIGATION_TIME + 1));
         ship.process(masses);
@@ -38,7 +38,7 @@ mod test {
     fn test_navigation_range() {
         let (mut ship, mut masses) = setup();
 
-        ship.give_received_data(ModuleType::Navigation, String::from("astroid"), &masses);
+        ship.give_received_data(ModuleType::Navigation, String::from("astroid"));
         ship.process(&mut masses);
         let data = ship.get_client_data(ModuleType::Navigation, &masses);
         let navigation_data: navigation::ClientData = serde_json::from_str(&data).unwrap();
@@ -74,7 +74,7 @@ mod test {
         let (mut ship, mut masses) = setup();
         setup_ship_target(&mut ship, &mut masses);
 
-        ship.give_received_data(ModuleType::Mining, String::from("F"), &masses);
+        ship.give_received_data(ModuleType::Mining, String::from("F"));
         ship.process(&mut masses);
         let data = ship.get_client_data(ModuleType::Mining, &masses);
         let mining_data: mining::ClientData = serde_json::from_str(&data).unwrap();
@@ -93,7 +93,7 @@ mod test {
         let (mut ship, mut masses) = setup();
         setup_ship_target(&mut ship, &mut masses);
 
-        ship.give_received_data(ModuleType::Mining, String::from("F"), &masses);
+        ship.give_received_data(ModuleType::Mining, String::from("F"));
         ship.process(&mut masses);
         sleep(Duration::from_secs(constants::SHIP_MINING_TIME + 1));
         ship.process(&mut masses);
@@ -113,7 +113,7 @@ mod test {
             ship.give_item(Item::new(ItemType::CrudeMinerals));
         }
 
-        ship.give_received_data(ModuleType::Mining, String::from("F"), &masses);
+        ship.give_received_data(ModuleType::Mining, String::from("F"));
         ship.process(&mut masses);
         sleep(Duration::from_secs(constants::SHIP_MINING_TIME + 1));
         assert!(masses.len() == 1);
@@ -126,7 +126,7 @@ mod test {
         let (mut ship, mut masses) = setup();
         setup_ship_target(&mut ship, &mut masses);
 
-        ship.give_received_data(ModuleType::Refinery, String::from("R"), &masses);
+        ship.give_received_data(ModuleType::Refinery, String::from("R"));
         ship.process(&mut masses);
         let data = ship.get_client_data(ModuleType::Refinery, &masses);
         let mining_data: refinery::ClientData = serde_json::from_str(&data).unwrap();
@@ -134,7 +134,7 @@ mod test {
 
         ship.give_item(Item::new(ItemType::CrudeMinerals));
 
-        ship.give_received_data(ModuleType::Refinery, String::from("R"), &masses);
+        ship.give_received_data(ModuleType::Refinery, String::from("R"));
         ship.process(&mut masses);
         let data = ship.get_client_data(ModuleType::Refinery, &masses);
         let mining_data: refinery::ClientData = serde_json::from_str(&data).unwrap();
@@ -150,44 +150,27 @@ mod test {
     fn test_construction() {
         let (mut ship, mut masses) = setup();
 
-        if let MassType::Ship {
-            ref mut storage,
-            ref mut construction,
-            ..
-        } = ship.mass_type
-        {
-            construction.give_received_data(String::from("c"));
-            construction.process(
-                ship.velocity.clone(),
-                ship.position.clone(),
-                &mut masses,
-                storage,
-            );
-            assert!(construction.status == construction::Status::None);
+        ship.give_received_data(ModuleType::Construction, String::from("c"));
+        ship.process(&mut masses);
+        let data = ship.get_client_data(ModuleType::Construction, &masses);
+        let construction_data: construction::ClientData = serde_json::from_str(&data).unwrap();
+        assert!(construction_data.status == construction::Status::None);
 
-            for _ in 0..5 {
-                storage.give_item(Item::new(ItemType::Iron));
-            }
-
-            construction.give_received_data(String::from("c"));
-            construction.process(
-                ship.velocity.clone(),
-                ship.position.clone(),
-                &mut masses,
-                storage,
-            );
-            assert!(construction.status == construction::Status::Constructing);
-            assert!(masses.len() == 1);
-
-            sleep(Duration::from_secs(constants::SHIP_CONSTRUCTION_TIME + 1));
-            construction.process(
-                ship.velocity.clone(),
-                ship.position.clone(),
-                &mut masses,
-                storage,
-            );
-            assert!(masses.len() == 2);
-            assert!(storage.items.len() == 0);
+        for _ in 0..5 {
+            ship.give_item(Item::new(ItemType::Iron));
         }
+
+        ship.give_received_data(ModuleType::Construction, String::from("c"));
+        ship.process(&mut masses);
+
+        let data = ship.get_client_data(ModuleType::Construction, &masses);
+        let construction_data: construction::ClientData = serde_json::from_str(&data).unwrap();
+        assert!(construction_data.status == construction::Status::Constructing);
+        assert!(masses.len() == 1);
+
+        sleep(Duration::from_secs(constants::SHIP_CONSTRUCTION_TIME + 1));
+        ship.process(&mut masses);
+        assert!(masses.len() == 2);
+        assert!(ship.item_count(ItemType::Iron) == 0);
     }
 }

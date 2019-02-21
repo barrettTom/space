@@ -186,6 +186,12 @@ impl Mass {
                 masses.insert(target_name.to_string(), target);
             }
 
+            let target = match &navigation.target_name {
+                Some(target_name) => masses.get(target_name),
+                None => None,
+            };
+
+            engines.process(self.position.clone(), self.velocity.clone(), target);
             refinery.process(storage);
             navigation.process(self.position.clone(), masses);
             construction.process(
@@ -194,7 +200,6 @@ impl Mass {
                 masses,
                 storage,
             );
-            engines.process(self.velocity.clone());
             self.effects.give_acceleration(engines.take_acceleration());
         }
 
@@ -236,12 +241,7 @@ impl Mass {
         }
     }
 
-    pub fn give_received_data(
-        &mut self,
-        module_type: ModuleType,
-        recv: String,
-        masses: &HashMap<String, Mass>,
-    ) {
+    pub fn give_received_data(&mut self, module_type: ModuleType, recv: String) {
         if let MassType::Ship {
             ref mut navigation,
             ref mut engines,
@@ -252,18 +252,9 @@ impl Mass {
             ..
         } = self.mass_type
         {
-            let target = match &navigation.target_name {
-                Some(target_name) => masses.get(target_name),
-                None => None,
-            };
             match module_type {
                 ModuleType::Navigation => navigation.give_received_data(recv),
-                ModuleType::Engines => engines.give_received_data(
-                    recv,
-                    self.position.clone(),
-                    self.velocity.clone(),
-                    target,
-                ),
+                ModuleType::Engines => engines.give_received_data(recv, self.velocity.clone()),
                 ModuleType::Mining => mining.give_received_data(recv),
                 ModuleType::Construction => construction.give_received_data(recv),
                 ModuleType::Refinery => refinery.give_received_data(recv),
@@ -299,12 +290,8 @@ impl Mass {
 
     pub fn item_count(&self, item_type: ItemType) -> usize {
         match &self.mass_type {
-            MassType::Ship {
-                storage, ..
-            } => storage.item_count(item_type),
-            MassType::Astroid {
-                resources, ..
-            } => resources.item_count(item_type),
+            MassType::Ship { storage, .. } => storage.item_count(item_type),
+            MassType::Astroid { resources, .. } => resources.item_count(item_type),
             _ => 0,
         }
     }

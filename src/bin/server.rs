@@ -50,7 +50,7 @@ fn main() {
                         connection.open = connection.stream.write(send.as_bytes()).is_ok();
 
                         let recv = connection.receive();
-                        ship.give_received_data(connection.module_type.clone(), recv, &masses);
+                        ship.give_received_data(connection.module_type.clone(), recv);
 
                         masses.insert(connection.name.clone(), ship);
                     }
