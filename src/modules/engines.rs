@@ -40,14 +40,13 @@ impl Engines {
                 self.status = Status::None;
             }
         }
-        match self.target_velocity.clone() {
-            Some(target_velocity) => {
-                self.acceleration += target_velocity - velocity;
-                if self.acceleration == Vector::default() {
-                    self.target_velocity = None;
-                }
+
+        if let Some(target_velocity) = self.target_velocity.clone() {
+            self.acceleration += target_velocity - velocity;
+            if self.acceleration == Vector::default() {
+                self.target_velocity = None;
+                self.status = Status::None;
             }
-            None => (),
         }
     }
 

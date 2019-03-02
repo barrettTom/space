@@ -173,4 +173,46 @@ mod test {
         assert!(masses.len() == 2);
         assert!(ship.item_count(ItemType::Iron) == 0);
     }
+
+    #[test]
+    fn test_engines() {
+        let (mut ship, mut masses) = setup();
+        setup_ship_target(&mut ship, &mut masses);
+
+        let mut astroid = masses.remove("astroid").unwrap();
+        astroid.velocity = Vector::new((constants::SHIP_ENGINES_ACCELERATION * 2.0, 0.0, 0.0));
+        astroid.process(&mut masses);
+        masses.insert(String::from("astroid"), astroid);
+
+        ship.give_received_data(ModuleType::Engines, String::from("c"));
+        ship.process(&mut masses);
+        assert!(ship.velocity.x == constants::SHIP_ENGINES_ACCELERATION);
+
+        ship.process(&mut masses);
+        assert!(ship.velocity.x == constants::SHIP_ENGINES_ACCELERATION * 2.0);
+
+        ship.process(&mut masses);
+        assert!(ship.velocity.x == constants::SHIP_ENGINES_ACCELERATION * 2.0);
+
+        ship.give_received_data(ModuleType::Engines, String::from("s"));
+        ship.process(&mut masses);
+        assert!(ship.velocity.x == constants::SHIP_ENGINES_ACCELERATION);
+
+        ship.process(&mut masses);
+        assert!(ship.velocity.x == 0.0);
+
+        ship.process(&mut masses);
+        assert!(ship.velocity.x == 0.0);
+
+        ship.give_received_data(ModuleType::Engines, String::from("t"));
+        ship.process(&mut masses);
+        assert!(ship.velocity.x == constants::SHIP_ENGINES_ACCELERATION * -1.0);
+
+        ship.process(&mut masses);
+        assert!(ship.velocity.x == constants::SHIP_ENGINES_ACCELERATION * -1.0);
+
+        ship.give_received_data(ModuleType::Engines, String::from("t"));
+        ship.process(&mut masses);
+        assert!(ship.velocity.x == constants::SHIP_ENGINES_ACCELERATION * -2.0);
+    }
 }
