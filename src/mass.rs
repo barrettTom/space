@@ -98,16 +98,16 @@ impl Mass {
 
         Mass {
             mass_type: astroid,
-            position: Vector::new((
+            position: Vector::new(
                 rng.sample(p_range),
                 rng.sample(p_range),
                 rng.sample(p_range),
-            )),
-            velocity: Vector::new((
+            ),
+            velocity: Vector::new(
                 rng.sample(v_range),
                 rng.sample(v_range),
                 rng.sample(v_range),
-            )),
+            ),
             effects: Effects::new(),
         }
     }
@@ -179,10 +179,7 @@ impl Mass {
             if let Some(target_name) = &navigation.target_name {
                 let mut target = masses.remove(target_name).unwrap();
                 mining.process(self.position.clone(), masses, &mut target, storage);
-                tractorbeam.process();
-                let acceleration =
-                    tractorbeam.get_acceleration(self.position.clone(), target.position.clone());
-                target.effects.give_acceleration(acceleration);
+                tractorbeam.process(self.position.clone(), &mut target);
                 masses.insert(target_name.to_string(), target);
             }
 
@@ -193,13 +190,13 @@ impl Mass {
 
             engines.process(self.position.clone(), self.velocity.clone(), target);
             refinery.process(storage);
-            navigation.process(self.position.clone(), masses);
             construction.process(
                 self.velocity.clone(),
                 self.position.clone(),
                 masses,
                 storage,
             );
+            navigation.process(self.position.clone(), masses);
             self.effects.give_acceleration(engines.take_acceleration());
         }
 

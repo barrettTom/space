@@ -27,25 +27,25 @@ pub fn client_tractorbeam(mut stream: TcpStream, mut buff_r: BufReader<TcpStream
             match data.status {
                 tractorbeam::Status::None => write!(
                     stdout,
-                    "{}Press o to pull, p to push, t to bring to 5m.",
+                    "{}Press o to pull, p to push, b to bring to 5m.",
                     clear
                 )
                 .unwrap(),
                 tractorbeam::Status::Push => write!(
                     stdout,
-                    "{}Press o to pull, p to stop pushing, t to bring to 5m.",
+                    "{}Press o to pull, p to stop pushing, b to bring to 5m.",
                     clear
                 )
                 .unwrap(),
                 tractorbeam::Status::Pull => write!(
                     stdout,
-                    "{}Press o to stop pulling, p to push, t to bring to 5m.",
+                    "{}Press o to stop pulling, p to push, b to bring to 5m.",
                     clear
                 )
                 .unwrap(),
                 tractorbeam::Status::Bring => write!(
                     stdout,
-                    "{}Press o to pulling, p to push, t to stop bringing to 5m.",
+                    "{}Press o to pulling, p to push, b to stop bringing to 5m.",
                     clear
                 )
                 .unwrap(),

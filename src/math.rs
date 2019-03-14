@@ -19,12 +19,8 @@ pub struct Vector {
 }
 
 impl Vector {
-    pub fn new(v: (f64, f64, f64)) -> Vector {
-        Vector {
-            x: v.0,
-            y: v.1,
-            z: v.2,
-        }
+    pub fn new(x: f64, y: f64, z: f64) -> Vector {
+        Vector { x, y, z }
     }
 
     pub fn distance_from(&self, other: Vector) -> f64 {

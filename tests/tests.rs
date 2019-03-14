@@ -1,7 +1,7 @@
 extern crate space;
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::collections::HashMap;
     use std::thread::sleep;
     use std::time::Duration;
@@ -14,6 +14,7 @@ mod test {
     use space::modules::mining;
     use space::modules::navigation;
     use space::modules::refinery;
+    use space::modules::tractorbeam;
     use space::modules::types::ModuleType;
 
     fn setup() -> (Mass, HashMap<String, Mass>) {
@@ -45,7 +46,7 @@ mod test {
         assert!(navigation_data.status == navigation::Status::Targeting);
 
         let astroid = masses.get_mut("astroid").unwrap();
-        astroid.position = Vector::new((constants::SHIP_NAVIGATION_RANGE + 1.0, 0.0, 0.0));
+        astroid.position = Vector::new(constants::SHIP_NAVIGATION_RANGE + 1.0, 0.0, 0.0);
         ship.process(&mut masses);
         let data = ship.get_client_data(ModuleType::Navigation, &masses);
         let navigation_data: navigation::ClientData = serde_json::from_str(&data).unwrap();
@@ -62,7 +63,7 @@ mod test {
         assert!(navigation_data.status == navigation::Status::Targeted);
 
         let astroid = masses.get_mut("astroid").unwrap();
-        astroid.position = Vector::new((constants::SHIP_NAVIGATION_RANGE + 1.0, 0.0, 0.0));
+        astroid.position = Vector::new(constants::SHIP_NAVIGATION_RANGE + 1.0, 0.0, 0.0);
         ship.process(&mut masses);
         let data = ship.get_client_data(ModuleType::Navigation, &masses);
         let navigation_data: navigation::ClientData = serde_json::from_str(&data).unwrap();
@@ -81,7 +82,26 @@ mod test {
         assert!(mining_data.status == mining::Status::Mining);
 
         let mut astroid = masses.get_mut("astroid").unwrap();
-        astroid.position = Vector::new((constants::SHIP_MINING_RANGE + 1.0, 0.0, 0.0));
+        astroid.position = Vector::new(constants::SHIP_MINING_RANGE + 1.0, 0.0, 0.0);
+        ship.process(&mut masses);
+        let data = ship.get_client_data(ModuleType::Mining, &masses);
+        let mining_data: mining::ClientData = serde_json::from_str(&data).unwrap();
+        assert!(mining_data.status == mining::Status::None);
+    }
+
+    #[test]
+    fn test_mining_navigation_range() {
+        let (mut ship, mut masses) = setup();
+        setup_ship_target(&mut ship, &mut masses);
+
+        ship.give_received_data(ModuleType::Mining, String::from("F"));
+        ship.process(&mut masses);
+        let data = ship.get_client_data(ModuleType::Mining, &masses);
+        let mining_data: mining::ClientData = serde_json::from_str(&data).unwrap();
+        assert!(mining_data.status == mining::Status::Mining);
+
+        let mut astroid = masses.get_mut("astroid").unwrap();
+        astroid.position = Vector::new(constants::SHIP_NAVIGATION_RANGE + 1.0, 0.0, 0.0);
         ship.process(&mut masses);
         let data = ship.get_client_data(ModuleType::Mining, &masses);
         let mining_data: mining::ClientData = serde_json::from_str(&data).unwrap();
@@ -180,7 +200,7 @@ mod test {
         setup_ship_target(&mut ship, &mut masses);
 
         let mut astroid = masses.remove("astroid").unwrap();
-        astroid.velocity = Vector::new((constants::SHIP_ENGINES_ACCELERATION * 2.0, 0.0, 0.0));
+        astroid.velocity = Vector::new(constants::SHIP_ENGINES_ACCELERATION * 2.0, 0.0, 0.0);
         astroid.process(&mut masses);
         masses.insert(String::from("astroid"), astroid);
 
@@ -214,5 +234,181 @@ mod test {
         ship.give_received_data(ModuleType::Engines, String::from("t"));
         ship.process(&mut masses);
         assert!(ship.velocity.x == constants::SHIP_ENGINES_ACCELERATION * -2.0);
+    }
+
+    #[test]
+    fn test_tractorbeam_push_range() {
+        let (mut ship, mut masses) = setup();
+        setup_ship_target(&mut ship, &mut masses);
+
+        let mut astroid = masses.remove("astroid").unwrap();
+        astroid.position = Vector::new(1.0, 0.0, 0.0);
+        masses.insert(String::from("astroid"), astroid);
+
+        ship.give_received_data(ModuleType::Tractorbeam, String::from("p"));
+        ship.process(&mut masses);
+        let data = ship.get_client_data(ModuleType::Tractorbeam, &masses);
+        let tractorbeam_data: tractorbeam::ClientData = serde_json::from_str(&data).unwrap();
+        assert!(tractorbeam_data.status == tractorbeam::Status::Push);
+
+        let mut astroid = masses.remove("astroid").unwrap();
+        astroid.position = Vector::new(constants::SHIP_TRACTORBEAM_RANGE + 1.0, 0.0, 0.0);
+        astroid.process(&mut masses);
+        masses.insert(String::from("astroid"), astroid);
+        ship.process(&mut masses);
+        let data = ship.get_client_data(ModuleType::Tractorbeam, &masses);
+        let tractorbeam_data: tractorbeam::ClientData = serde_json::from_str(&data).unwrap();
+        assert!(tractorbeam_data.status == tractorbeam::Status::None);
+    }
+
+    #[test]
+    fn test_tractorbeam_pull_range() {
+        let (mut ship, mut masses) = setup();
+        setup_ship_target(&mut ship, &mut masses);
+
+        let mut astroid = masses.remove("astroid").unwrap();
+        astroid.position = Vector::new(1.0, 0.0, 0.0);
+        masses.insert(String::from("astroid"), astroid);
+
+        ship.give_received_data(ModuleType::Tractorbeam, String::from("o"));
+        ship.process(&mut masses);
+        let data = ship.get_client_data(ModuleType::Tractorbeam, &masses);
+        let tractorbeam_data: tractorbeam::ClientData = serde_json::from_str(&data).unwrap();
+        assert!(tractorbeam_data.status == tractorbeam::Status::Pull);
+
+        let mut astroid = masses.remove("astroid").unwrap();
+        astroid.position = Vector::new(constants::SHIP_TRACTORBEAM_RANGE + 1.0, 0.0, 0.0);
+        astroid.process(&mut masses);
+        masses.insert(String::from("astroid"), astroid);
+        ship.process(&mut masses);
+        let data = ship.get_client_data(ModuleType::Tractorbeam, &masses);
+        let tractorbeam_data: tractorbeam::ClientData = serde_json::from_str(&data).unwrap();
+        assert!(tractorbeam_data.status == tractorbeam::Status::None);
+    }
+
+    #[test]
+    fn test_tractorbeam_bring_range() {
+        let (mut ship, mut masses) = setup();
+        setup_ship_target(&mut ship, &mut masses);
+
+        let mut astroid = masses.remove("astroid").unwrap();
+        astroid.position = Vector::new(1.0, 0.0, 0.0);
+        masses.insert(String::from("astroid"), astroid);
+
+        ship.give_received_data(ModuleType::Tractorbeam, String::from("b"));
+        ship.process(&mut masses);
+        let data = ship.get_client_data(ModuleType::Tractorbeam, &masses);
+        let tractorbeam_data: tractorbeam::ClientData = serde_json::from_str(&data).unwrap();
+        assert!(tractorbeam_data.status == tractorbeam::Status::Bring);
+
+        let mut astroid = masses.remove("astroid").unwrap();
+        astroid.position = Vector::new(constants::SHIP_TRACTORBEAM_RANGE + 1.0, 0.0, 0.0);
+        astroid.process(&mut masses);
+        masses.insert(String::from("astroid"), astroid);
+        ship.process(&mut masses);
+        let data = ship.get_client_data(ModuleType::Tractorbeam, &masses);
+        let tractorbeam_data: tractorbeam::ClientData = serde_json::from_str(&data).unwrap();
+        assert!(tractorbeam_data.status == tractorbeam::Status::None);
+    }
+
+    #[test]
+    fn test_tractorbeam() {
+        let (mut ship, mut masses) = setup();
+        setup_ship_target(&mut ship, &mut masses);
+
+        let mut astroid = masses.remove("astroid").unwrap();
+        let start = 2.0;
+        astroid.velocity = Vector::new(start, 0.0, 0.0);
+        astroid.process(&mut masses);
+        assert!(astroid.position == Vector::new(start, 0.0, 0.0));
+        masses.insert(String::from("astroid"), astroid);
+
+        ship.give_received_data(ModuleType::Tractorbeam, String::from("o"));
+        let mut iterated = 1.0;
+        loop {
+            ship.process(&mut masses);
+
+            let mut astroid = masses.remove("astroid").unwrap();
+            astroid.process(&mut masses);
+
+            let estimated_velocity = start - (constants::SHIP_TRACTORBEAM_STRENGTH * iterated);
+            assert!(
+                astroid.velocity.x.abs() - estimated_velocity.abs() < constants::FLOAT_PRECISION
+            );
+            masses.insert(String::from("astroid"), astroid);
+
+            iterated += 1.0;
+            if iterated > 10.0 {
+                break;
+            }
+        }
+
+        ship.give_received_data(ModuleType::Tractorbeam, String::from("p"));
+        let mut iterated = 1.0;
+        loop {
+            ship.process(&mut masses);
+
+            let mut astroid = masses.remove("astroid").unwrap();
+            astroid.process(&mut masses);
+
+            let estimated_velocity = start + (constants::SHIP_TRACTORBEAM_STRENGTH * iterated);
+            assert!(
+                astroid.velocity.x.abs() - estimated_velocity.abs() < constants::FLOAT_PRECISION
+            );
+            masses.insert(String::from("astroid"), astroid);
+
+            iterated += 1.0;
+            if iterated > 10.0 {
+                break;
+            }
+        }
+    }
+
+    #[test]
+    fn test_tractorbeam_bring() {
+        let (mut ship, mut masses) = setup();
+        setup_ship_target(&mut ship, &mut masses);
+
+        let mut astroid = masses.remove("astroid").unwrap();
+        let start = 25.0;
+        astroid.position = Vector::new(start, 0.0, 0.0);
+        astroid.process(&mut masses);
+        masses.insert(String::from("astroid"), astroid);
+
+        ship.give_received_data(ModuleType::Tractorbeam, String::from("b"));
+        let mut iterated = 1.0;
+        loop {
+            ship.process(&mut masses);
+
+            let mut astroid = masses.remove("astroid").unwrap();
+            astroid.process(&mut masses);
+
+            if ship.position.distance_from(astroid.position.clone())
+                < constants::SHIP_TRACTORBEAM_BRING_TO_DISTANCE
+                && astroid.velocity.magnitude() < 1.0
+            {
+                break;
+            }
+
+            masses.insert(String::from("astroid"), astroid);
+
+            iterated += 1.0;
+            if iterated > 100.0 {
+                assert!(false);
+                break;
+            }
+        }
+
+        /* for plotting
+        //let mut xy = Vec::new();
+        //xy.push((iterated, astroid.position.x));
+        let l =
+            plotlib::line::Line::new(&xy[..]).style(plotlib::style::LineStyle::new().colour("red"));
+        let v = plotlib::view::ContinuousView::new().add(&l);
+        plotlib::page::Page::single(&v)
+            .save("line.svg")
+            .expect("error");
+        std::process::Command::new("feh").arg("--conversion-timeout").arg("1").arg("line.svg").output().expect("problem");
+        */
     }
 }

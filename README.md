@@ -10,6 +10,7 @@ modules
 - bookmarking objects (e.g. stations, estimates position & velocity outside navigation)
 - hacking modules to disable other modules
 - some sort of armor / shield module
+- tractorbeam has range of effectiveness
 
 world
 - tiers of minerals, modules
