@@ -12,7 +12,7 @@ use crate::modules::navigation;
 pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
-    let mut stdin = async_stdin().bytes();
+    let mut stdin = async_stdin();
 
     loop {
         let mut recv = String::new();
@@ -51,20 +51,19 @@ pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>
             .unwrap();
         }
 
-        if let Some(c) = stdin.next() {
-            let c = c.unwrap() as char;
-            if c == 'q' {
-                break;
-            } else {
-                let i = c.to_digit(10).unwrap() as usize;
-                if i < navigation_data.available_targets.len() {
-                    let mut send = String::new();
-                    send.push_str(&navigation_data.available_targets[i].0);
-                    send.push_str("\n");
-                    stream.write_all(send.as_bytes()).unwrap();
-                }
+        let mut key = String::new();
+        stdin.read_to_string(&mut key).unwrap();
+        if key.as_str() == "q" {
+            break;
+        } else {
+            let mut send = String::new();
+            if let Ok(i) = key.parse::<usize>() {
+                send.push_str(&navigation_data.available_targets[i].0);
+                send.push_str("\n");
+                stream.write_all(send.as_bytes()).unwrap();
             }
         }
+
         stdout.flush().unwrap();
     }
 }

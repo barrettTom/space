@@ -11,7 +11,7 @@ use crate::mass::Mass;
 pub fn client_dashboard(mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
-    let mut stdin = async_stdin().bytes();
+    let mut stdin = async_stdin();
 
     loop {
         let mut recv = String::new();
@@ -27,12 +27,12 @@ pub fn client_dashboard(mut buff_r: BufReader<TcpStream>) {
         )
         .unwrap();
 
-        if let Some(c) = stdin.next() {
-            let c = c.unwrap() as char;
-            if c == 'q' {
-                break;
-            }
+        let mut key = String::new();
+        stdin.read_to_string(&mut key).unwrap();
+        if key.as_str() == "q" {
+            break;
         }
+
         stdout.flush().unwrap();
     }
 }

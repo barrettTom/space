@@ -12,7 +12,7 @@ use crate::modules::refinery;
 pub fn client_refinery(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
-    let mut stdin = async_stdin().bytes();
+    let mut stdin = async_stdin();
 
     loop {
         let mut recv = String::new();
@@ -34,16 +34,13 @@ pub fn client_refinery(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) 
             write!(stdout, "{}You have no crude minerals.", clear).unwrap();
         }
 
-        if let Some(c) = stdin.next() {
-            let c = c.unwrap();
-            let mut send = String::new();
-            send.push(c as char);
-            if send.as_bytes() == b"q" {
-                break;
-            }
-            send.push_str("\n");
-            stream.write_all(send.as_bytes()).unwrap();
+        let mut key = String::new();
+        stdin.read_to_string(&mut key).unwrap();
+        if key.as_str() == "q" {
+            break;
         }
+        key.push_str("\n");
+        stream.write_all(key.as_bytes()).unwrap();
 
         stdout.flush().unwrap();
     }
