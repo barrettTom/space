@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::time::SystemTime;
 
@@ -60,8 +61,18 @@ impl Navigation {
 
     fn verify_target(&mut self, ship_position: Vector, masses: &HashMap<String, Mass>) {
         if let Some(name) = self.target_name.clone() {
-            let target = masses.get(&name).unwrap();
-            if target.position.distance_from(ship_position) > self.range {
+            let good = match masses.get(&name) {
+                Some(target) => {
+                    target
+                        .position
+                        .distance_from(ship_position)
+                        .partial_cmp(&self.range)
+                        == Some(Ordering::Less)
+                }
+                None => false,
+            };
+
+            if !good {
                 self.target_name = None;
                 self.status = Status::None;
             }

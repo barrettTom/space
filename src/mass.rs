@@ -179,8 +179,15 @@ impl Mass {
             if let Some(target_name) = &navigation.target_name {
                 let mut target = masses.remove(target_name).unwrap();
                 mining.process(self.position.clone(), masses, &mut target, storage);
-                tractorbeam.process(self.position.clone(), &mut target);
-                masses.insert(target_name.to_string(), target);
+                let acquired = tractorbeam.process(self.position.clone(), &mut target);
+
+                if acquired {
+                    if let MassType::Item { item } = target.mass_type {
+                        storage.give_item(item);
+                    }
+                } else {
+                    masses.insert(target_name.to_string(), target);
+                }
             }
 
             let target = match &navigation.target_name {

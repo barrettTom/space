@@ -28,8 +28,8 @@ mod tests {
         (ship, masses)
     }
 
-    fn setup_ship_target(ship: &mut Mass, masses: &mut HashMap<String, Mass>) {
-        ship.give_received_data(ModuleType::Navigation, String::from("astroid"));
+    fn setup_ship_target(ship: &mut Mass, target_name: String, masses: &mut HashMap<String, Mass>) {
+        ship.give_received_data(ModuleType::Navigation, target_name);
         ship.process(masses);
         sleep(Duration::from_secs(constants::SHIP_NAVIGATION_TIME + 1));
         ship.process(masses);
@@ -56,7 +56,7 @@ mod tests {
     #[test]
     fn test_navigation_range_targeted() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         let data = ship.get_client_data(ModuleType::Navigation, &masses);
         let navigation_data: navigation::ClientData = serde_json::from_str(&data).unwrap();
@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn test_mining_range() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         ship.give_received_data(ModuleType::Mining, String::from("F"));
         ship.process(&mut masses);
@@ -92,7 +92,7 @@ mod tests {
     #[test]
     fn test_mining_navigation_range() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         ship.give_received_data(ModuleType::Mining, String::from("F"));
         ship.process(&mut masses);
@@ -111,7 +111,7 @@ mod tests {
     #[test]
     fn test_mining() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         ship.give_received_data(ModuleType::Mining, String::from("F"));
         ship.process(&mut masses);
@@ -127,7 +127,7 @@ mod tests {
     #[test]
     fn test_mining_storage() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         for _ in 0..10 {
             ship.give_item(Item::new(ItemType::CrudeMinerals));
@@ -144,7 +144,7 @@ mod tests {
     #[test]
     fn test_refinery() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         ship.give_received_data(ModuleType::Refinery, String::from("R"));
         ship.process(&mut masses);
@@ -197,7 +197,7 @@ mod tests {
     #[test]
     fn test_engines() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         let mut astroid = masses.remove("astroid").unwrap();
         astroid.velocity = Vector::new(constants::SHIP_ENGINES_ACCELERATION * 2.0, 0.0, 0.0);
@@ -239,13 +239,18 @@ mod tests {
     #[test]
     fn test_tractorbeam_push_range() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         let mut astroid = masses.remove("astroid").unwrap();
         astroid.position = Vector::new(1.0, 0.0, 0.0);
         masses.insert(String::from("astroid"), astroid);
 
-        ship.give_received_data(ModuleType::Tractorbeam, String::from("p"));
+        let recv = serde_json::to_string(&tractorbeam::ServerRecvData {
+            key: String::from("p"),
+            desired_distance: None,
+        })
+        .unwrap();
+        ship.give_received_data(ModuleType::Tractorbeam, recv);
         ship.process(&mut masses);
         let data = ship.get_client_data(ModuleType::Tractorbeam, &masses);
         let tractorbeam_data: tractorbeam::ClientData = serde_json::from_str(&data).unwrap();
@@ -264,13 +269,18 @@ mod tests {
     #[test]
     fn test_tractorbeam_pull_range() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         let mut astroid = masses.remove("astroid").unwrap();
         astroid.position = Vector::new(1.0, 0.0, 0.0);
         masses.insert(String::from("astroid"), astroid);
 
-        ship.give_received_data(ModuleType::Tractorbeam, String::from("o"));
+        let recv = serde_json::to_string(&tractorbeam::ServerRecvData {
+            key: String::from("o"),
+            desired_distance: None,
+        })
+        .unwrap();
+        ship.give_received_data(ModuleType::Tractorbeam, recv);
         ship.process(&mut masses);
         let data = ship.get_client_data(ModuleType::Tractorbeam, &masses);
         let tractorbeam_data: tractorbeam::ClientData = serde_json::from_str(&data).unwrap();
@@ -289,13 +299,18 @@ mod tests {
     #[test]
     fn test_tractorbeam_bring_range() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         let mut astroid = masses.remove("astroid").unwrap();
         astroid.position = Vector::new(1.0, 0.0, 0.0);
         masses.insert(String::from("astroid"), astroid);
 
-        ship.give_received_data(ModuleType::Tractorbeam, String::from("b"));
+        let recv = serde_json::to_string(&tractorbeam::ServerRecvData {
+            key: String::from("b"),
+            desired_distance: Some(5.0),
+        })
+        .unwrap();
+        ship.give_received_data(ModuleType::Tractorbeam, recv);
         ship.process(&mut masses);
         let data = ship.get_client_data(ModuleType::Tractorbeam, &masses);
         let tractorbeam_data: tractorbeam::ClientData = serde_json::from_str(&data).unwrap();
@@ -314,7 +329,7 @@ mod tests {
     #[test]
     fn test_tractorbeam() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         let mut astroid = masses.remove("astroid").unwrap();
         let start = 2.0;
@@ -323,7 +338,12 @@ mod tests {
         assert!(astroid.position == Vector::new(start, 0.0, 0.0));
         masses.insert(String::from("astroid"), astroid);
 
-        ship.give_received_data(ModuleType::Tractorbeam, String::from("o"));
+        let recv = serde_json::to_string(&tractorbeam::ServerRecvData {
+            key: String::from("o"),
+            desired_distance: None,
+        })
+        .unwrap();
+        ship.give_received_data(ModuleType::Tractorbeam, recv);
         let mut iterated = 1.0;
         loop {
             ship.process(&mut masses);
@@ -343,7 +363,12 @@ mod tests {
             }
         }
 
-        ship.give_received_data(ModuleType::Tractorbeam, String::from("p"));
+        let recv = serde_json::to_string(&tractorbeam::ServerRecvData {
+            key: String::from("p"),
+            desired_distance: None,
+        })
+        .unwrap();
+        ship.give_received_data(ModuleType::Tractorbeam, recv);
         let mut iterated = 1.0;
         loop {
             ship.process(&mut masses);
@@ -367,15 +392,21 @@ mod tests {
     #[test]
     fn test_tractorbeam_bring() {
         let (mut ship, mut masses) = setup();
-        setup_ship_target(&mut ship, &mut masses);
+        setup_ship_target(&mut ship, String::from("astroid"), &mut masses);
 
         let mut astroid = masses.remove("astroid").unwrap();
         let start = 25.0;
+        let desired_distance = 5.0;
         astroid.position = Vector::new(start, 0.0, 0.0);
         astroid.process(&mut masses);
         masses.insert(String::from("astroid"), astroid);
 
-        ship.give_received_data(ModuleType::Tractorbeam, String::from("b"));
+        let recv = serde_json::to_string(&tractorbeam::ServerRecvData {
+            key: String::from("b"),
+            desired_distance: Some(desired_distance),
+        })
+        .unwrap();
+        ship.give_received_data(ModuleType::Tractorbeam, recv);
         let mut iterated = 1.0;
         loop {
             ship.process(&mut masses);
@@ -383,8 +414,7 @@ mod tests {
             let mut astroid = masses.remove("astroid").unwrap();
             astroid.process(&mut masses);
 
-            if ship.position.distance_from(astroid.position.clone())
-                < constants::SHIP_TRACTORBEAM_BRING_TO_DISTANCE
+            if ship.position.distance_from(astroid.position.clone()) < desired_distance
                 && astroid.velocity.magnitude() < 1.0
             {
                 break;
@@ -410,5 +440,81 @@ mod tests {
             .expect("error");
         std::process::Command::new("feh").arg("--conversion-timeout").arg("1").arg("line.svg").output().expect("problem");
         */
+    }
+
+    #[test]
+    fn test_tractorbeam_acquire() {
+        let (mut ship, mut masses) = setup();
+        masses.insert(
+            String::from("iron"),
+            Mass::new_item(
+                Item::new(ItemType::Iron),
+                Vector::default(),
+                Vector::default(),
+            ),
+        );
+        setup_ship_target(&mut ship, String::from("iron"), &mut masses);
+
+        let recv = serde_json::to_string(&tractorbeam::ServerRecvData {
+            key: String::from("a"),
+            desired_distance: None,
+        })
+        .unwrap();
+        ship.give_received_data(ModuleType::Tractorbeam, recv);
+
+        assert!(masses.len() == 2);
+        assert!(ship.item_count(ItemType::Iron) == 0);
+        ship.process(&mut masses);
+        assert!(ship.item_count(ItemType::Iron) == 1);
+        assert!(masses.len() == 1);
+    }
+
+    #[test]
+    fn test_tractorbeam_acquire_range() {
+        let (mut ship, mut masses) = setup();
+        masses.insert(
+            String::from("iron"),
+            Mass::new_item(
+                Item::new(ItemType::Iron),
+                Vector::new(50.0, 0.0, 0.0),
+                Vector::default(),
+            ),
+        );
+        setup_ship_target(&mut ship, String::from("iron"), &mut masses);
+
+        let recv = serde_json::to_string(&tractorbeam::ServerRecvData {
+            key: String::from("a"),
+            desired_distance: None,
+        })
+        .unwrap();
+        ship.give_received_data(ModuleType::Tractorbeam, recv);
+
+        assert!(masses.len() == 2);
+        assert!(ship.item_count(ItemType::Iron) == 0);
+        ship.process(&mut masses);
+        assert!(ship.item_count(ItemType::Iron) == 0);
+        assert!(masses.len() == 2);
+
+        let mut iterated = 1.0;
+        loop {
+            ship.process(&mut masses);
+
+            match masses.remove("iron") {
+                Some(mut item) => {
+                    item.process(&mut masses);
+                    masses.insert(String::from("iron"), item);
+                }
+                None => {
+                    assert!(ship.item_count(ItemType::Iron) == 1);
+                    break;
+                }
+            }
+
+            iterated += 1.0;
+            if iterated > 100.0 {
+                assert!(false);
+                break;
+            }
+        }
     }
 }

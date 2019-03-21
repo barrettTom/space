@@ -1,6 +1,8 @@
 use crate::constants;
-use crate::mass::Mass;
+use crate::mass::{Mass, MassType};
+use crate::math::ControlSystem;
 use crate::math::Vector;
+use crate::modules::types::ModuleType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Tractorbeam {
@@ -11,47 +13,6 @@ pub struct Tractorbeam {
     control_system: ControlSystem,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-struct ControlSystem {
-    previous_error: f64,
-    integral: f64,
-    kp: f64,
-    ki: f64,
-    kd: f64,
-    dt: f64,
-}
-
-impl ControlSystem {
-    pub fn new() -> ControlSystem {
-        ControlSystem {
-            previous_error: 0.0,
-            integral: 0.0,
-            kp: 1.0,
-            ki: 0.01,
-            kd: 0.001,
-            dt: 0.0001,
-        }
-    }
-
-    pub fn compute(&mut self, strength: f64, distance: f64, desired_distance: f64) -> f64 {
-        let error = desired_distance - distance;
-        self.integral += error * self.dt;
-        let derivative = (error - self.previous_error) / self.dt;
-        let output = self.kp * error + self.ki * self.integral + self.kd * derivative;
-        self.previous_error = error;
-
-        if output.abs() > strength {
-            if output.is_sign_positive() {
-                strength
-            } else {
-                strength * -1.0
-            }
-        } else {
-            output
-        }
-    }
-}
-
 impl Tractorbeam {
     pub fn new() -> Tractorbeam {
         Tractorbeam {
@@ -59,11 +20,11 @@ impl Tractorbeam {
             status: Status::None,
             strength: constants::SHIP_TRACTORBEAM_STRENGTH,
             desired_distance: None,
-            control_system: ControlSystem::new(),
+            control_system: ControlSystem::new(ModuleType::Tractorbeam),
         }
     }
 
-    pub fn process(&mut self, ship_position: Vector, target: &mut Mass) {
+    pub fn process(&mut self, ship_position: Vector, target: &mut Mass) -> bool {
         let distance = ship_position.distance_from(target.position.clone());
         if self.range < distance {
             self.off()
@@ -81,15 +42,37 @@ impl Tractorbeam {
                     }
                     None => Vector::default(),
                 },
+                Status::Acquire => {
+                    match target.mass_type {
+                        MassType::Item { .. } => (),
+                        _ => {
+                            self.status = Status::None;
+                            Vector::default();
+                        }
+                    }
+                    if distance > constants::SHIP_TRACTORBEAM_ACQUIRE_RANGE {
+                        direction.unitize()
+                            * self.control_system.compute(
+                                self.strength,
+                                distance,
+                                constants::SHIP_TRACTORBEAM_ACQUIRE_RANGE,
+                            )
+                    } else {
+                        self.status = Status::None;
+                        return true;
+                    }
+                }
                 Status::None => Vector::default(),
             };
 
             target.effects.give_acceleration(acceleration);
         }
+        false
     }
 
     pub fn get_client_data(&self, target: Option<&Mass>) -> String {
         let client_data = ClientData {
+            desired_distance: self.desired_distance,
             has_target: target.is_some(),
             status: self.status.clone(),
         };
@@ -98,40 +81,47 @@ impl Tractorbeam {
     }
 
     pub fn give_received_data(&mut self, recv: String) {
-        match recv.as_str() {
-            "o" => self.toggle_pull(),
-            "p" => self.toggle_push(),
-            "b" => self.toggle_bring(constants::SHIP_TRACTORBEAM_BRING_TO_DISTANCE),
-            _ => (),
+        let server_recv_data: Result<ServerRecvData, serde_json::Error> =
+            serde_json::from_str(&recv);
+        if let Ok(server_recv_data) = server_recv_data {
+            match server_recv_data.key.as_ref() {
+                "o" => self.toggle_pull(),
+                "p" => self.toggle_push(),
+                "b" => self.toggle_bring(server_recv_data.desired_distance),
+                "a" => self.toggle_acquire(),
+                _ => (),
+            }
         }
     }
 
     fn toggle_pull(&mut self) {
         self.status = match self.status {
-            Status::None => Status::Pull,
-            Status::Push => Status::Pull,
-            Status::Bring => Status::Pull,
             Status::Pull => Status::None,
+            _ => Status::Pull,
         }
     }
 
     fn toggle_push(&mut self) {
         self.status = match self.status {
-            Status::None => Status::Push,
-            Status::Pull => Status::Push,
-            Status::Bring => Status::Push,
             Status::Push => Status::None,
+            _ => Status::Push,
         }
     }
 
-    fn toggle_bring(&mut self, desired_distance: f64) {
-        self.desired_distance = Some(desired_distance);
-        self.control_system = ControlSystem::new();
+    fn toggle_bring(&mut self, desired_distance: Option<f64>) {
+        self.desired_distance = desired_distance;
+        self.control_system = ControlSystem::new(ModuleType::Tractorbeam);
         self.status = match self.status {
-            Status::None => Status::Bring,
-            Status::Pull => Status::Bring,
-            Status::Push => Status::Bring,
             Status::Bring => Status::None,
+            _ => Status::Bring,
+        }
+    }
+
+    fn toggle_acquire(&mut self) {
+        self.control_system = ControlSystem::new(ModuleType::Tractorbeam);
+        self.status = match self.status {
+            Status::Acquire => Status::None,
+            _ => Status::Acquire,
         }
     }
 
@@ -143,7 +133,14 @@ impl Tractorbeam {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ClientData {
     pub has_target: bool,
+    pub desired_distance: Option<f64>,
     pub status: Status,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ServerRecvData {
+    pub key: String,
+    pub desired_distance: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -152,6 +149,7 @@ pub enum Status {
     Push,
     Pull,
     Bring,
+    Acquire,
 }
 
 impl Default for Status {
