@@ -28,3 +28,4 @@ nice to haves
 - open server api with documentation so people can develop their own clients
 - server ability to quit and import/export all current data
 - have something like lightshope donation page
+- give tractorbeam client bring option ability to choose desired distance

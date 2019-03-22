@@ -1,10 +1,14 @@
 extern crate space;
+extern crate diesel;
 
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
     use std::thread::sleep;
     use std::time::Duration;
+
+    use diesel::prelude::*;
+    use diesel::pg::PgConnection;
 
     use space::constants;
     use space::item::{Item, ItemType};
@@ -516,5 +520,10 @@ mod tests {
                 break;
             }
         }
+    }
+
+    #[test]
+    fn test_postgres_connection() {
+        PgConnection::establish("postgres://space:space@localhost/space_db").expect("Cannot connect");
     }
 }
