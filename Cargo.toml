@@ -12,4 +12,5 @@ termion = "*"
 rand = "0.6"
 toml = "0.4"
 clap = "2"
-diesel = {version = "1.4.2", features = ["postgres"]}
+diesel = {version = "1.4.2", features = ["postgres", "serde_json"]}
+migrations_internals = "1.4.0"

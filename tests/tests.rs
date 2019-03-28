@@ -1,5 +1,6 @@
-extern crate space;
 extern crate diesel;
+extern crate migrations_internals;
+extern crate space;
 
 #[cfg(test)]
 mod tests {
@@ -7,13 +8,15 @@ mod tests {
     use std::thread::sleep;
     use std::time::Duration;
 
-    use diesel::prelude::*;
     use diesel::pg::PgConnection;
+    use diesel::prelude::*;
+    use space::schema::masses::dsl;
+    use space::schema::masses::dsl::masses as db_masses;
 
     use space::constants;
     use space::item::{Item, ItemType};
-    use space::mass::Mass;
-    use space::math::Vector;
+    use space::mass::{Mass, MassEntry};
+    use space::math::{get_db_url, Vector};
     use space::modules::construction;
     use space::modules::mining;
     use space::modules::navigation;
@@ -523,7 +526,36 @@ mod tests {
     }
 
     #[test]
-    fn test_postgres_connection() {
-        PgConnection::establish("postgres://space:space@localhost/space_db").expect("Cannot connect");
+    fn test_postgres() {
+        let connection = PgConnection::establish(&get_db_url()).expect("Cannot connect");
+
+        let masses = db_masses
+            .load::<MassEntry>(&connection)
+            .expect("Cannot query, probably no migrations, run 'cargo run --bin migrate'");
+        let size = masses.len();
+        let name = String::from("test");
+
+        diesel::insert_into(db_masses)
+            .values(&Mass::new_astroid().to_new_mass_entry(name.clone()))
+            .execute(&connection)
+            .expect("Cannot insert");
+
+        let len = db_masses
+            .load::<MassEntry>(&connection)
+            .expect("Cannot query")
+            .len();
+
+        assert!(len == size + 1);
+
+        diesel::delete(db_masses.filter(dsl::name.eq(name)))
+            .execute(&connection)
+            .expect("Cannot delete");
+
+        let len = db_masses
+            .load::<MassEntry>(&connection)
+            .expect("Cannot query")
+            .len();
+
+        assert!(len == size);
     }
 }

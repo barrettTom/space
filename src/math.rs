@@ -13,6 +13,19 @@ pub fn rand_name() -> String {
         .collect()
 }
 
+pub fn get_db_url() -> String {
+    let mut db_url = String::new();
+    db_url.push_str("postgres://");
+    db_url.push_str(constants::POSTGRES_USERNAME);
+    db_url.push_str(":");
+    db_url.push_str(constants::POSTGRES_PASSWORD);
+    db_url.push_str("@");
+    db_url.push_str(constants::POSTGRES_IP);
+    db_url.push_str("/");
+    db_url.push_str(constants::POSTGRES_DB_NAME);
+    db_url
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ControlSystem {
     previous_error: f64,

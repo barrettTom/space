@@ -15,6 +15,7 @@ use crate::modules::navigation::Navigation;
 use crate::modules::refinery::Refinery;
 use crate::modules::tractorbeam::Tractorbeam;
 use crate::modules::types::ModuleType;
+use crate::schema::masses as db_masses;
 use crate::storage::Storage;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -23,6 +24,32 @@ pub struct Mass {
     pub position: Vector,
     pub velocity: Vector,
     pub effects: Effects,
+}
+
+#[derive(Queryable)]
+pub struct MassEntry {
+    pub id: i32,
+    pub name: String,
+    pub pos_x: f64,
+    pub pos_y: f64,
+    pub pos_z: f64,
+    pub vel_x: f64,
+    pub vel_y: f64,
+    pub vel_z: f64,
+    pub type_data: serde_json::Value,
+}
+
+#[derive(Insertable)]
+#[table_name = "db_masses"]
+pub struct NewMassEntry {
+    pub name: String,
+    pub pos_x: f64,
+    pub pos_y: f64,
+    pub pos_z: f64,
+    pub vel_x: f64,
+    pub vel_y: f64,
+    pub vel_z: f64,
+    pub type_data: serde_json::Value,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -297,6 +324,20 @@ impl Mass {
             MassType::Ship { storage, .. } => storage.item_count(item_type),
             MassType::Astroid { resources, .. } => resources.item_count(item_type),
             _ => 0,
+        }
+    }
+
+    pub fn to_new_mass_entry(&self, name: String) -> NewMassEntry {
+        NewMassEntry {
+            name,
+            pos_x: self.position.x,
+            pos_y: self.position.y,
+            pos_z: self.position.z,
+            vel_x: self.velocity.x,
+            vel_y: self.velocity.y,
+            vel_z: self.velocity.z,
+            type_data: serde_json::from_str(&serde_json::to_string(&self.mass_type).unwrap())
+                .unwrap(),
         }
     }
 }

@@ -29,3 +29,8 @@ pub const CRUDE_MINERALS_SIZE: usize = 10;
 
 pub const SLEEP_DURATION: u64 = 100;
 pub const FLOAT_PRECISION: f64 = 0.001;
+
+pub const POSTGRES_USERNAME: &str = "space";
+pub const POSTGRES_PASSWORD: &str = "space";
+pub const POSTGRES_IP: &str = "localhost";
+pub const POSTGRES_DB_NAME: &str = "space_db";
