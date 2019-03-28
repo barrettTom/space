@@ -1,6 +1,6 @@
 table! {
     masses (id) {
-        id -> Integer,
+        id -> Nullable<Integer>,
         name -> Varchar,
         pos_x -> Double,
         pos_y -> Double,

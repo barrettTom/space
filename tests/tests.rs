@@ -529,14 +529,15 @@ mod tests {
     fn test_postgres() {
         let connection = PgConnection::establish(&get_db_url()).expect("Cannot connect");
 
-        let masses = db_masses
+        let size = db_masses
             .load::<MassEntry>(&connection)
-            .expect("Cannot query, probably no migrations, run 'cargo run --bin migrate'");
-        let size = masses.len();
-        let name = String::from("test");
+            .expect("Cannot query, probably no migrations, run 'cargo run --bin migrate'")
+            .len();
 
+        let name = String::from("test");
+        let mass = Mass::new_astroid();
         diesel::insert_into(db_masses)
-            .values(&Mass::new_astroid().to_new_mass_entry(name.clone()))
+            .values(&mass.to_mass_entry(name.clone()))
             .execute(&connection)
             .expect("Cannot insert");
 
@@ -546,6 +547,13 @@ mod tests {
             .len();
 
         assert!(len == size + 1);
+
+        let db_mass = db_masses
+            .filter(dsl::name.eq(name.clone()))
+            .load::<MassEntry>(&connection)
+            .expect("Cannot filter");
+
+        assert!(mass.position.x == db_mass[0].pos_x);
 
         diesel::delete(db_masses.filter(dsl::name.eq(name)))
             .execute(&connection)

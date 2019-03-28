@@ -18,10 +18,13 @@ sudo -u postgres psql -c "CREATE USER $USERNAME WITH PASSWORD '$PASSWORD';"
 sudo -u postgres psql -c "CREATE DATABASE $DB_NAME WITH OWNER $USERNAME;"
 
 # copy configs
-cp /vagrant/postgres/*conf /etc/postgresql/9.6/main/
-cp /vagrant/postgres/.pg* /home/vagrant/
+cp /vagrant/postgres/pg_hba.conf /etc/postgresql/9.6/main/
+cp /vagrant/postgres/postgresql.conf /etc/postgresql/9.6/main/
+cp /vagrant/postgres/.pgadmin3 /home/vagrant/
+echo "localhost:5432:*:$USERNAME:$PASSWORD" > /home/vagrant/.pgpass
 
-# give ownership
+# give permissions
+chmod 0600 /home/vagrant/.pgpass
 chown -R vagrant:vagrant /home/vagrant
 
 # systemd

@@ -1,10 +1,10 @@
+#[macro_use]
+extern crate serde;
+
 extern crate clap;
 extern crate serde_json;
 extern crate space;
 extern crate toml;
-
-#[macro_use]
-extern crate serde_derive;
 
 use clap::{App, SubCommand};
 use std::fs::File;

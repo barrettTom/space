@@ -1,4 +1,3 @@
--- Your SQL goes here
 CREATE TABLE masses (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR NOT NULL,
