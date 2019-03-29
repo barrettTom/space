@@ -27,8 +27,8 @@ pub const IRON_SIZE: usize = 1;
 pub const HYDROGEN_SIZE: usize = 1;
 pub const CRUDE_MINERALS_SIZE: usize = 10;
 
-pub const SLEEP_DURATION: u64 = 100;
 pub const FLOAT_PRECISION: f64 = 0.001;
+pub const LOOP_DURATION_MS: u64 = 100;
 
 pub const POSTGRES_USERNAME: &str = "space";
 pub const POSTGRES_PASSWORD: &str = "space";
