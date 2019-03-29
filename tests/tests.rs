@@ -553,7 +553,7 @@ mod tests {
             .load::<MassEntry>(&connection)
             .expect("Cannot filter");
 
-        assert!(mass.position.x == db_mass[0].pos_x);
+        assert!(mass.position.x == db_mass[0].to_mass().1.position.x);
 
         diesel::delete(db_masses.filter(dsl::name.eq(name)))
             .execute(&connection)

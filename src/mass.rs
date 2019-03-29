@@ -31,24 +31,12 @@ pub struct Mass {
 pub struct MassEntry {
     pub id: Option<i32>,
     pub name: String,
-    pub pos_x: f64,
-    pub pos_y: f64,
-    pub pos_z: f64,
-    pub vel_x: f64,
-    pub vel_y: f64,
-    pub vel_z: f64,
-    pub type_data: serde_json::Value,
+    pub mass: String,
 }
 
 impl MassEntry {
-    pub fn to_mass(&self) -> Mass {
-        Mass {
-            position: Vector::new(self.pos_x, self.pos_y, self.pos_z),
-            velocity: Vector::new(self.vel_x, self.vel_y, self.vel_z),
-            mass_type: serde_json::from_str(&serde_json::to_string(&self.type_data).unwrap())
-                .unwrap(),
-            effects: Effects::new(),
-        }
+    pub fn to_mass(&self) -> (String, Mass) {
+        (self.name.clone(), serde_json::from_str(&self.mass).unwrap())
     }
 }
 
@@ -331,14 +319,7 @@ impl Mass {
         MassEntry {
             id: None,
             name,
-            pos_x: self.position.x,
-            pos_y: self.position.y,
-            pos_z: self.position.z,
-            vel_x: self.velocity.x,
-            vel_y: self.velocity.y,
-            vel_z: self.velocity.z,
-            type_data: serde_json::from_str(&serde_json::to_string(&self.mass_type).unwrap())
-                .unwrap(),
+            mass: serde_json::to_string(&self).unwrap(),
         }
     }
 }
