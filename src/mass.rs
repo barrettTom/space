@@ -26,7 +26,7 @@ pub struct Mass {
     pub effects: Effects,
 }
 
-#[derive(Queryable, Insertable)]
+#[derive(Queryable, Insertable, Identifiable, AsChangeset, Debug)]
 #[table_name = "db_masses"]
 pub struct MassEntry {
     pub id: Option<i32>,

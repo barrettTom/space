@@ -34,7 +34,7 @@ fn main() {
     let server;
     let mut name = String::new();
 
-    let matches = App::new("space")
+    let matches = App::new("space client")
         .subcommand(SubCommand::with_name("mining"))
         .subcommand(SubCommand::with_name("engines"))
         .subcommand(SubCommand::with_name("refinery"))

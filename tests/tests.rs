@@ -535,7 +535,8 @@ mod tests {
             .len();
 
         let name = String::from("test");
-        let mass = Mass::new_astroid();
+        let mut mass = Mass::new_astroid();
+
         diesel::insert_into(db_masses)
             .values(&mass.to_mass_entry(name.clone()))
             .execute(&connection)
@@ -547,6 +548,20 @@ mod tests {
             .len();
 
         assert!(len == size + 1);
+
+        let db_mass = db_masses
+            .filter(dsl::name.eq(name.clone()))
+            .load::<MassEntry>(&connection)
+            .expect("Cannot filter");
+
+        assert!(mass.position.x == db_mass[0].to_mass().1.position.x);
+
+        mass.process(&mut HashMap::new());
+
+        diesel::update(db_masses)
+            .set(mass.to_mass_entry(name.clone()))
+            .execute(&connection)
+            .expect("Cannot update");
 
         let db_mass = db_masses
             .filter(dsl::name.eq(name.clone()))
