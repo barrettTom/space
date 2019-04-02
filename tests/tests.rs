@@ -6,7 +6,7 @@ extern crate space;
 mod tests {
     use std::collections::HashMap;
     use std::thread::sleep;
-    use std::time::Duration;
+    use std::time::{Duration, SystemTime};
 
     use diesel::pg::PgConnection;
     use diesel::prelude::*;
@@ -538,7 +538,7 @@ mod tests {
         let mut mass = Mass::new_astroid();
 
         diesel::insert_into(db_masses)
-            .values(&mass.to_mass_entry(name.clone()))
+            .values(&mass.to_mass_entry(name.clone(), SystemTime::now()))
             .execute(&connection)
             .expect("Cannot insert");
 
@@ -559,7 +559,7 @@ mod tests {
         mass.process(&mut HashMap::new());
 
         diesel::update(db_masses)
-            .set(mass.to_mass_entry(name.clone()))
+            .set(mass.to_mass_entry(name.clone(), SystemTime::now()))
             .execute(&connection)
             .expect("Cannot update");
 

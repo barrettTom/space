@@ -3,6 +3,7 @@ extern crate rand;
 use self::rand::distributions::Uniform;
 use self::rand::Rng;
 use std::collections::HashMap;
+use std::time::SystemTime;
 
 use crate::constants;
 use crate::item::{Item, ItemType};
@@ -32,6 +33,7 @@ pub struct MassEntry {
     pub id: Option<i32>,
     pub name: String,
     pub mass: String,
+    pub last_modified: SystemTime,
 }
 
 impl MassEntry {
@@ -315,11 +317,12 @@ impl Mass {
         }
     }
 
-    pub fn to_mass_entry(&self, name: String) -> MassEntry {
+    pub fn to_mass_entry(&self, name: String, last_modified: SystemTime) -> MassEntry {
         MassEntry {
             id: None,
             name,
             mass: serde_json::to_string(&self).unwrap(),
+            last_modified,
         }
     }
 }

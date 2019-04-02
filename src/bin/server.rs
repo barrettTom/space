@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpListener;
 use std::thread::{sleep, spawn};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 
 use space::constants;
 use space::mass::{Mass, MassEntry};
@@ -28,8 +28,9 @@ fn populate() -> HashMap<String, Mass> {
 
 fn backup(masses: HashMap<String, Mass>) {
     let connection = PgConnection::establish(&get_db_url()).expect("Cannot connect");
+    let timestamp = SystemTime::now();
     for (name, mass) in masses {
-        let mass_entry = mass.to_mass_entry(name.to_string());
+        let mass_entry = mass.to_mass_entry(name.to_string(), timestamp);
         diesel::insert_into(db_masses)
             .values(&mass_entry)
             .on_conflict(name_column)
