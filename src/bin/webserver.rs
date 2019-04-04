@@ -48,6 +48,10 @@ fn leaderboards(_: HttpRequest, data: web::Data<Pkg>) -> impl Responder {
     render(&data.tera, "leaderboards.html", &Context::new())
 }
 
+fn docs(_: HttpRequest, data: web::Data<Pkg>) -> impl Responder {
+    render(&data.tera, "docs.html", &Context::new())
+}
+
 fn p404(_: HttpRequest, data: web::Data<Pkg>) -> impl Responder {
     render(&data.tera, "404.html", &Context::new())
 }
@@ -65,6 +69,7 @@ fn main() {
             .service(web::resource("/").to(index))
             .service(web::resource("/user/{name}").to(user))
             .service(web::resource("/leaderboards").to(leaderboards))
+            .service(web::resource("/docs").to(docs))
             .service(Files::new("/static", "static").show_files_listing())
             .default_resource(|request| request.route(web::get().to(p404)))
     })
