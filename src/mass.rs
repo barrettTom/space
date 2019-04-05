@@ -8,6 +8,7 @@ use std::time::SystemTime;
 use crate::constants;
 use crate::item::{Item, ItemType};
 use crate::math::Vector;
+use crate::models::MassEntry;
 use crate::modules::construction::Construction;
 use crate::modules::dashboard::Dashboard;
 use crate::modules::engines::Engines;
@@ -16,7 +17,6 @@ use crate::modules::navigation::Navigation;
 use crate::modules::refinery::Refinery;
 use crate::modules::tractorbeam::Tractorbeam;
 use crate::modules::types::ModuleType;
-use crate::schema::masses as db_masses;
 use crate::storage::Storage;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -25,21 +25,6 @@ pub struct Mass {
     pub position: Vector,
     pub velocity: Vector,
     pub effects: Effects,
-}
-
-#[derive(Queryable, Insertable, Identifiable, AsChangeset, Debug)]
-#[table_name = "db_masses"]
-pub struct MassEntry {
-    pub id: Option<i32>,
-    pub name: String,
-    pub mass: String,
-    pub last_modified: SystemTime,
-}
-
-impl MassEntry {
-    pub fn to_mass(&self) -> (String, Mass) {
-        (self.name.clone(), serde_json::from_str(&self.mass).unwrap())
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -320,6 +305,7 @@ impl Mass {
     pub fn to_mass_entry(&self, name: String, last_modified: SystemTime) -> MassEntry {
         MassEntry {
             id: None,
+            user_id: None,
             name,
             mass: serde_json::to_string(&self).unwrap(),
             last_modified,

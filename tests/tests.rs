@@ -15,7 +15,8 @@ mod tests {
 
     use space::constants;
     use space::item::{Item, ItemType};
-    use space::mass::{Mass, MassEntry};
+    use space::mass::Mass;
+    use space::models::MassEntry;
     use space::math::{get_db_url, Vector};
     use space::modules::construction;
     use space::modules::mining;

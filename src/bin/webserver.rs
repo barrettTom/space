@@ -4,15 +4,15 @@ extern crate tera;
 extern crate actix_web;
 extern crate diesel;
 
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_files::Files;
+use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use tera::{Context, Tera};
 
-use space::mass::MassEntry;
 use space::math::get_db_url;
+use space::models::MassEntry;
 use space::schema::masses::dsl::masses as db_masses;
 
 struct Pkg {

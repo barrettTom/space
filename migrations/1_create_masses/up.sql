@@ -1,5 +1,6 @@
 CREATE TABLE masses (
 	id SERIAL PRIMARY KEY,
+	user_id INTEGER,
 	name TEXT UNIQUE NOT NULL,
 	mass TEXT NOT NULL,
 	last_modified TIMESTAMP NOT NULL
