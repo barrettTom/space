@@ -6,9 +6,9 @@ use std::collections::HashMap;
 use std::time::SystemTime;
 
 use crate::constants;
+use crate::db::MassEntry;
 use crate::item::{Item, ItemType};
 use crate::math::Vector;
-use crate::models::MassEntry;
 use crate::modules::construction::Construction;
 use crate::modules::dashboard::Dashboard;
 use crate::modules::engines::Engines;

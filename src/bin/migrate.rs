@@ -1,7 +1,7 @@
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 
-use space::math::get_db_url;
+use space::db::get_db_url;
 
 fn main() {
     let connection = PgConnection::establish(&get_db_url()).expect("Cannot connect");

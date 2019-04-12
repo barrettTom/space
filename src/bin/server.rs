@@ -10,9 +10,9 @@ use std::thread::{sleep, spawn};
 use std::time::{Duration, Instant, SystemTime};
 
 use space::constants;
+use space::db::{get_db_url, MassEntry};
 use space::mass::Mass;
-use space::math::{get_db_url, rand_name};
-use space::models::MassEntry;
+use space::math::rand_name;
 use space::schema::masses::dsl::masses as db_masses;
 use space::schema::masses::dsl::name as name_column;
 use space::server_connection::ServerConnection;

@@ -12,7 +12,9 @@ table! {
     users (id) {
         id -> Nullable<Integer>,
         name -> Varchar,
-        password -> Varchar,
-        last_modified -> Timestamp,
+        hash -> Varchar,
+        salt -> Varchar,
+        email -> Varchar,
+        created -> Timestamp,
     }
 }

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+{% if error %}
+	{{ error }}
+{% endif %}
+<form action=/post_login method=POST>
+	username<input type="text" name="name"/>
+	password<input type="password" name="password"/>
+	<input type="submit" value="login"/>
+</form>
+{% endblock content %}

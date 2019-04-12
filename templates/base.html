@@ -8,8 +8,18 @@
 			<a href="/">space</a>
 			<a href="/leaderboards">leaderboards</a>
 			<a href="/docs">docs</a>
+			{% if user %}
+				{{ user }}
+				<a href="/controlpanel">controlpanel</a>
+				<a href="/logout">logout</a>
+			{% else %}
+				<a href="/register">register</a>
+				<a href="/login">login</a>
+			{% endif %}
 		</div>
-		{% block content %}
-		{% endblock content %}
+		<div class="panel" style="float: right; width: 60%;">
+			{% block content %}
+			{% endblock content %}
+		</div>
 	</body>
 </html>

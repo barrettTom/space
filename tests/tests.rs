@@ -10,14 +10,17 @@ mod tests {
 
     use diesel::pg::PgConnection;
     use diesel::prelude::*;
-    use space::schema::masses::dsl;
+    use diesel::r2d2::{ConnectionManager, Pool};
+    use space::schema::masses::dsl as masses_dsl;
     use space::schema::masses::dsl::masses as db_masses;
+    use space::schema::users::dsl as users_dsl;
+    use space::schema::users::dsl::users as db_users;
 
     use space::constants;
+    use space::db::{encrypt, get_db_url, verify, Login, MassEntry, Registration};
     use space::item::{Item, ItemType};
     use space::mass::Mass;
-    use space::models::MassEntry;
-    use space::math::{get_db_url, Vector};
+    use space::math::Vector;
     use space::modules::construction;
     use space::modules::mining;
     use space::modules::navigation;
@@ -551,7 +554,7 @@ mod tests {
         assert!(len == size + 1);
 
         let db_mass = db_masses
-            .filter(dsl::name.eq(name.clone()))
+            .filter(masses_dsl::name.eq(name.clone()))
             .load::<MassEntry>(&connection)
             .expect("Cannot filter");
 
@@ -565,13 +568,13 @@ mod tests {
             .expect("Cannot update");
 
         let db_mass = db_masses
-            .filter(dsl::name.eq(name.clone()))
+            .filter(masses_dsl::name.eq(name.clone()))
             .load::<MassEntry>(&connection)
             .expect("Cannot filter");
 
         assert!(mass.position.x == db_mass[0].to_mass().1.position.x);
 
-        diesel::delete(db_masses.filter(dsl::name.eq(name)))
+        diesel::delete(db_masses.filter(masses_dsl::name.eq(name)))
             .execute(&connection)
             .expect("Cannot delete");
 
@@ -581,5 +584,48 @@ mod tests {
             .len();
 
         assert!(len == size);
+    }
+
+    #[test]
+    fn test_salt_hash() {
+        let mut password = String::from("this is a test password");
+        let (hash, salt) = encrypt(password.clone());
+        assert!(verify(password.clone(), hash.clone(), salt.clone()).is_ok());
+        password.push_str("bad");
+        assert!(!verify(password, hash, salt).is_ok());
+    }
+
+    #[test]
+    fn test_register_login_user() {
+        let pool = Pool::new(ConnectionManager::<PgConnection>::new(get_db_url())).unwrap();
+        let name = String::from("test");
+        let pass = String::from("test");
+        let form = Registration {
+            name: name.clone(),
+            email: "spalf0@gmail.com".to_string(),
+            password1: pass.clone(),
+            password2: pass.clone(),
+        };
+
+        form.insert_into(pool.get().unwrap()).unwrap();
+
+        let mut form = Login {
+            name: name.clone(),
+            password: pass.clone(),
+        };
+
+        assert!(form.verify(pool.get().unwrap()).is_ok());
+
+        form.password.push_str("zz");
+
+        assert!(!form.verify(pool.get().unwrap()).is_ok());
+
+        form.name.push_str("zz");
+
+        assert!(!form.verify(pool.get().unwrap()).is_ok());
+
+        diesel::delete(db_users.filter(users_dsl::name.eq(name)))
+            .execute(&pool.get().unwrap())
+            .expect("Cannot delete");
     }
 }
