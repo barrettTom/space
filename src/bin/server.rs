@@ -48,7 +48,7 @@ fn restore() -> HashMap<String, Mass> {
         .load::<MassEntry>(&connection)
         .expect("Cannot query, are you sure you can restore?")
         .iter()
-        .map(|mass_entry| mass_entry.to_mass())
+        .map(MassEntry::to_mass)
         .collect()
 }
 

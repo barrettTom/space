@@ -95,6 +95,21 @@ fn post_login(id: Identity, form: web::Form<Login>, data: web::Data<Pkg>) -> imp
     }
 }
 
+fn controlpanel(id: Identity, data: web::Data<Pkg>) -> impl Responder {
+    match &id.identity() {
+        Some(_) => {
+            let mut context = Context::new();
+            context.insert("ship", &false);
+            render(&data, id, "controlpanel.html", &mut context)
+        }
+        None => render(&data, id, "404.html", &mut Context::new()),
+    }
+}
+
+fn post_controlpanel(id: Identity, data: web::Data<Pkg>) -> impl Responder {
+    render(&data, id, "controlpanel.html", &mut Context::new())
+}
+
 fn logout(id: Identity, data: web::Data<Pkg>) -> impl Responder {
     id.forget();
     render(&data, id, "index.html", &mut Context::new())
@@ -129,6 +144,8 @@ fn main() {
             .service(web::resource("/").to(index))
             .service(web::resource("/user/{name}").to(user))
             .service(web::resource("/leaderboards").to(leaderboards))
+            .service(web::resource("/controlpanel").to(controlpanel))
+            .service(web::resource("/post_controlpanel").to(post_controlpanel))
             .service(web::resource("/docs").to(docs))
             .service(web::resource("/login").to(login))
             .service(web::resource("/post_login").to(post_login))
@@ -136,7 +153,7 @@ fn main() {
             .service(web::resource("/post_register").to(post_register))
             .service(web::resource("/logout").to(logout))
             .service(Files::new("/static", "static").show_files_listing())
-            .default_resource(|request| request.route(web::get().to(p404)))
+            .default_service(web::resource("").to(p404))
     })
     .bind("localhost:8000")
     .unwrap()

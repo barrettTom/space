@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+{% if error %}
+	{{ error }}
+{% endif %}
+{% if ship %}
+	{{ ship }}
+{% else %}
+	<form action=/post_controlpanel method=POST>
+		<input type="submit" value="generate"/>
+	</form>
+{% endif %}
+{% endblock content %}
