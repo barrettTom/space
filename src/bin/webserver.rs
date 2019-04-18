@@ -14,7 +14,7 @@ use diesel::r2d2::{ConnectionManager, Pool};
 use tera::{Context, Tera};
 
 use space::db::{get_db_url, Login, MassEntry, Registration};
-use space::schema::masses::dsl::masses as db_masses;
+use space::schema::masses::dsl::masses as masses_db;
 
 struct Pkg {
     pool: Pool<ConnectionManager<PgConnection>>,
@@ -27,6 +27,12 @@ impl Pkg {
             pool: Pool::new(ConnectionManager::<PgConnection>::new(get_db_url())).unwrap(),
             tera: compile_templates!("templates/*"),
         }
+    }
+
+    pub fn all_mass_entries(&self) -> Vec<MassEntry> {
+        masses_db
+            .load::<MassEntry>(&self.pool.get().unwrap())
+            .expect("Cannot query")
     }
 }
 
@@ -41,11 +47,7 @@ fn user(id: Identity, name: web::Path<String>, data: web::Data<Pkg>) -> impl Res
 }
 
 fn leaderboards(id: Identity, data: web::Data<Pkg>) -> impl Responder {
-    let connection = data.pool.get().unwrap();
-    let _mass_entries = db_masses
-        .load::<MassEntry>(&connection)
-        .expect("Cannot query, probably no migrations.");
-
+    let _mass_entries = data.all_mass_entries();
     render(&data, id, "leaderboards.html", &mut Context::new())
 }
 

@@ -9,15 +9,10 @@ mod tests {
     use std::time::{Duration, SystemTime};
 
     use diesel::pg::PgConnection;
-    use diesel::prelude::*;
     use diesel::r2d2::{ConnectionManager, Pool};
-    use space::schema::masses::dsl as masses_dsl;
-    use space::schema::masses::dsl::masses as db_masses;
-    use space::schema::users::dsl as users_dsl;
-    use space::schema::users::dsl::users as db_users;
 
     use space::constants;
-    use space::db::{encrypt, get_db_url, verify, Login, MassEntry, Registration};
+    use space::db::{encrypt, get_db_url, verify, Login, MassesDB, Registration};
     use space::item::{Item, ItemType};
     use space::mass::Mass;
     use space::math::Vector;
@@ -531,59 +526,31 @@ mod tests {
 
     #[test]
     fn test_postgres() {
-        let connection = PgConnection::establish(&get_db_url()).expect("Cannot connect");
-
-        let size = db_masses
-            .load::<MassEntry>(&connection)
-            .expect("Cannot query, probably no migrations, run 'cargo run --bin migrate'")
-            .len();
+        let masses_db = MassesDB::new();
+        let len_before = masses_db.len();
 
         let name = String::from("test");
         let mut mass = Mass::new_astroid();
 
-        diesel::insert_into(db_masses)
-            .values(&mass.to_mass_entry(name.clone(), SystemTime::now()))
-            .execute(&connection)
-            .expect("Cannot insert");
+        masses_db.insert(mass.to_mass_entry(name.clone(), SystemTime::now()));
 
-        let len = db_masses
-            .load::<MassEntry>(&connection)
-            .expect("Cannot query")
-            .len();
+        assert!(masses_db.len() == len_before + 1);
 
-        assert!(len == size + 1);
+        let db_mass = masses_db.get(name.clone());
 
-        let db_mass = db_masses
-            .filter(masses_dsl::name.eq(name.clone()))
-            .load::<MassEntry>(&connection)
-            .expect("Cannot filter");
-
-        assert!(mass.position.x == db_mass[0].to_mass().1.position.x);
+        assert!(mass.position.x == db_mass.to_mass().1.position.x);
 
         mass.process(&mut HashMap::new());
 
-        diesel::update(db_masses)
-            .set(mass.to_mass_entry(name.clone(), SystemTime::now()))
-            .execute(&connection)
-            .expect("Cannot update");
+        masses_db.update(mass.to_mass_entry(name.clone(), SystemTime::now()));
 
-        let db_mass = db_masses
-            .filter(masses_dsl::name.eq(name.clone()))
-            .load::<MassEntry>(&connection)
-            .expect("Cannot filter");
+        let db_mass = masses_db.get(name.clone());
 
-        assert!(mass.position.x == db_mass[0].to_mass().1.position.x);
+        assert!(mass.position.x == db_mass.to_mass().1.position.x);
 
-        diesel::delete(db_masses.filter(masses_dsl::name.eq(name)))
-            .execute(&connection)
-            .expect("Cannot delete");
+        masses_db.delete(db_mass);
 
-        let len = db_masses
-            .load::<MassEntry>(&connection)
-            .expect("Cannot query")
-            .len();
-
-        assert!(len == size);
+        assert!(masses_db.len() == len_before);
     }
 
     #[test]
@@ -600,32 +567,27 @@ mod tests {
         let pool = Pool::new(ConnectionManager::<PgConnection>::new(get_db_url())).unwrap();
         let name = String::from("test");
         let pass = String::from("test");
-        let form = Registration {
+        let reg_form = Registration {
             name: name.clone(),
             email: "spalf0@gmail.com".to_string(),
             password1: pass.clone(),
             password2: pass.clone(),
         };
 
-        form.insert_into(pool.get().unwrap()).unwrap();
+        reg_form.insert_into(pool.get().unwrap()).unwrap();
 
         let mut form = Login {
             name: name.clone(),
             password: pass.clone(),
         };
-
         assert!(form.verify(pool.get().unwrap()).is_ok());
 
         form.password.push_str("zz");
-
         assert!(!form.verify(pool.get().unwrap()).is_ok());
 
         form.name.push_str("zz");
-
         assert!(!form.verify(pool.get().unwrap()).is_ok());
 
-        diesel::delete(db_users.filter(users_dsl::name.eq(name)))
-            .execute(&pool.get().unwrap())
-            .expect("Cannot delete");
+        reg_form.to_user().unwrap().delete(pool.get().unwrap());
     }
 }

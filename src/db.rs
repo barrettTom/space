@@ -4,19 +4,26 @@ use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, PooledConnection};
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand as ring_rand};
+use std::collections::HashMap;
 use std::num::NonZeroU32;
 use std::time::SystemTime;
 
 use crate::constants;
 use crate::mass::Mass;
-use crate::schema::masses as db_masses;
-use crate::schema::users as db_users;
+use crate::math::rand_name;
+
+use crate::schema::masses as masses_schema;
+use crate::schema::masses::dsl as masses_dsl;
+use crate::schema::masses::dsl::masses as masses_db;
+use crate::schema::masses::dsl::name as name_column;
+
+use crate::schema::users as users_schema;
 use crate::schema::users::dsl as users_dsl;
-use crate::schema::users::dsl::users;
+use crate::schema::users::dsl::users as users_db;
 
 #[derive(Queryable, Insertable, Identifiable, AsChangeset, Associations, Debug)]
 #[belongs_to(User)]
-#[table_name = "db_masses"]
+#[table_name = "masses_schema"]
 pub struct MassEntry {
     pub id: Option<i32>,
     pub user_id: Option<i32>,
@@ -29,10 +36,116 @@ impl MassEntry {
     pub fn to_mass(&self) -> (String, Mass) {
         (self.name.clone(), serde_json::from_str(&self.mass).unwrap())
     }
+
+    pub fn insert(&self, connection: &PgConnection) {
+        diesel::insert_into(masses_db)
+            .values(self)
+            .execute(connection)
+            .expect("Cannot insert");
+    }
+
+    pub fn update(&self, connection: &PgConnection) {
+        diesel::update(masses_db)
+            .set(self)
+            .execute(connection)
+            .expect("Cannot update");
+    }
+
+    pub fn delete(&self, connection: &PgConnection) {
+        diesel::delete(masses_db.filter(masses_dsl::name.eq(self.name.clone())))
+            .execute(connection)
+            .expect("Cannot delete.");
+    }
+}
+
+pub struct MassesDB {
+    connection: PgConnection,
+}
+
+impl MassesDB {
+    pub fn new() -> MassesDB {
+        MassesDB {
+            connection: PgConnection::establish(&get_db_url()).expect("Cannot connect"),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.all().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.all().len() == 0
+    }
+
+    pub fn all(&self) -> Vec<MassEntry> {
+        masses_db
+            .load::<MassEntry>(&self.connection)
+            .expect("Cannot query.")
+    }
+
+    pub fn get(&self, name: String) -> MassEntry {
+        masses_db
+            .filter(masses_dsl::name.eq(name))
+            .load::<MassEntry>(&self.connection)
+            .expect("Cannot filter")
+            .pop()
+            .unwrap()
+    }
+
+    pub fn insert(&self, mass_entry: MassEntry) {
+        mass_entry.insert(&self.connection)
+    }
+
+    pub fn update(&self, mass_entry: MassEntry) {
+        mass_entry.update(&self.connection)
+    }
+
+    pub fn delete(&self, mass_entry: MassEntry) {
+        mass_entry.delete(&self.connection)
+    }
+
+    pub fn backup(&self, masses: HashMap<String, Mass>) {
+        let timestamp = SystemTime::now();
+        for (name, mass) in masses {
+            let mass_entry = mass.to_mass_entry(name.to_string(), timestamp);
+            diesel::insert_into(masses_db)
+                .values(&mass_entry)
+                .on_conflict(name_column)
+                .do_update()
+                .set(&mass_entry)
+                .execute(&self.connection)
+                .expect("Cannot backup");
+        }
+    }
+
+    pub fn restore(&self) -> HashMap<String, Mass> {
+        masses_db
+            .load::<MassEntry>(&self.connection)
+            .expect("Cannot query, are you sure you can restore?")
+            .iter()
+            .map(MassEntry::to_mass)
+            .collect()
+    }
+
+    pub fn populate(&self) -> HashMap<String, Mass> {
+        let mut masses: HashMap<String, Mass> = HashMap::new();
+
+        for _ in 0..constants::ASTROID_COUNT {
+            masses.insert(rand_name(), Mass::new_astroid());
+        }
+
+        masses
+    }
+}
+
+impl Default for MassesDB {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[derive(Queryable, Insertable, Identifiable, AsChangeset, Debug)]
-#[table_name = "db_users"]
+#[table_name = "users_schema"]
 pub struct User {
     pub id: Option<i32>,
     pub name: String,
@@ -40,6 +153,14 @@ pub struct User {
     pub salt: String,
     pub email: String,
     pub created: SystemTime,
+}
+
+impl User {
+    pub fn delete(&self, connection: PooledConnection<ConnectionManager<PgConnection>>) {
+        diesel::delete(users_db.filter(users_dsl::name.eq(self.name.clone())))
+            .execute(&connection)
+            .expect("Cannot delete.");
+    }
 }
 
 #[derive(Deserialize)]
@@ -53,7 +174,7 @@ impl Login {
         &self,
         connection: PooledConnection<ConnectionManager<PgConnection>>,
     ) -> Result<(), String> {
-        match users
+        match users_db
             .filter(users_dsl::name.eq(self.name.clone()))
             .load::<User>(&connection)
         {
@@ -102,7 +223,7 @@ impl Registration {
         &self,
         connection: PooledConnection<ConnectionManager<PgConnection>>,
     ) -> Result<(), String> {
-        match diesel::insert_into(users)
+        match diesel::insert_into(users_db)
             .values(&self.to_user()?)
             .execute(&connection)
         {

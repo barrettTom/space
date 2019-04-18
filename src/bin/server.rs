@@ -1,56 +1,14 @@
 extern crate space;
 
 use clap::{App, SubCommand};
-use diesel::pg::PgConnection;
-use diesel::prelude::*;
-use std::collections::HashMap;
 use std::io::Write;
 use std::net::TcpListener;
 use std::thread::{sleep, spawn};
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 
 use space::constants;
-use space::db::{get_db_url, MassEntry};
-use space::mass::Mass;
-use space::math::rand_name;
-use space::schema::masses::dsl::masses as db_masses;
-use space::schema::masses::dsl::name as name_column;
+use space::db::MassesDB;
 use space::server_connection::ServerConnection;
-
-fn populate() -> HashMap<String, Mass> {
-    let mut masses: HashMap<String, Mass> = HashMap::new();
-
-    for _ in 0..constants::ASTROID_COUNT {
-        masses.insert(rand_name(), Mass::new_astroid());
-    }
-
-    masses
-}
-
-fn backup(masses: HashMap<String, Mass>) {
-    let connection = PgConnection::establish(&get_db_url()).expect("Cannot connect");
-    let timestamp = SystemTime::now();
-    for (name, mass) in masses {
-        let mass_entry = mass.to_mass_entry(name.to_string(), timestamp);
-        diesel::insert_into(db_masses)
-            .values(&mass_entry)
-            .on_conflict(name_column)
-            .do_update()
-            .set(&mass_entry)
-            .execute(&connection)
-            .expect("Cannot backup");
-    }
-}
-
-fn restore() -> HashMap<String, Mass> {
-    let connection = PgConnection::establish(&get_db_url()).expect("Cannot connect");
-    db_masses
-        .load::<MassEntry>(&connection)
-        .expect("Cannot query, are you sure you can restore?")
-        .iter()
-        .map(MassEntry::to_mass)
-        .collect()
-}
 
 fn main() {
     let listener = TcpListener::bind("localhost:6000").unwrap();
@@ -61,8 +19,8 @@ fn main() {
         .get_matches();
 
     let mut masses = match matches.subcommand_name() {
-        Some("--restore") => restore(),
-        _ => populate(),
+        Some("--restore") => MassesDB::new().restore(),
+        _ => MassesDB::new().populate(),
     };
 
     let mut backup_countdown = constants::BACKUP_COUNTDOWN;
@@ -105,7 +63,7 @@ fn main() {
 
                 if backup_countdown == 0 {
                     let masses_clone = masses.clone();
-                    spawn(move || backup(masses_clone));
+                    spawn(|| MassesDB::new().backup(masses_clone));
                     backup_countdown = constants::BACKUP_COUNTDOWN;
                 }
 
