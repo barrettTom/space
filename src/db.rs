@@ -1,7 +1,7 @@
 use data_encoding::HEXUPPER;
 use diesel::pg::PgConnection;
-use diesel::prelude::*;
-use diesel::r2d2::{ConnectionManager, PooledConnection};
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand as ring_rand};
 use std::collections::HashMap;
@@ -15,7 +15,7 @@ use crate::math::rand_name;
 use crate::schema::masses as masses_schema;
 use crate::schema::masses::dsl as masses_dsl;
 use crate::schema::masses::dsl::masses as masses_db;
-use crate::schema::masses::dsl::name as name_column;
+use crate::schema::masses::dsl::name as masses_name;
 
 use crate::schema::users as users_schema;
 use crate::schema::users::dsl as users_dsl;
@@ -37,7 +37,7 @@ impl MassEntry {
         (self.name.clone(), serde_json::from_str(&self.mass).unwrap())
     }
 
-    pub fn insert(&self, connection: &PgConnection) {
+    pub fn insert_into(&self, connection: &PgConnection) {
         diesel::insert_into(masses_db)
             .values(self)
             .execute(connection)
@@ -59,14 +59,20 @@ impl MassEntry {
 }
 
 pub struct MassesDB {
-    connection: PgConnection,
+    connection: PooledConnection<ConnectionManager<PgConnection>>,
 }
 
 impl MassesDB {
-    pub fn new() -> MassesDB {
-        MassesDB {
-            connection: PgConnection::establish(&get_db_url()).expect("Cannot connect"),
-        }
+    pub fn new(connection: Option<PooledConnection<ConnectionManager<PgConnection>>>) -> MassesDB {
+        let connection = match connection {
+            Some(connection) => connection,
+            None => Pool::new(ConnectionManager::<PgConnection>::new(get_db_url()))
+                .unwrap()
+                .get()
+                .unwrap(),
+        };
+
+        MassesDB { connection }
     }
 
     pub fn len(&self) -> usize {
@@ -93,7 +99,7 @@ impl MassesDB {
     }
 
     pub fn insert(&self, mass_entry: MassEntry) {
-        mass_entry.insert(&self.connection)
+        mass_entry.insert_into(&self.connection)
     }
 
     pub fn update(&self, mass_entry: MassEntry) {
@@ -110,7 +116,7 @@ impl MassesDB {
             let mass_entry = mass.to_mass_entry(name.to_string(), timestamp);
             diesel::insert_into(masses_db)
                 .values(&mass_entry)
-                .on_conflict(name_column)
+                .on_conflict(masses_name)
                 .do_update()
                 .set(&mass_entry)
                 .execute(&self.connection)
@@ -140,7 +146,7 @@ impl MassesDB {
 
 impl Default for MassesDB {
     fn default() -> Self {
-        Self::new()
+        Self::new(None)
     }
 }
 
@@ -156,6 +162,19 @@ pub struct User {
 }
 
 impl User {
+    pub fn insert_into(
+        &self,
+        connection: PooledConnection<ConnectionManager<PgConnection>>,
+    ) -> Result<(), String> {
+        match diesel::insert_into(users_db)
+            .values(self)
+            .execute(&connection)
+        {
+            Ok(_) => Ok(()),
+            Err(_error) => Err(String::from("Already exists.")),
+        }
+    }
+
     pub fn delete(&self, connection: PooledConnection<ConnectionManager<PgConnection>>) {
         diesel::delete(users_db.filter(users_dsl::name.eq(self.name.clone())))
             .execute(&connection)
@@ -219,17 +238,12 @@ impl Registration {
         }
     }
 
-    pub fn insert_into(
+    pub fn to_user_and_insert_into(
         &self,
         connection: PooledConnection<ConnectionManager<PgConnection>>,
     ) -> Result<(), String> {
-        match diesel::insert_into(users_db)
-            .values(&self.to_user()?)
-            .execute(&connection)
-        {
-            Ok(_) => Ok(()),
-            Err(_error) => Err(String::from("Already exists.")),
-        }
+        let user = self.to_user()?;
+        user.insert_into(connection)
     }
 }
 

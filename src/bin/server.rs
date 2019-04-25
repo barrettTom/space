@@ -19,8 +19,8 @@ fn main() {
         .get_matches();
 
     let mut masses = match matches.subcommand_name() {
-        Some("--restore") => MassesDB::new().restore(),
-        _ => MassesDB::new().populate(),
+        Some("--restore") => MassesDB::new(None).restore(),
+        _ => MassesDB::new(None).populate(),
     };
 
     let mut backup_countdown = constants::BACKUP_COUNTDOWN;
@@ -63,7 +63,7 @@ fn main() {
 
                 if backup_countdown == 0 {
                     let masses_clone = masses.clone();
-                    spawn(|| MassesDB::new().backup(masses_clone));
+                    spawn(|| MassesDB::new(None).backup(masses_clone));
                     backup_countdown = constants::BACKUP_COUNTDOWN;
                 }
 

@@ -9,12 +9,10 @@ use actix_files::Files;
 use actix_web::middleware::identity::{CookieIdentityPolicy, Identity, IdentityService};
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use diesel::pg::PgConnection;
-use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use tera::{Context, Tera};
 
-use space::db::{get_db_url, Login, MassEntry, Registration};
-use space::schema::masses::dsl::masses as masses_db;
+use space::db::{get_db_url, Login, MassEntry, MassesDB, Registration};
 
 struct Pkg {
     pool: Pool<ConnectionManager<PgConnection>>,
@@ -30,9 +28,7 @@ impl Pkg {
     }
 
     pub fn all_mass_entries(&self) -> Vec<MassEntry> {
-        masses_db
-            .load::<MassEntry>(&self.pool.get().unwrap())
-            .expect("Cannot query")
+        MassesDB::new(Some(self.pool.get().unwrap())).all()
     }
 }
 
@@ -66,7 +62,7 @@ fn post_register(
     form: web::Form<Registration>,
     data: web::Data<Pkg>,
 ) -> impl Responder {
-    match form.insert_into(data.pool.get().unwrap()) {
+    match form.to_user_and_insert_into(data.pool.get().unwrap()) {
         Ok(_) => {
             id.remember(form.name.to_owned());
             render(&data, id, "index.html", &mut Context::new())

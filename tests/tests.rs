@@ -526,7 +526,7 @@ mod tests {
 
     #[test]
     fn test_postgres() {
-        let masses_db = MassesDB::new();
+        let masses_db = MassesDB::new(None);
         let len_before = masses_db.len();
 
         let name = String::from("test");
@@ -574,7 +574,9 @@ mod tests {
             password2: pass.clone(),
         };
 
-        reg_form.insert_into(pool.get().unwrap()).unwrap();
+        reg_form
+            .to_user_and_insert_into(pool.get().unwrap())
+            .unwrap();
 
         let mut form = Login {
             name: name.clone(),
