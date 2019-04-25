@@ -28,15 +28,16 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                let new_connection = ServerConnection::new(stream, &mut masses);
-                let exists = connections.iter().position(|connection| {
-                    connection.name == new_connection.name
-                        && connection.module_type == new_connection.module_type
-                });
-                if let Some(index) = exists {
-                    connections.remove(index);
+                if let Some(new_connection) = ServerConnection::new(stream, &mut masses) {
+                    let exists = connections.iter().position(|connection| {
+                        connection.name == new_connection.name
+                            && connection.module_type == new_connection.module_type
+                    });
+                    if let Some(index) = exists {
+                        connections.remove(index);
+                    }
+                    connections.push(new_connection);
                 }
-                connections.push(new_connection);
             }
             _ => {
                 let timer = Instant::now();

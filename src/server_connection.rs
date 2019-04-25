@@ -17,31 +17,36 @@ pub struct ServerConnection {
 }
 
 impl ServerConnection {
-    pub fn new(mut stream: TcpStream, masses: &mut HashMap<String, Mass>) -> ServerConnection {
+    pub fn new(
+        mut stream: TcpStream,
+        masses: &mut HashMap<String, Mass>,
+    ) -> Option<ServerConnection> {
         let mut buff_r = BufReader::new(stream.try_clone().unwrap());
 
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
         let name = &recv[..recv.find(':').unwrap()];
 
-        let ship = masses
-            .entry(name.to_string())
-            .or_insert_with(Mass::new_ship);
+        match masses.get(&name.to_string()) {
+            Some(ship) => {
+                let send = serde_json::to_string(&ship.get_modules()).unwrap() + "\n";
+                stream.write_all(send.as_bytes()).unwrap();
 
-        let send = serde_json::to_string(&ship.get_modules()).unwrap() + "\n";
-        stream.write_all(send.as_bytes()).unwrap();
+                let mut recv = String::new();
+                buff_r.read_line(&mut recv).unwrap();
+                let module_type: ModuleType =
+                    serde_json::from_str(&recv.replace("\n", "")).unwrap();
 
-        let mut recv = String::new();
-        buff_r.read_line(&mut recv).unwrap();
-        let module_type: ModuleType = serde_json::from_str(&recv.replace("\n", "")).unwrap();
-
-        stream.set_nonblocking(true).unwrap();
-        ServerConnection {
-            name: String::from(name),
-            module_type,
-            stream,
-            buff_r,
-            open: true,
+                stream.set_nonblocking(true).unwrap();
+                Some(ServerConnection {
+                    name: String::from(name),
+                    module_type,
+                    stream,
+                    buff_r,
+                    open: true,
+                })
+            }
+            None => None,
         }
     }
 

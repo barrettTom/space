@@ -23,6 +23,7 @@ world
 
 nice to haves
 - pretty dashboard
+- protocol buffers for client server communication?
 - more cli parsing stuff
 - website with leaderboards, documentation, account stuff for main server
 - open server api with documentation so people can develop their own clients
