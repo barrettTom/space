@@ -5,6 +5,8 @@ extern crate space;
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+    use std::io::Write;
+    use std::net::{TcpListener, TcpStream};
     use std::thread::sleep;
     use std::time::{Duration, SystemTime};
 
@@ -12,7 +14,8 @@ mod tests {
     use diesel::r2d2::{ConnectionManager, Pool};
 
     use space::constants;
-    use space::db::{encrypt, get_db_url, verify, Login, MassesDB, Registration};
+    use space::db::{encrypt, get_db_url, verify, Login, Registration};
+    use space::masses_db::MassesDB;
     use space::item::{Item, ItemType};
     use space::mass::Mass;
     use space::math::Vector;
@@ -22,6 +25,7 @@ mod tests {
     use space::modules::refinery;
     use space::modules::tractorbeam;
     use space::modules::types::ModuleType;
+    use space::server_connection::ServerConnection;
 
     fn setup() -> (Mass, HashMap<String, Mass>) {
         let ship = Mass::new_ship();
@@ -434,18 +438,6 @@ mod tests {
                 break;
             }
         }
-
-        /* for plotting
-        //let mut xy = Vec::new();
-        //xy.push((iterated, astroid.position.x));
-        let l =
-            plotlib::line::Line::new(&xy[..]).style(plotlib::style::LineStyle::new().colour("red"));
-        let v = plotlib::view::ContinuousView::new().add(&l);
-        plotlib::page::Page::single(&v)
-            .save("line.svg")
-            .expect("error");
-        std::process::Command::new("feh").arg("--conversion-timeout").arg("1").arg("line.svg").output().expect("problem");
-        */
     }
 
     #[test]
@@ -569,7 +561,7 @@ mod tests {
         let pass = String::from("test");
         let reg_form = Registration {
             name: name.clone(),
-            email: "spalf0@gmail.com".to_string(),
+            email: "test@gmail.com".to_string(),
             password1: pass.clone(),
             password2: pass.clone(),
         };
@@ -589,6 +581,46 @@ mod tests {
 
         form.name.push_str("zz");
         assert!(!form.verify(pool.get().unwrap()).is_ok());
+
+        reg_form.to_user().unwrap().delete(pool.get().unwrap());
+    }
+
+    #[test]
+    fn test_server_connection() {
+        let (_, mut masses) = setup();
+
+        let listener = TcpListener::bind(constants::SERVER_IP_PORT).unwrap();
+        let mut client_stream =
+            TcpStream::connect(constants::SERVER_IP_PORT).expect("Cannot connect");
+
+        let name = String::from("tom");
+        let pass = String::from("pass");
+
+        let send = name.clone()
+            + ":"
+            + &pass
+            + ":"
+            + &serde_json::to_string(&ModuleType::Mining).unwrap()
+            + "\n";
+
+        client_stream.write_all(send.as_bytes()).unwrap();
+
+        if let Ok((stream, _)) = listener.accept() {
+            assert!(ServerConnection::new(stream, &mut masses).is_none());
+        }
+
+        let pool = Pool::new(ConnectionManager::<PgConnection>::new(get_db_url())).unwrap();
+
+        let reg_form = Registration {
+            name: name.clone(),
+            email: "spalf0@gmail.com".to_string(),
+            password1: pass.clone(),
+            password2: pass.clone(),
+        };
+
+        reg_form
+            .to_user_and_insert_into(pool.get().unwrap())
+            .unwrap();
 
         reg_form.to_user().unwrap().delete(pool.get().unwrap());
     }

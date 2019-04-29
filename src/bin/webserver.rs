@@ -12,7 +12,8 @@ use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use tera::{Context, Tera};
 
-use space::db::{get_db_url, Login, MassEntry, MassesDB, Registration};
+use space::masses_db::MassesDB;
+use space::db::{get_db_url, Login, MassEntry, Registration};
 
 struct Pkg {
     pool: Pool<ConnectionManager<PgConnection>>,

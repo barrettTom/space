@@ -31,6 +31,8 @@ pub const FLOAT_PRECISION: f64 = 0.001;
 pub const LOOP_DURATION_MS: u64 = 100;
 pub const BACKUP_COUNTDOWN: usize = 10;
 
+pub const SERVER_IP_PORT: &str = "localhost:6000";
+
 pub const POSTGRES_USERNAME: &str = "space";
 pub const POSTGRES_PASSWORD: &str = "space";
 pub const POSTGRES_IP: &str = "localhost";

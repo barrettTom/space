@@ -30,7 +30,6 @@ struct Config {
 }
 
 fn main() {
-    let send;
     let server;
     let mut name = String::new();
 
@@ -44,7 +43,7 @@ fn main() {
         .subcommand(SubCommand::with_name("construction"))
         .get_matches();
 
-    match File::open(".space") {
+    let mut send = match File::open(".space") {
         Ok(mut config_file) => {
             let mut config_string = String::new();
             config_file.read_to_string(&mut config_string).unwrap();
@@ -52,7 +51,7 @@ fn main() {
 
             server = config.server.unwrap();
             name = config.username.unwrap();
-            send = name.clone() + ":" + &config.password.unwrap() + "\n";
+            name.clone() + ":" + &config.password.unwrap() + ":"
         }
         Err(_err) => {
             println!("Ship Name:");
@@ -62,20 +61,12 @@ fn main() {
             let mut password = String::new();
             println!("Password:");
             io::stdin().read_line(&mut password).expect("Failed");
+            password = password.replace("\n", "");
 
             server = "localhost:6000".to_string();
-            send = name.clone() + ":" + &password;
+            name.clone() + ":" + &password + ":"
         }
-    }
-
-    let mut stream = TcpStream::connect(&server).unwrap();
-    let mut buff_r = BufReader::new(stream.try_clone().unwrap());
-
-    stream.write_all(send.as_bytes()).unwrap();
-
-    let mut recv = String::new();
-    buff_r.read_line(&mut recv).unwrap();
-    let modules: Vec<ModuleType> = serde_json::from_str(&recv.replace("\n", "")).unwrap();
+    };
 
     let module_type = match matches.subcommand_name() {
         Some("mining") => ModuleType::Mining,
@@ -87,20 +78,23 @@ fn main() {
         Some("construction") => ModuleType::Construction,
         _ => {
             println!("Choose your module:");
-            for (i, module) in modules.iter().enumerate() {
+            for (i, module) in ModuleType::iter().iter().enumerate() {
                 println!("{}) {:?}", i, module);
             }
 
             let mut choice = String::new();
             io::stdin().read_line(&mut choice).expect("Failed");
-            modules
+            ModuleType::iter()
                 .into_iter()
                 .nth(choice.replace("\n", "").parse::<usize>().unwrap())
                 .unwrap()
         }
     };
 
-    let send = serde_json::to_string(&module_type).unwrap() + "\n";
+    send += &(serde_json::to_string(&module_type).unwrap() + "\n");
+
+    let mut stream = TcpStream::connect(&server).unwrap();
+    let buff_r = BufReader::new(stream.try_clone().unwrap());
     stream.write_all(send.as_bytes()).unwrap();
 
     match module_type {

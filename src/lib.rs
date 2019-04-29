@@ -14,3 +14,4 @@ pub mod modules;
 pub mod schema;
 pub mod server_connection;
 pub mod storage;
+pub mod masses_db;

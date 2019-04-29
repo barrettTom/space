@@ -7,11 +7,11 @@ use std::thread::{sleep, spawn};
 use std::time::{Duration, Instant};
 
 use space::constants;
-use space::db::MassesDB;
+use space::masses_db::MassesDB;
 use space::server_connection::ServerConnection;
 
 fn main() {
-    let listener = TcpListener::bind("localhost:6000").unwrap();
+    let listener = TcpListener::bind(constants::SERVER_IP_PORT).unwrap();
     listener.set_nonblocking(true).unwrap();
 
     let matches = App::new("space server")
