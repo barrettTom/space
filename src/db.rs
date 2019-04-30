@@ -18,7 +18,6 @@ use crate::schema::users as users_schema;
 use crate::schema::users::dsl as users_dsl;
 use crate::schema::users::dsl::users as users_db;
 
-
 #[derive(Queryable, Insertable, Identifiable, AsChangeset, Associations, Debug)]
 #[belongs_to(User)]
 #[table_name = "masses_schema"]

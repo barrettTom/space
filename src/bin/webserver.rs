@@ -12,8 +12,8 @@ use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use tera::{Context, Tera};
 
-use space::masses_db::MassesDB;
 use space::db::{get_db_url, Login, MassEntry, Registration};
+use space::masses_db::all;
 
 struct Pkg {
     pool: Pool<ConnectionManager<PgConnection>>,
@@ -29,7 +29,7 @@ impl Pkg {
     }
 
     pub fn all_mass_entries(&self) -> Vec<MassEntry> {
-        MassesDB::new(Some(self.pool.get().unwrap())).all()
+        all(&self.pool.get().unwrap())
     }
 }
 

@@ -1,11 +1,10 @@
 extern crate serde_json;
 
-use std::collections::HashMap;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::net::TcpStream;
 
-use crate::mass::Mass;
+use crate::masses_db::Masses;
 use crate::modules::types::ModuleType;
 
 pub struct ServerConnection {
@@ -17,7 +16,7 @@ pub struct ServerConnection {
 }
 
 impl ServerConnection {
-    pub fn new(stream: TcpStream, masses: &mut HashMap<String, Mass>) -> Option<ServerConnection> {
+    pub fn new(stream: TcpStream, masses: &mut Masses) -> Option<ServerConnection> {
         let mut buff_r = BufReader::new(stream.try_clone().unwrap());
 
         let mut recv = String::new();
@@ -28,7 +27,7 @@ impl ServerConnection {
         let _password = data[1];
         let module_type_str = data[2];
 
-        if masses.contains_key(name) {
+        if masses.hashmap.contains_key(name) {
             let module_type: ModuleType =
                 serde_json::from_str(&module_type_str.replace("\n", "")).unwrap();
 

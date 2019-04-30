@@ -31,3 +31,4 @@ nice to haves
 - have something like lightshope donation page
 - give tractorbeam client bring option ability to choose desired distance
 - make constants file some way of being global and read on run so you can give it faster sleep paramters for tests
+- test database that can wipe the database everytime tests are ran

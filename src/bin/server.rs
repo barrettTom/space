@@ -1,13 +1,12 @@
 extern crate space;
 
 use clap::{App, SubCommand};
-use std::io::Write;
 use std::net::TcpListener;
-use std::thread::{sleep, spawn};
+use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use space::constants;
-use space::masses_db::MassesDB;
+use space::masses_db::{Init, Masses};
 use space::server_connection::ServerConnection;
 
 fn main() {
@@ -19,8 +18,8 @@ fn main() {
         .get_matches();
 
     let mut masses = match matches.subcommand_name() {
-        Some("--restore") => MassesDB::new(None).restore(),
-        _ => MassesDB::new(None).populate(),
+        Some("--restore") => Masses::new(Init::Restore),
+        _ => Masses::new(Init::Populate),
     };
 
     let mut backup_countdown = constants::BACKUP_COUNTDOWN;
@@ -42,29 +41,16 @@ fn main() {
             _ => {
                 let timer = Instant::now();
 
-                for connection in &mut connections {
+                for connection in connections.iter_mut() {
                     if connection.open {
-                        let mut ship = masses.remove(&connection.name).unwrap();
-
-                        let send = ship.get_client_data(connection.module_type.clone(), &masses);
-                        connection.open = connection.stream.write(send.as_bytes()).is_ok();
-
-                        let recv = connection.receive();
-                        ship.give_received_data(connection.module_type.clone(), recv);
-
-                        masses.insert(connection.name.clone(), ship);
+                        masses.communicate(connection);
                     }
                 }
 
-                for key in masses.clone().keys() {
-                    let mut mass = masses.remove(key).unwrap();
-                    mass.process(&mut masses);
-                    masses.insert(key.to_string(), mass);
-                }
+                masses.process();
 
                 if backup_countdown == 0 {
-                    let masses_clone = masses.clone();
-                    spawn(|| MassesDB::new(None).backup(masses_clone));
+                    masses.backup();
                     backup_countdown = constants::BACKUP_COUNTDOWN;
                 }
 
