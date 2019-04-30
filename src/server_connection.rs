@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::net::TcpStream;
 
-use crate::masses_db::Masses;
+use crate::masses::Masses;
 use crate::modules::types::ModuleType;
 
 pub struct ServerConnection {

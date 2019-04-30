@@ -55,7 +55,7 @@ impl Masses {
                 astroid.velocity = Vector::default();
                 hashmap.insert(String::from("astroid"), astroid);
                 hashmap
-            },
+            }
         };
 
         Masses {

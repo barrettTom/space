@@ -17,7 +17,7 @@ mod tests {
     use space::db::{encrypt, get_db_url, verify, Login, Registration};
     use space::item::{Item, ItemType};
     use space::mass::Mass;
-    use space::masses_db::{Init, Masses};
+    use space::masses::{Init, Masses};
     use space::math::Vector;
     use space::modules::construction;
     use space::modules::mining;
@@ -561,9 +561,12 @@ mod tests {
             email: "test@gmail.com".to_string(),
             password1: pass.clone(),
             password2: pass.clone(),
-        }.to_user().expect("Cannot create");
+        }
+        .to_user()
+        .expect("Cannot create");
 
-        user.insert_into(pool.get().unwrap()).expect("Cannot insert");
+        user.insert_into(pool.get().unwrap())
+            .expect("Cannot insert");
 
         let mut form = Login {
             name: name.clone(),
@@ -610,9 +613,12 @@ mod tests {
             email: "spalf0@gmail.com".to_string(),
             password1: pass.clone(),
             password2: pass.clone(),
-        }.to_user().expect("Cannot create");
+        }
+        .to_user()
+        .expect("Cannot create");
 
-        user.insert_into(pool.get().unwrap()).expect("Cannot insert");
+        user.insert_into(pool.get().unwrap())
+            .expect("Cannot insert");
 
         //client_stream.write_all(send.as_bytes()).unwrap();
         //if let Ok((stream, _)) = listener.accept() {

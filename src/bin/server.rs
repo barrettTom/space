@@ -6,7 +6,7 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use space::constants;
-use space::masses_db::{Init, Masses};
+use space::masses::{Init, Masses};
 use space::server_connection::ServerConnection;
 
 fn main() {

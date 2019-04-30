@@ -9,7 +9,7 @@ pub mod constants;
 pub mod db;
 pub mod item;
 pub mod mass;
-pub mod masses_db;
+pub mod masses;
 pub mod math;
 pub mod modules;
 pub mod schema;
