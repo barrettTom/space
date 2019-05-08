@@ -27,7 +27,7 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                if let Some(new_connection) = ServerConnection::new(stream, &mut masses) {
+                if let Ok(new_connection) = ServerConnection::new(stream, &mut masses) {
                     let exists = connections.iter().position(|connection| {
                         connection.name == new_connection.name
                             && connection.module_type == new_connection.module_type
@@ -50,16 +50,17 @@ fn main() {
                 masses.process();
 
                 if backup_countdown == 0 {
+                    masses.import();
                     masses.backup();
                     backup_countdown = constants::BACKUP_COUNTDOWN;
                 }
+                backup_countdown -= 1;
 
                 if timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
                     sleep(Duration::from_millis(
                         constants::LOOP_DURATION_MS - timer.elapsed().as_millis() as u64,
                     ));
                 }
-                backup_countdown -= 1;
             }
         }
     }

@@ -23,7 +23,13 @@ pub fn client_tractorbeam(mut stream: TcpStream, mut buff_r: BufReader<TcpStream
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let data: tractorbeam::ClientData = serde_json::from_str(&recv.replace("\n", "")).unwrap();
+
+        let data: Result<tractorbeam::ClientData, serde_json::Error> = serde_json::from_str(&recv);
+        if data.is_err() {
+            print!("{}", recv);
+            break;
+        }
+        let data = data.unwrap();
 
         write!(stdout, "{}", termion::clear::All).unwrap();
 

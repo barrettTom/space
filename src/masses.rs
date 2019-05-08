@@ -9,6 +9,7 @@ use std::time::SystemTime;
 
 use crate::constants;
 use crate::db::{get_db_url, MassEntry};
+use crate::forms::Login;
 use crate::mass::Mass;
 use crate::math::{rand_name, Vector};
 use crate::server_connection::ServerConnection;
@@ -90,7 +91,7 @@ impl Masses {
         spawn(move || {
             let timestamp = SystemTime::now();
             for (name, mass) in hashmap_clone {
-                let mass_entry = mass.to_mass_entry(name.to_string(), timestamp);
+                let mass_entry = mass.to_mass_entry(name.to_string(), None, timestamp);
                 diesel::insert_into(masses_db)
                     .values(&mass_entry)
                     .on_conflict(masses_name)
@@ -100,6 +101,30 @@ impl Masses {
                     .expect("Cannot backup");
             }
         });
+    }
+
+    pub fn import(&mut self) {
+        self.hashmap = masses_db
+            .load::<MassEntry>(&self.connection)
+            .expect("Cannot query, are you sure you can restore?")
+            .iter()
+            .map(MassEntry::to_mass)
+            .collect();
+    }
+
+    pub fn validate(
+        &self,
+        username: String,
+        ship_name: String,
+        password: String,
+    ) -> Result<(), String> {
+        if !self.hashmap.contains_key(&ship_name) {
+            return Err(String::from("Ship doesn't exist."));
+        }
+
+        Login { username, password }.verify(&self.connection)?;
+
+        Ok(())
     }
 
     pub fn len(&self) -> usize {

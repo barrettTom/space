@@ -25,13 +25,13 @@ use space::modules::types::ModuleType;
 #[derive(Debug, Deserialize)]
 struct Config {
     username: Option<String>,
+    ship_name: Option<String>,
     password: Option<String>,
     server: Option<String>,
 }
 
 fn main() {
     let server;
-    let mut name = String::new();
 
     let matches = App::new("space client")
         .subcommand(SubCommand::with_name("mining"))
@@ -50,13 +50,23 @@ fn main() {
             let config: Config = toml::from_str(&config_string).unwrap();
 
             server = config.server.unwrap();
-            name = config.username.unwrap();
-            name.clone() + ":" + &config.password.unwrap() + ":"
+            config.username.unwrap()
+                + ":"
+                + &config.ship_name.unwrap()
+                + ":"
+                + &config.password.unwrap()
+                + ":"
         }
         Err(_err) => {
+            let mut username = String::new();
             println!("Ship Name:");
-            io::stdin().read_line(&mut name).expect("Failed");
-            name = name.replace("\n", "");
+            io::stdin().read_line(&mut username).expect("Failed");
+            username = username.replace("\n", "");
+
+            let mut ship_name = String::new();
+            println!("Ship Name:");
+            io::stdin().read_line(&mut ship_name).expect("Failed");
+            ship_name = ship_name.replace("\n", "");
 
             let mut password = String::new();
             println!("Password:");
@@ -64,7 +74,7 @@ fn main() {
             password = password.replace("\n", "");
 
             server = "localhost:6000".to_string();
-            name.clone() + ":" + &password + ":"
+            username + ":" + &ship_name + ":" + &password + ":"
         }
     };
 

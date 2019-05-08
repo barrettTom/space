@@ -1,3 +1,4 @@
 username = "tom"
+ship_name = "skipper"
 password = "pass"
 server = "localhost:6000"

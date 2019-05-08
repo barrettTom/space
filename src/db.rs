@@ -59,7 +59,7 @@ impl MassEntry {
 #[table_name = "users_schema"]
 pub struct User {
     pub id: Option<i32>,
-    pub name: String,
+    pub username: String,
     pub hash: String,
     pub salt: String,
     pub email: String,
@@ -67,6 +67,48 @@ pub struct User {
 }
 
 impl User {
+    pub fn get(
+        username: String,
+        connection: PooledConnection<ConnectionManager<PgConnection>>,
+    ) -> User {
+        users_db
+            .filter(users_dsl::username.eq(username))
+            .load::<User>(&connection)
+            .expect("Cannot get")
+            .pop()
+            .unwrap()
+    }
+
+    pub fn get_ship(&self, connection: &PgConnection) -> Option<Mass> {
+        match masses_db
+            .filter(masses_dsl::user_id.eq(self.id))
+            .load::<MassEntry>(connection)
+            .expect("Cannot get")
+            .pop()
+        {
+            Some(mass_entry) => Some(mass_entry.to_mass().1),
+            None => None,
+        }
+    }
+
+    pub fn get_ship_name(&self, connection: &PgConnection) -> Option<String> {
+        match masses_db
+            .filter(masses_dsl::user_id.eq(self.id))
+            .load::<MassEntry>(connection)
+            .expect("Cannot get")
+            .pop()
+        {
+            Some(mass_entry) => Some(mass_entry.to_mass().0),
+            None => None,
+        }
+    }
+
+    pub fn give_ship(&self, ship_name: String, connection: &PgConnection) {
+        Mass::new_ship()
+            .to_mass_entry(ship_name, self.id, SystemTime::now())
+            .insert_into(connection);
+    }
+
     pub fn insert_into(
         &self,
         connection: PooledConnection<ConnectionManager<PgConnection>>,
@@ -81,74 +123,9 @@ impl User {
     }
 
     pub fn delete(&self, connection: PooledConnection<ConnectionManager<PgConnection>>) {
-        diesel::delete(users_db.filter(users_dsl::name.eq(self.name.clone())))
+        diesel::delete(users_db.filter(users_dsl::username.eq(self.username.clone())))
             .execute(&connection)
             .expect("Cannot delete.");
-    }
-}
-
-#[derive(Deserialize)]
-pub struct Login {
-    pub name: String,
-    pub password: String,
-}
-
-impl Login {
-    pub fn verify(
-        &self,
-        connection: PooledConnection<ConnectionManager<PgConnection>>,
-    ) -> Result<(), String> {
-        match users_db
-            .filter(users_dsl::name.eq(self.name.clone()))
-            .load::<User>(&connection)
-        {
-            Ok(user) => {
-                if let false = user.is_empty() {
-                    verify(
-                        self.password.clone(),
-                        user[0].hash.clone(),
-                        user[0].salt.clone(),
-                    )
-                } else {
-                    Err(String::from("Username not found."))
-                }
-            }
-            Err(_) => Err(String::from("Username not found.")),
-        }
-    }
-}
-
-#[derive(Deserialize)]
-pub struct Registration {
-    pub name: String,
-    pub email: String,
-    pub password1: String,
-    pub password2: String,
-}
-
-impl Registration {
-    pub fn to_user(&self) -> Result<User, String> {
-        if self.password1 == self.password2 {
-            let (hash, salt) = encrypt(self.password1.clone());
-            Ok(User {
-                id: None,
-                name: self.name.clone(),
-                email: self.email.clone(),
-                hash,
-                salt,
-                created: SystemTime::now(),
-            })
-        } else {
-            Err(String::from("Passwords not equal"))
-        }
-    }
-
-    pub fn to_user_and_insert_into(
-        &self,
-        connection: PooledConnection<ConnectionManager<PgConnection>>,
-    ) -> Result<(), String> {
-        let user = self.to_user()?;
-        user.insert_into(connection)
     }
 }
 

@@ -17,7 +17,13 @@ pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let navigation_data: navigation::ClientData = serde_json::from_str(&recv).unwrap();
+
+        let data: Result<navigation::ClientData, serde_json::Error> = serde_json::from_str(&recv);
+        if data.is_err() {
+            print!("{}", recv);
+            break;
+        }
+        let data = data.unwrap();
 
         write!(
             stdout,
@@ -27,11 +33,11 @@ pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>
         )
         .unwrap();
 
-        for (i, (name, position)) in navigation_data.available_targets.iter().enumerate() {
-            let target_status = match &navigation_data.target_name {
+        for (i, (name, position)) in data.available_targets.iter().enumerate() {
+            let target_status = match &data.target_name {
                 Some(target_name) => {
                     if target_name == name {
-                        serde_json::to_string(&navigation_data.status).unwrap()
+                        serde_json::to_string(&data.status).unwrap()
                     } else {
                         String::new()
                     }
@@ -45,7 +51,7 @@ pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>
                 i,
                 name,
                 position,
-                position.distance_from(navigation_data.ship_position.clone()),
+                position.distance_from(data.ship_position.clone()),
                 target_status
             )
             .unwrap();
@@ -58,7 +64,7 @@ pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>
         } else {
             let mut send = String::new();
             if let Ok(i) = key.parse::<usize>() {
-                send.push_str(&navigation_data.available_targets[i].0);
+                send.push_str(&data.available_targets[i].0);
                 send.push_str("\n");
                 stream.write_all(send.as_bytes()).unwrap();
             }

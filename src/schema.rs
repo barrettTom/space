@@ -11,7 +11,7 @@ table! {
 table! {
     users (id) {
         id -> Nullable<Integer>,
-        name -> Varchar,
+        username -> Varchar,
         hash -> Varchar,
         salt -> Varchar,
         email -> Varchar,

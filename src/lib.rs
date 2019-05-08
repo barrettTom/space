@@ -7,6 +7,7 @@ extern crate diesel;
 pub mod client;
 pub mod constants;
 pub mod db;
+pub mod forms;
 pub mod item;
 pub mod mass;
 pub mod masses;

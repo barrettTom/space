@@ -302,10 +302,15 @@ impl Mass {
         }
     }
 
-    pub fn to_mass_entry(&self, name: String, last_modified: SystemTime) -> MassEntry {
+    pub fn to_mass_entry(
+        &self,
+        name: String,
+        user_id: Option<i32>,
+        last_modified: SystemTime,
+    ) -> MassEntry {
         MassEntry {
             id: None,
-            user_id: None,
+            user_id,
             name,
             mass: serde_json::to_string(&self).unwrap(),
             last_modified,

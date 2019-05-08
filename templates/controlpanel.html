@@ -3,10 +3,11 @@
 {% if error %}
 	{{ error }}
 {% endif %}
-{% if ship %}
-	{{ ship }}
+{% if ship_name %}
+	{{ ship_name }}
 {% else %}
 	<form action=/post_controlpanel method=POST>
+		ship_name:<input type="text" name="ship_name"/>
 		<input type="submit" value="generate"/>
 	</form>
 {% endif %}

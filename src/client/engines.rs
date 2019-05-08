@@ -19,15 +19,20 @@ pub fn client_engines(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     loop {
         let mut recv = String::new();
         buff_r.read_line(&mut recv).unwrap();
-        let engines_data: engines::ClientData =
-            serde_json::from_str(&recv.replace("\n", "")).unwrap();
+
+        let data: Result<engines::ClientData, serde_json::Error> = serde_json::from_str(&recv);
+        if data.is_err() {
+            print!("{}", recv);
+            break;
+        }
+        let data = data.unwrap();
 
         writeln!(
             stdout,
             "{}{}Fuel: {:.2}\nuse numpad to freely move",
             termion::clear::All,
             termion::cursor::Goto(1, 1),
-            engines_data.fuel
+            data.fuel
         )
         .unwrap();
         write!(stdout, "{}+ : speedup", termion::cursor::Goto(1, 2)).unwrap();
@@ -35,7 +40,7 @@ pub fn client_engines(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
         write!(stdout, "{}s : stop", termion::cursor::Goto(1, 4)).unwrap();
         write!(stdout, "{}q : quit", termion::cursor::Goto(1, 5)).unwrap();
 
-        if engines_data.has_target {
+        if data.has_target {
             write!(
                 stdout,
                 "{}c : mimic targets velocity vector",

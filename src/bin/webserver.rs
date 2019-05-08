@@ -12,7 +12,8 @@ use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use tera::{Context, Tera};
 
-use space::db::{get_db_url, Login, MassEntry, Registration};
+use space::db::{get_db_url, MassEntry, User};
+use space::forms::{ControlPanel, Login, Registration};
 use space::masses;
 
 struct Pkg {
@@ -65,7 +66,7 @@ fn post_register(
 ) -> impl Responder {
     match form.to_user_and_insert_into(data.pool.get().unwrap()) {
         Ok(_) => {
-            id.remember(form.name.to_owned());
+            id.remember(form.username.to_owned());
             render(&data, id, "index.html", &mut Context::new())
         }
         Err(error) => {
@@ -81,9 +82,9 @@ fn login(id: Identity, data: web::Data<Pkg>) -> impl Responder {
 }
 
 fn post_login(id: Identity, form: web::Form<Login>, data: web::Data<Pkg>) -> impl Responder {
-    match form.verify(data.pool.get().unwrap()) {
+    match form.verify(&data.pool.get().unwrap()) {
         Ok(_) => {
-            id.remember(form.name.to_owned());
+            id.remember(form.username.to_owned());
             render(&data, id, "index.html", &mut Context::new())
         }
         Err(error) => {
@@ -96,17 +97,40 @@ fn post_login(id: Identity, form: web::Form<Login>, data: web::Data<Pkg>) -> imp
 
 fn controlpanel(id: Identity, data: web::Data<Pkg>) -> impl Responder {
     match &id.identity() {
-        Some(_) => {
+        Some(name) => {
             let mut context = Context::new();
-            context.insert("ship", &false);
+            match User::get(name.to_string(), data.pool.get().unwrap())
+                .get_ship_name(&data.pool.get().unwrap())
+            {
+                Some(ship_name) => context.insert("ship_name", &ship_name),
+                None => context.insert("ship", &false),
+            }
             render(&data, id, "controlpanel.html", &mut context)
         }
         None => render(&data, id, "404.html", &mut Context::new()),
     }
 }
 
-fn post_controlpanel(id: Identity, data: web::Data<Pkg>) -> impl Responder {
-    render(&data, id, "controlpanel.html", &mut Context::new())
+fn post_controlpanel(
+    id: Identity,
+    form: web::Form<ControlPanel>,
+    data: web::Data<Pkg>,
+) -> impl Responder {
+    match &id.identity() {
+        Some(name) => {
+            let mut context = Context::new();
+            User::get(name.to_string(), data.pool.get().unwrap())
+                .give_ship(form.ship_name.to_string(), &data.pool.get().unwrap());
+            match User::get(name.to_string(), data.pool.get().unwrap())
+                .get_ship_name(&data.pool.get().unwrap())
+            {
+                Some(ship_name) => context.insert("ship_name", &ship_name),
+                None => context.insert("ship_name", &false),
+            }
+            render(&data, id, "controlpanel.html", &mut context)
+        }
+        None => render(&data, id, "404.html", &mut Context::new()),
+    }
 }
 
 fn logout(id: Identity, data: web::Data<Pkg>) -> impl Responder {
