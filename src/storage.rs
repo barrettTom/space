@@ -35,13 +35,13 @@ impl Storage {
         }
     }
 
-    pub fn give_item(&mut self, item: Item) -> bool {
+    pub fn give_item(&mut self, item: Item) -> GiveItemStatus {
         if self.capacity >= self.carrying + item.size {
             self.carrying += item.size;
             self.items.push(item);
-            true
+            GiveItemStatus::Success
         } else {
-            false
+            GiveItemStatus::Failure
         }
     }
 
@@ -51,4 +51,9 @@ impl Storage {
             .filter(|item| item.item_type == item_type)
             .count()
     }
+}
+
+pub enum GiveItemStatus {
+    Success,
+    Failure
 }

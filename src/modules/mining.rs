@@ -5,6 +5,7 @@ use crate::item::ItemType;
 use crate::mass::{Mass, MassType};
 use crate::math::Vector;
 use crate::storage::Storage;
+use crate::storage::GiveItemStatus as StorageGiveItemStatus;
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -44,7 +45,7 @@ impl Mining {
         if self.status == Status::Mined {
             match target.take_item(ItemType::CrudeMinerals) {
                 Some(item) => {
-                    if !storage.give_item(item.clone()) {
+                    if let StorageGiveItemStatus::Failure = storage.give_item(item.clone()) {
                         let mass = Mass::new_item(
                             item.clone(),
                             target.position.clone(),

@@ -24,7 +24,7 @@ impl Tractorbeam {
         }
     }
 
-    pub fn process(&mut self, ship_position: Vector, target: &mut Mass) -> bool {
+    pub fn process(&mut self, ship_position: Vector, target: &mut Mass) -> ProcessStatus {
         let distance = ship_position.distance_from(target.position.clone());
         if self.range < distance {
             self.off()
@@ -59,7 +59,7 @@ impl Tractorbeam {
                             )
                     } else {
                         self.status = Status::None;
-                        return true;
+                        return ProcessStatus::ItemAcquired;
                     }
                 }
                 Status::None => Vector::default(),
@@ -67,7 +67,7 @@ impl Tractorbeam {
 
             target.effects.give_acceleration(acceleration);
         }
-        false
+        ProcessStatus::None
     }
 
     pub fn get_client_data(&self, target: Option<&Mass>) -> String {
@@ -150,6 +150,11 @@ pub enum Status {
     Pull,
     Bring,
     Acquire,
+}
+
+pub enum ProcessStatus {
+    None,
+    ItemAcquired,
 }
 
 impl Default for Status {

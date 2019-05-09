@@ -15,9 +15,11 @@ use crate::modules::engines::Engines;
 use crate::modules::mining::Mining;
 use crate::modules::navigation::Navigation;
 use crate::modules::refinery::Refinery;
+use crate::modules::tractorbeam::ProcessStatus as TractorbeamProcessStatus;
 use crate::modules::tractorbeam::Tractorbeam;
 use crate::modules::types::ModuleType;
 use crate::storage::Storage;
+use crate::storage::GiveItemStatus as StorageGiveItemStatus;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mass {
@@ -181,14 +183,16 @@ impl Mass {
             if let Some(target_name) = &navigation.target_name {
                 let mut target = masses.remove(target_name).unwrap();
                 mining.process(self.position.clone(), masses, &mut target, storage);
-                let acquired = tractorbeam.process(self.position.clone(), &mut target);
 
-                if acquired {
-                    if let MassType::Item { item } = target.mass_type {
-                        storage.give_item(item);
+                match tractorbeam.process(self.position.clone(), &mut target) {
+                    TractorbeamProcessStatus::None => {
+                        masses.insert(target_name.to_string(), target);
                     }
-                } else {
-                    masses.insert(target_name.to_string(), target);
+                    TractorbeamProcessStatus::ItemAcquired => {
+                        if let MassType::Item { item } = target.mass_type {
+                            storage.give_item(item);
+                        }
+                    }
                 }
             }
 
@@ -282,7 +286,7 @@ impl Mass {
         }
     }
 
-    pub fn give_item(&mut self, item: Item) -> bool {
+    pub fn give_item(&mut self, item: Item) -> StorageGiveItemStatus {
         match self.mass_type {
             MassType::Ship {
                 ref mut storage, ..
@@ -290,7 +294,7 @@ impl Mass {
             MassType::Astroid {
                 ref mut resources, ..
             } => resources.give_item(item),
-            _ => false,
+            _ => StorageGiveItemStatus::Failure,
         }
     }
 
