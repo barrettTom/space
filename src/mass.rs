@@ -18,8 +18,8 @@ use crate::modules::refinery::Refinery;
 use crate::modules::tractorbeam::ProcessStatus as TractorbeamProcessStatus;
 use crate::modules::tractorbeam::Tractorbeam;
 use crate::modules::types::ModuleType;
-use crate::storage::Storage;
 use crate::storage::GiveItemStatus as StorageGiveItemStatus;
+use crate::storage::Storage;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mass {

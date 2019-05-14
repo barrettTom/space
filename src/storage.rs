@@ -55,5 +55,5 @@ impl Storage {
 
 pub enum GiveItemStatus {
     Success,
-    Failure
+    Failure,
 }
