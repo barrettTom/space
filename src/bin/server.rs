@@ -2,6 +2,9 @@ extern crate space;
 
 use legion::prelude::*;
 use space::math::Vector;
+use space::modules::engines::Engines;
+use space::modules::navigation::Navigation;
+use space::storage::Storage;
 use std::net::TcpListener;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
@@ -49,7 +52,11 @@ impl Astroid {
     fn insert_to(world: &mut World) {
         world.insert(
             (Astroid, true),
-            vec![(Velocity::default(), Position::default(), Storage::default())],
+            vec![(
+                Velocity::default(),
+                Position::default(),
+                Storage::new(Vec::new(), constants::ASTROID_STORAGE_CAPACITY),
+            )],
         );
     }
 }
@@ -64,8 +71,9 @@ impl Ship {
             vec![(
                 Velocity::default(),
                 Position::default(),
-                Storage::default(),
-                Engines::default(),
+                Storage::new(Vec::new(), constants::SHIP_STORAGE_CAPACITY),
+                Engines::new(),
+                Navigation::new(),
             )],
         );
     }
@@ -79,49 +87,6 @@ struct Velocity(Vector);
 
 #[derive(Debug, Clone, Default, PartialEq)]
 struct Position(Vector);
-
-#[derive(Debug, Clone, PartialEq)]
-enum ItemType {
-    //    CrudeMinerals,
-//    Iron,
-//    Hydrogen,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-struct Item {
-    item_type: ItemType,
-    name: String,
-    size: usize,
-}
-
-#[derive(Debug, Clone, Default, PartialEq)]
-struct Storage {
-    items: Vec<Item>,
-    carrying: usize,
-    capactiy: usize,
-}
-
-#[derive(Debug, Clone, Default, PartialEq)]
-struct Engines {
-    status: Status,
-    acceleration: Vector,
-    target_velocity: Option<Vector>,
-    fuel: f64,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-enum Status {
-    Inactive,
-//    Stopping,
-//    FollowingTarget,
-//    TowardsTarget,
-}
-
-impl Default for Status {
-    fn default() -> Self {
-        Status::Inactive
-    }
-}
 
 fn main() {
     let listener = TcpListener::bind("localhost:6000").unwrap();
@@ -177,14 +142,6 @@ fn main() {
                 }
 
                 /*
-                for key in masses.clone().keys() {
-                    let mut mass = masses.remove(key).unwrap();
-                    mass.process(&mut masses);
-                    masses.insert(key.to_string(), mass);
-                }
-                */
-
-                /*
                 if backup_countdown == 0 {
                     let masses_clone = masses.clone();
                     spawn(move || backup(masses_clone));
@@ -206,10 +163,15 @@ fn main() {
 }
 
 fn process(world: &mut World) {
-    for (mut engines, position, velocity) in
-        <(Write<Engines>, Read<Position>, Read<Velocity>)>::query().iter(world)
+    for (mut engines, navigation, position, velocity) in <(
+        Write<Engines>,
+        Read<Navigation>,
+        Read<Position>,
+        Read<Velocity>,
+    )>::query()
+    .iter(world)
     {
-        if engines.target_velocity.is_none() && engines.status != Status::Inactive {}
+        engines.process(position.0, velocity.0, None);
     }
 
     for (mut velocity, acceleration) in <(Write<Velocity>, Read<Acceleration>)>::query().iter(world)
