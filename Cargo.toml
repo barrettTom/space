@@ -3,6 +3,7 @@ name = "space"
 version = "0.1.0"
 authors = ["tom barrett <spalf0@gmail.com>"]
 edition = "2018"
+default-run = "server"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

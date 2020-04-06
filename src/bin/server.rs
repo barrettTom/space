@@ -1,8 +1,10 @@
 extern crate space;
 
 use legion::prelude::*;
+use legion::world::IntoComponentSource;
+use space::math::Vector;
 use std::net::TcpListener;
-use std::thread::{sleep};
+use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use space::constants;
@@ -13,9 +15,14 @@ fn populate(world: &mut World) {
         (Astroid, true),
         vec![(Velocity::default(), Position::default(), Storage::default())],
     );
+
+    world.insert(
+        (Ship, true),
+        vec![(Velocity::default(), Position::default(), Storage::default(), Engines::default())],
+    );
 }
 
-    /*
+/*
 fn backup(_masses: HashMap<String, Mass>) {
     let connection = PgConnection::establish(&get_db_url()).expect("Cannot connect");
     let timestamp = SystemTime::now();
@@ -45,34 +52,33 @@ fn restore() -> HashMap<String, Mass> {
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Astroid;
 
-#[derive(Debug, Clone, Default, PartialEq)]
-struct Velocity {
-    x: f32,
-    y: f32,
-    z: f32,
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Ship;
+/*
+impl Ship {
+    fn new() -> Vec<IntoComponentSource> {
+        vec![(Velocity::default())]
+    }
 }
+*/
 
 #[derive(Debug, Clone, Default, PartialEq)]
-struct Position {
-    x: f32,
-    y: f32,
-    z: f32,
-}
+struct Acceleration(Vector);
+
+#[derive(Debug, Clone, Default, PartialEq)]
+struct Velocity(Vector);
+
+#[derive(Debug, Clone, Default, PartialEq)]
+struct Position(Vector);
 
 #[derive(Debug, Clone, PartialEq)]
 enum ItemType {
-    CrudeMinerals,
-    //    Iron,
-    //    Hydrogen,
+    //    CrudeMinerals,
+//    Iron,
+//    Hydrogen,
 }
 
-impl Default for ItemType {
-    fn default() -> ItemType {
-        ItemType::CrudeMinerals
-    }
-}
-
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 struct Item {
     item_type: ItemType,
     name: String,
@@ -84,6 +90,28 @@ struct Storage {
     items: Vec<Item>,
     carrying: usize,
     capactiy: usize,
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+struct Engines {
+    status: Status,
+    acceleration: Vector,
+    target_velocity: Option<Vector>,
+    fuel: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+enum Status {
+    Inactive,
+    Stopping,
+    FollowingTarget,
+    TowardsTarget,
+}
+
+impl Default for Status {
+    fn default() -> Self {
+        Status::Inactive
+    }
 }
 
 fn main() {
@@ -110,18 +138,15 @@ fn main() {
     let mut connections: Vec<ServerConnection> = Vec::new();
     for stream in listener.incoming() {
         match stream {
-            Ok(_stream) => {
-                /*
-                let new_connection = ServerConnection::new(stream, &mut masses);
+            Ok(stream) => {
+                let new_connection = ServerConnection::new(stream);
                 let exists = connections.iter().position(|connection| {
                     connection.name == new_connection.name
-                        && connection.module_type == new_connection.module_type
                 });
                 if let Some(index) = exists {
                     connections.remove(index);
                 }
                 connections.push(new_connection);
-                */
             }
             _ => {
                 let timer = Instant::now();
@@ -157,6 +182,17 @@ fn main() {
                     backup_countdown = constants::BACKUP_COUNTDOWN;
                 }
                 */
+
+                for (mut vel, acc) in
+                    <(Write<Velocity>, Read<Acceleration>)>::query().iter(&mut world)
+                {
+                    vel.0 += acc.0;
+                }
+
+                for (mut pos, vel) in <(Write<Position>, Read<Velocity>)>::query().iter(&mut world)
+                {
+                    pos.0 += vel.0;
+                }
 
                 if timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
                     sleep(Duration::from_millis(

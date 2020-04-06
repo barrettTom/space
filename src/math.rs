@@ -80,7 +80,7 @@ impl ControlSystem {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, Default, PartialEq)]
 pub struct Vector {
     pub x: f64,
     pub y: f64,
