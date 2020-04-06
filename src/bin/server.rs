@@ -1,7 +1,6 @@
 extern crate space;
 
 use legion::prelude::*;
-use legion::world::IntoComponentSource;
 use space::math::Vector;
 use std::net::TcpListener;
 use std::thread::sleep;
@@ -11,15 +10,9 @@ use space::constants;
 use space::server_connection::ServerConnection;
 
 fn populate(world: &mut World) {
-    world.insert(
-        (Astroid, true),
-        vec![(Velocity::default(), Position::default(), Storage::default())],
-    );
-
-    world.insert(
-        (Ship, true),
-        vec![(Velocity::default(), Position::default(), Storage::default(), Engines::default())],
-    );
+    for _ in 0..constants::ASTROID_COUNT {
+        Astroid::insert_to(world);
+    }
 }
 
 /*
@@ -52,15 +45,31 @@ fn restore() -> HashMap<String, Mass> {
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Astroid;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-struct Ship;
-/*
-impl Ship {
-    fn new() -> Vec<IntoComponentSource> {
-        vec![(Velocity::default())]
+impl Astroid {
+    fn insert_to(world: &mut World) {
+        world.insert(
+            (Astroid, true),
+            vec![(Velocity::default(), Position::default(), Storage::default())],
+        );
     }
 }
-*/
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Ship;
+
+impl Ship {
+    fn insert_to(world: &mut World) {
+        world.insert(
+            (Ship, true),
+            vec![(
+                Velocity::default(),
+                Position::default(),
+                Storage::default(),
+                Engines::default(),
+            )],
+        );
+    }
+}
 
 #[derive(Debug, Clone, Default, PartialEq)]
 struct Acceleration(Vector);
@@ -103,9 +112,9 @@ struct Engines {
 #[derive(Debug, Clone, PartialEq)]
 enum Status {
     Inactive,
-    Stopping,
-    FollowingTarget,
-    TowardsTarget,
+//    Stopping,
+//    FollowingTarget,
+//    TowardsTarget,
 }
 
 impl Default for Status {
@@ -140,9 +149,9 @@ fn main() {
         match stream {
             Ok(stream) => {
                 let new_connection = ServerConnection::new(stream);
-                let exists = connections.iter().position(|connection| {
-                    connection.name == new_connection.name
-                });
+                let exists = connections
+                    .iter()
+                    .position(|connection| connection.name == new_connection.name);
                 if let Some(index) = exists {
                     connections.remove(index);
                 }
@@ -183,16 +192,7 @@ fn main() {
                 }
                 */
 
-                for (mut vel, acc) in
-                    <(Write<Velocity>, Read<Acceleration>)>::query().iter(&mut world)
-                {
-                    vel.0 += acc.0;
-                }
-
-                for (mut pos, vel) in <(Write<Position>, Read<Velocity>)>::query().iter(&mut world)
-                {
-                    pos.0 += vel.0;
-                }
+                process(&mut world);
 
                 if timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
                     sleep(Duration::from_millis(
@@ -202,5 +202,22 @@ fn main() {
                 //backup_countdown -= 1;
             }
         }
+    }
+}
+
+fn process(world: &mut World) {
+    for (mut engines, position, velocity) in
+        <(Write<Engines>, Read<Position>, Read<Velocity>)>::query().iter(world)
+    {
+        if engines.target_velocity.is_none() && engines.status != Status::Inactive {}
+    }
+
+    for (mut velocity, acceleration) in <(Write<Velocity>, Read<Acceleration>)>::query().iter(world)
+    {
+        velocity.0 += acceleration.0;
+    }
+
+    for (mut position, velocity) in <(Write<Position>, Read<Velocity>)>::query().iter(world) {
+        position.0 += velocity.0;
     }
 }
