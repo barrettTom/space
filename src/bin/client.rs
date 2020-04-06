@@ -52,7 +52,7 @@ fn main() {
 
             server = config.server.unwrap();
             name = config.username.unwrap();
-            send = name.clone() + ":" + &config.password.unwrap() + "\n";
+            send = name + ":" + &config.password.unwrap() + "\n";
         }
         Err(_err) => {
             println!("Ship Name:");
@@ -64,7 +64,7 @@ fn main() {
             io::stdin().read_line(&mut password).expect("Failed");
 
             server = "localhost:6000".to_string();
-            send = name.clone() + ":" + &password;
+            send = name + ":" + &password;
         }
     }
 

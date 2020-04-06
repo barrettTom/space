@@ -32,3 +32,4 @@ nice to haves
 - make constants file some way of being global and read on run so you can give it faster sleep paramters for tests
 - openapi?
 - some sort of ecs? (legion?)
+- vagrant -> lxc
