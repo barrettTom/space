@@ -1,19 +1,22 @@
 extern crate space;
 
 use legion::prelude::*;
-use space::math::Vector;
-use space::modules::engines::Engines;
-use space::modules::navigation::Navigation;
-use space::storage::Storage;
-use std::thread::sleep;
+use std::sync::mpsc;
+use std::thread;
 use std::time::{Duration, Instant};
 
 use space::constants;
+use space::math::Vector;
+use space::modules::engines::Engines;
+use space::modules::navigation::Navigation;
+use space::requests;
+use space::storage::Storage;
 
 fn populate(world: &mut World) {
     for _ in 0..constants::ASTROID_COUNT {
         Astroid::insert_to(world);
     }
+    Ship::insert_to(world);
 }
 
 /*
@@ -104,13 +107,19 @@ fn main() {
     //};
 
     //let mut backup_countdown = constants::BACKUP_COUNTDOWN;
+
+    let (tx, rx) = mpsc::channel();
+    thread::spawn(move || {
+        requests::run(tx).unwrap();
+    });
+
     loop {
         let timer = Instant::now();
 
         process(&mut world);
 
         if timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
-            sleep(Duration::from_millis(
+            thread::sleep(Duration::from_millis(
                 constants::LOOP_DURATION_MS - timer.elapsed().as_millis() as u64,
             ));
         }

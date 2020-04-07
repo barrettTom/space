@@ -10,5 +10,6 @@ pub mod item;
 pub mod mass;
 pub mod math;
 pub mod modules;
+pub mod requests;
 pub mod schema;
 pub mod storage;
