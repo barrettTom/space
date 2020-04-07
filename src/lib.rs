@@ -11,5 +11,4 @@ pub mod mass;
 pub mod math;
 pub mod modules;
 pub mod schema;
-pub mod server_connection;
 pub mod storage;
