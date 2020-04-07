@@ -7,7 +7,7 @@ use std::io::{stdout, Read, Write};
 use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
-use crate::modules::navigation;
+use crate::components::navigation;
 
 pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();

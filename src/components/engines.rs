@@ -1,7 +1,7 @@
+use crate::components::navigation;
 use crate::constants;
 use crate::mass::Mass;
 use crate::math::Vector;
-use crate::modules::navigation;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Engines {

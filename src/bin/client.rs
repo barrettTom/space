@@ -20,7 +20,7 @@ use space::client::mining::client_mining;
 use space::client::navigation::client_navigation;
 use space::client::refinery::client_refinery;
 use space::client::tractorbeam::client_tractorbeam;
-use space::modules::types::ModuleType;
+use space::components::types::ModuleType;
 
 #[derive(Debug, Deserialize)]
 struct Config {

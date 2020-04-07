@@ -1,8 +1,8 @@
+use crate::components::types::ModuleType;
 use crate::constants;
 use crate::mass::{Mass, MassType};
 use crate::math::ControlSystem;
 use crate::math::Vector;
-use crate::modules::types::ModuleType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Tractorbeam {

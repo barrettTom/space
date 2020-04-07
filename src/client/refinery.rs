@@ -7,7 +7,7 @@ use std::io::{stdout, Read, Write};
 use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
-use crate::modules::refinery;
+use crate::components::refinery;
 
 pub fn client_refinery(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();

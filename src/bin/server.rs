@@ -1,10 +1,10 @@
 extern crate space;
 
 use legion::prelude::*;
+use space::components::engines::Engines;
+use space::components::navigation::Navigation;
+use space::components::storage::Storage;
 use space::math::Vector;
-use space::modules::engines::Engines;
-use space::modules::navigation::Navigation;
-use space::storage::Storage;
 use std::net::TcpListener;
 use std::thread::sleep;
 use std::time::{Duration, Instant};

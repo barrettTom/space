@@ -8,7 +8,7 @@ use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 use std::str::FromStr;
 
-use crate::modules::tractorbeam;
+use crate::components::tractorbeam;
 
 pub fn client_tractorbeam(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();
