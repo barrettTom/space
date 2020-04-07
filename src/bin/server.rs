@@ -116,13 +116,11 @@ fn main() {
     loop {
         let timer = Instant::now();
 
-        process(&mut world);
-
-        if timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
-            thread::sleep(Duration::from_millis(
-                constants::LOOP_DURATION_MS - timer.elapsed().as_millis() as u64,
-            ));
+        let mut requests = Vec::new();
+        while let request = rx.recv() {
+            requests.push(request);
         }
+        process(&mut world);
 
         /*
         if backup_countdown == 0 {
@@ -130,9 +128,14 @@ fn main() {
             spawn(move || backup(masses_clone));
             backup_countdown = constants::BACKUP_COUNTDOWN;
         }
+        backup_countdown -= 1;
         */
 
-        //backup_countdown -= 1;
+        if timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
+            thread::sleep(Duration::from_millis(
+                constants::LOOP_DURATION_MS - timer.elapsed().as_millis() as u64,
+            ));
+        }
     }
 }
 

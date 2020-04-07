@@ -1,13 +1,21 @@
 use actix_rt::System;
-use actix_web::{dev::Server, get, web, App, HttpServer, Responder};
+use actix_web::{get, web, App, HttpServer, Responder};
 use std::sync::mpsc;
 
+#[derive(Debug)]
+pub struct Request;
+
 #[get("/{id}/{name}/index.html")]
-async fn index(info: web::Path<(u32, String)>) -> impl Responder {
+async fn index(
+    info: web::Path<(u32, String)>,
+    data: web::Data<mpsc::Sender<Request>>,
+) -> impl Responder {
+    data.get_ref().send(Request).unwrap();
+
     format!("Hello {}! id:{}", info.1, info.0)
 }
 
-pub fn run(tx: mpsc::Sender<Server>) -> std::io::Result<()> {
+pub fn run(tx: mpsc::Sender<Request>) -> std::io::Result<()> {
     let mut sys = System::new("runtime");
 
     sys.block_on(
