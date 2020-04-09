@@ -171,7 +171,7 @@ fn process(world: &mut World) {
     )>::query()
     .iter(world)
     {
-        engines.process(position.0, velocity.0, None);
+        engines.process(position.0, velocity.0, None, None);
     }
 
     for (mut velocity, acceleration) in <(Write<Velocity>, Read<Acceleration>)>::query().iter(world)

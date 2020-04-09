@@ -21,24 +21,39 @@ impl Engines {
         }
     }
 
-    pub fn process(&mut self, position: Vector, velocity: Vector, target: Option<&Mass>) {
+    pub fn process(
+        &mut self,
+        position: Vector,
+        velocity: Vector,
+        target_position: Option<Vector>,
+        target_velocity: Option<Vector>,
+    ) {
+
         if self.target_velocity.is_none() && self.status != Status::None {
+            self.target_velocity = match self.status {
+                Status::Stopping => Some(Vector::default()),
+                Status::FollowingTarget => target_velocity,
+                Status::TowardsTarget => {
+                    self.acceleration = (target_position.unwrap() - position).unitize()
+                        * constants::SHIP_ENGINES_ACCELERATION;
+                    None
+                }
+                _ => None,
+            }
+            /*
             if self.status == Status::Stopping {
                 self.target_velocity = Some(Vector::default());
             }
-            if let Some(target) = target {
-                match self.status {
-                    Status::TowardsTarget => {
-                        self.acceleration = (target.position.clone() - position).unitize()
-                            * constants::SHIP_ENGINES_ACCELERATION;
-                        self.status = Status::None;
-                    }
-                    Status::FollowingTarget => self.target_velocity = Some(target.velocity.clone()),
-                    _ => (),
+            match self.status {
+                Status::TowardsTarget => {
+                    self.acceleration = (target_position.unwrap() - position).unitize()
+                        * constants::SHIP_ENGINES_ACCELERATION;
+                    self.status = Status::None;
                 }
-            } else {
-                self.status = Status::None;
+                Status::FollowingTarget => self.target_velocity = target_velocity,
+                _ => (),
             }
+            */
         }
 
         if let Some(target_velocity) = self.target_velocity.clone() {

@@ -212,7 +212,7 @@ impl Mass {
                 None => None,
             };
 
-            engines.process(self.position.clone(), self.velocity.clone(), target);
+            //engines.process(self.position.clone(), self.velocity.clone(), target);
             refinery.process(storage);
             construction.process(
                 self.velocity.clone(),
