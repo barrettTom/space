@@ -2,7 +2,6 @@ extern crate rand;
 
 use self::rand::distributions::Uniform;
 use self::rand::Rng;
-use std::collections::HashMap;
 use std::time::SystemTime;
 
 use crate::components::construction::Construction;
@@ -181,6 +180,7 @@ impl Mass {
         modules
     }
 
+    /*
     pub fn process(&mut self, masses: &mut HashMap<String, Mass>) {
         if let MassType::Ship {
             ref mut navigation,
@@ -281,6 +281,7 @@ impl Mass {
             }
         }
     }
+    */
 
     pub fn take_item(&mut self, item_type: ItemType) -> Option<Item> {
         match self.mass_type {

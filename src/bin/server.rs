@@ -4,7 +4,7 @@ use legion::prelude::*;
 use space::components::engines::Engines;
 use space::components::navigation::Navigation;
 use space::components::storage::Storage;
-use space::math::Vector;
+use space::math::{rand_name, Vector};
 use std::net::TcpListener;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
@@ -16,6 +16,8 @@ fn populate(world: &mut World) {
     for _ in 0..constants::ASTROID_COUNT {
         Astroid::insert_to(world);
     }
+
+    Ship::insert_to(world);
 }
 
 /*
@@ -53,6 +55,7 @@ impl Astroid {
         world.insert(
             (Astroid, true),
             vec![(
+                Name(rand_name()),
                 Velocity::default(),
                 Position::default(),
                 Storage::new(Vec::new(), constants::ASTROID_STORAGE_CAPACITY),
@@ -69,6 +72,7 @@ impl Ship {
         world.insert(
             (Ship, true),
             vec![(
+                Name(rand_name()),
                 Velocity::default(),
                 Position::default(),
                 Storage::new(Vec::new(), constants::SHIP_STORAGE_CAPACITY),
@@ -87,6 +91,9 @@ struct Velocity(Vector);
 
 #[derive(Debug, Clone, Default, PartialEq)]
 struct Position(Vector);
+
+#[derive(Debug, Clone, Default, PartialEq)]
+struct Name(String);
 
 fn main() {
     let listener = TcpListener::bind("localhost:6000").unwrap();
@@ -163,15 +170,26 @@ fn main() {
 }
 
 fn process(world: &mut World) {
-    for (mut engines, navigation, position, velocity) in <(
+    for (mut engines, mut acceleration, navigation, position, velocity) in <(
         Write<Engines>,
+        Write<Acceleration>,
         Read<Navigation>,
         Read<Position>,
         Read<Velocity>,
     )>::query()
     .iter(world)
     {
-        engines.process(position.0, velocity.0, None, None);
+        let (target_position, target_velocity) = match &navigation.target {
+            Some(target) => (Some(target.position), Some(target.velocity)),
+            None => (None, None),
+        };
+        engines.process(
+            position.0,
+            velocity.0,
+            &mut acceleration.0,
+            target_position,
+            target_velocity,
+        );
     }
 
     for (mut velocity, acceleration) in <(Write<Velocity>, Read<Acceleration>)>::query().iter(world)

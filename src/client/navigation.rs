@@ -28,9 +28,9 @@ pub fn client_navigation(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>
         .unwrap();
 
         for (i, (name, position)) in navigation_data.available_targets.iter().enumerate() {
-            let target_status = match &navigation_data.target_name {
-                Some(target_name) => {
-                    if target_name == name {
+            let target_status = match &navigation_data.target {
+                Some(target) => {
+                    if target == name {
                         serde_json::to_string(&navigation_data.status).unwrap()
                     } else {
                         String::new()

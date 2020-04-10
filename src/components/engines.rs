@@ -1,22 +1,18 @@
-use crate::components::navigation;
 use crate::constants;
-use crate::mass::Mass;
 use crate::math::Vector;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Engines {
-    pub status: Status,
-    acceleration: Vector,
-    target_velocity: Option<Vector>,
-    pub fuel: f64,
+    status: Status,
+    desired_velocity: Option<Vector>,
+    fuel: f64,
 }
 
 impl Engines {
     pub fn new() -> Engines {
         Engines {
-            status: Status::None,
-            acceleration: Vector::default(),
-            target_velocity: None,
+            status: Status::Inactive,
+            desired_velocity: None,
             fuel: constants::SHIP_ENGINES_FUEL_START,
         }
     }
@@ -25,46 +21,27 @@ impl Engines {
         &mut self,
         position: Vector,
         velocity: Vector,
+        acceleration: &mut Vector,
         target_position: Option<Vector>,
         target_velocity: Option<Vector>,
     ) {
+        self.desired_velocity = match self.status {
+            Status::Stopping => Some(Vector::default()),
+            Status::FollowingTarget => target_velocity,
+            Status::TowardsTarget => None, // TODO
+            Status::Inactive => None,
+        };
 
-        if self.target_velocity.is_none() && self.status != Status::None {
-            self.target_velocity = match self.status {
-                Status::Stopping => Some(Vector::default()),
-                Status::FollowingTarget => target_velocity,
-                Status::TowardsTarget => {
-                    self.acceleration = (target_position.unwrap() - position).unitize()
-                        * constants::SHIP_ENGINES_ACCELERATION;
-                    None
-                }
-                _ => None,
-            }
-            /*
-            if self.status == Status::Stopping {
-                self.target_velocity = Some(Vector::default());
-            }
-            match self.status {
-                Status::TowardsTarget => {
-                    self.acceleration = (target_position.unwrap() - position).unitize()
-                        * constants::SHIP_ENGINES_ACCELERATION;
-                    self.status = Status::None;
-                }
-                Status::FollowingTarget => self.target_velocity = target_velocity,
-                _ => (),
-            }
-            */
-        }
-
-        if let Some(target_velocity) = self.target_velocity.clone() {
-            self.acceleration += target_velocity - velocity;
-            if self.acceleration == Vector::default() {
-                self.target_velocity = None;
-                self.status = Status::None;
+        if let Some(desired_velocity) = self.desired_velocity.clone() {
+            *acceleration += desired_velocity - velocity;
+            if *acceleration == Vector::default() {
+                self.desired_velocity = None;
+                self.status = Status::Inactive;
             }
         }
     }
 
+    /*
     pub fn give_received_data(&mut self, recv: String, velocity: Vector) {
         let mut acceleration = Vector::default();
         match recv.as_str() {
@@ -106,6 +83,7 @@ impl Engines {
             Vector::default()
         }
     }
+    */
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -115,8 +93,8 @@ pub struct ClientData {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum Status {
-    None,
+enum Status {
+    Inactive,
     Stopping,
     FollowingTarget,
     TowardsTarget,
@@ -124,6 +102,6 @@ pub enum Status {
 
 impl Default for Status {
     fn default() -> Self {
-        Status::None
+        Status::Inactive
     }
 }
