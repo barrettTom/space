@@ -1,4 +1,4 @@
-use crate::item::{Item, ItemType};
+use crate::components::item::{Item, ItemType};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Storage {

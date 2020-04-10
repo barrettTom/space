@@ -5,19 +5,19 @@ use self::rand::Rng;
 use std::collections::HashMap;
 use std::time::SystemTime;
 
+use crate::components::construction::Construction;
+use crate::components::dashboard::Dashboard;
+use crate::components::engines::Engines;
+use crate::components::item::{Item, ItemType};
+use crate::components::mining::Mining;
+use crate::components::navigation::Navigation;
+use crate::components::refinery::Refinery;
+use crate::components::storage::Storage;
+use crate::components::tractorbeam::Tractorbeam;
+use crate::components::types::ModuleType;
 use crate::constants;
-use crate::item::{Item, ItemType};
 use crate::math::Vector;
-use crate::modules::construction::Construction;
-use crate::modules::dashboard::Dashboard;
-use crate::modules::engines::Engines;
-use crate::modules::mining::Mining;
-use crate::modules::navigation::Navigation;
-use crate::modules::refinery::Refinery;
-use crate::modules::tractorbeam::Tractorbeam;
-use crate::modules::types::ModuleType;
 use crate::schema::masses as db_masses;
-use crate::storage::Storage;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mass {
@@ -212,7 +212,7 @@ impl Mass {
                 None => None,
             };
 
-            engines.process(self.position.clone(), self.velocity.clone(), target);
+            //engines.process(self.position.clone(), self.velocity.clone(), target);
             refinery.process(storage);
             construction.process(
                 self.velocity.clone(),
@@ -223,9 +223,6 @@ impl Mass {
             navigation.process(self.position.clone(), masses);
             self.effects.give_acceleration(engines.take_acceleration());
         }
-
-        self.velocity += self.effects.take_acceleration();
-        self.position += self.velocity.clone();
     }
 
     pub fn get_client_data(

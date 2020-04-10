@@ -4,8 +4,8 @@ use self::rand::distributions::Alphanumeric;
 use self::rand::Rng;
 use std::iter::repeat;
 
+use crate::components::types::ModuleType;
 use crate::constants;
-use crate::modules::types::ModuleType;
 
 pub fn rand_name() -> String {
     repeat(())

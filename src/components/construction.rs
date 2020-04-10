@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use std::time::SystemTime;
 
+use crate::components::item::ItemType;
+use crate::components::storage::Storage;
+use crate::components::types::ModuleType;
 use crate::constants;
-use crate::item::ItemType;
 use crate::mass::Mass;
 use crate::math::Vector;
-use crate::modules::types::ModuleType;
-use crate::storage::Storage;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Construction {

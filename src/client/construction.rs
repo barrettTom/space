@@ -7,8 +7,8 @@ use std::io::{stdout, Read, Write};
 use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 
+use crate::components::construction;
 use crate::constants;
-use crate::modules::construction;
 
 pub fn client_construction(mut stream: TcpStream, mut buff_r: BufReader<TcpStream>) {
     let stdout = stdout();

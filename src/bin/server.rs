@@ -5,12 +5,12 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
+use space::components::engines::Engines;
+use space::components::navigation::Navigation;
+use space::components::storage::Storage;
 use space::constants;
 use space::math::Vector;
-use space::modules::engines::Engines;
-use space::modules::navigation::Navigation;
 use space::requests;
-use space::storage::Storage;
 
 fn populate(world: &mut World) {
     for _ in 0..constants::ASTROID_COUNT {
@@ -148,7 +148,7 @@ fn process(world: &mut World) {
     )>::query()
     .iter(world)
     {
-        engines.process(position.0, velocity.0, None);
+        engines.process(position.0, velocity.0, None, None);
     }
 
     for (mut velocity, acceleration) in <(Write<Velocity>, Read<Acceleration>)>::query().iter(world)
