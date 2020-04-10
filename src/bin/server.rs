@@ -3,7 +3,7 @@ extern crate space;
 use legion::prelude::*;
 use std::sync::mpsc;
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use space::components::engines::Engines;
 use space::components::navigation::Navigation;
@@ -113,14 +113,17 @@ fn main() {
         requests::run(tx).unwrap();
     });
 
-    loop {
+    let mut requests = Vec::new();
+
+    let mut run = true;
+    while run {
         let timer = Instant::now();
 
-        let mut requests = Vec::new();
-        while let request = rx.recv() {
-            requests.push(request);
-        }
         process(&mut world);
+
+        if !requests.is_empty() {
+            println!("{:?}", requests);
+        }
 
         /*
         if backup_countdown == 0 {
@@ -131,10 +134,13 @@ fn main() {
         backup_countdown -= 1;
         */
 
-        if timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
-            thread::sleep(Duration::from_millis(
-                constants::LOOP_DURATION_MS - timer.elapsed().as_millis() as u64,
-            ));
+        requests.clear();
+        while timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
+            match rx.try_recv() {
+                Ok(request) => requests.push(request),
+                Err(mpsc::TryRecvError::Disconnected) => run = false,
+                Err(mpsc::TryRecvError::Empty) => (),
+            }
         }
     }
 }

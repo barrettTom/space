@@ -1,6 +1,5 @@
 use crate::components::navigation;
 use crate::constants;
-use crate::mass::Mass;
 use crate::math::Vector;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
