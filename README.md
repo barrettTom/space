@@ -19,7 +19,7 @@ world
 - figure out spawning
 - figure out some sort of dynamic zone system
 - figure out other bodies (planets, suns, n-body simulation?)
-- some sort of faction system so multiple accounts pool their scores together
+- some sort of faction system so multiple accounts pool their scores together?
 
 nice to haves
 - pretty dashboard

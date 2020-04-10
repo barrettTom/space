@@ -15,3 +15,5 @@ clap = "2"
 diesel = {version = "1.4.2", features = ["postgres"]}
 migrations_internals = "1.4.0"
 legion = "0.2.1"
+actix-web = "2"
+actix-rt = "1"
