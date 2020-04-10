@@ -2,7 +2,6 @@ extern crate rand;
 
 use self::rand::distributions::Uniform;
 use self::rand::Rng;
-use std::time::SystemTime;
 
 use crate::components::construction::Construction;
 use crate::components::dashboard::Dashboard;
@@ -16,7 +15,6 @@ use crate::components::tractorbeam::Tractorbeam;
 use crate::components::types::ModuleType;
 use crate::constants;
 use crate::math::Vector;
-use crate::schema::masses as db_masses;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mass {
@@ -24,21 +22,6 @@ pub struct Mass {
     pub position: Vector,
     pub velocity: Vector,
     pub effects: Effects,
-}
-
-#[derive(Queryable, Insertable, Identifiable, AsChangeset, Debug)]
-#[table_name = "db_masses"]
-pub struct MassEntry {
-    pub id: Option<i32>,
-    pub name: String,
-    pub mass: String,
-    pub last_modified: SystemTime,
-}
-
-impl MassEntry {
-    pub fn to_mass(&self) -> (String, Mass) {
-        (self.name.clone(), serde_json::from_str(&self.mass).unwrap())
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -312,15 +295,6 @@ impl Mass {
             MassType::Ship { storage, .. } => storage.item_count(item_type),
             MassType::Astroid { resources, .. } => resources.item_count(item_type),
             _ => 0,
-        }
-    }
-
-    pub fn to_mass_entry(&self, name: String, last_modified: SystemTime) -> MassEntry {
-        MassEntry {
-            id: None,
-            name,
-            mass: serde_json::to_string(&self).unwrap(),
-            last_modified,
         }
     }
 }
