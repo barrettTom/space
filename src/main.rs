@@ -3,6 +3,7 @@ extern crate space;
 use legion::prelude::*;
 use std::sync::mpsc;
 use std::thread;
+use std::time::{Duration, Instant};
 
 use space::components::engines::Engines;
 use space::components::navigation::Navigation;
@@ -10,7 +11,6 @@ use space::components::storage::Storage;
 use space::constants;
 use space::math::{rand_name, Vector};
 use space::requests;
-use std::time::Instant;
 
 fn populate(world: &mut World) {
     for _ in 0..constants::ASTROID_COUNT {
@@ -18,33 +18,6 @@ fn populate(world: &mut World) {
     }
     Ship::insert_to(world);
 }
-
-/*
-fn backup(_masses: HashMap<String, Mass>) {
-    let connection = PgConnection::establish(&get_db_url()).expect("Cannot connect");
-    let timestamp = SystemTime::now();
-    for (name, mass) in masses {
-        let mass_entry = mass.to_mass_entry(name.to_string(), timestamp);
-        diesel::insert_into(db_masses)
-            .values(&mass_entry)
-            .on_conflict(name_column)
-            .do_update()
-            .set(&mass_entry)
-            .execute(&connection)
-            .expect("Cannot backup");
-    }
-}
-
-fn restore() -> HashMap<String, Mass> {
-    let connection = PgConnection::establish(&get_db_url()).expect("Cannot connect");
-    db_masses
-        .load::<MassEntry>(&connection)
-        .expect("Cannot query, are you sure you can restore?")
-        .iter()
-        .map(|mass_entry| mass_entry.to_mass())
-        .collect()
-}
-    */
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Astroid;
@@ -95,23 +68,10 @@ struct Position(Vector);
 struct Name(String);
 
 fn main() {
-    /*
-    let matches = App::new("space server")
-        .subcommand(SubCommand::with_name("--restore"))
-        .get_matches();
-    */
-
     let universe = Universe::new();
     let mut world = universe.create_world();
 
     populate(&mut world);
-
-    //let mut masses = match matches.subcommand_name() {
-    //    Some("--restore") => restore(),
-    //    _ => populate(),
-    //};
-
-    //let mut backup_countdown = constants::BACKUP_COUNTDOWN;
 
     let (tx, rx) = mpsc::channel();
     thread::spawn(move || {
@@ -130,17 +90,9 @@ fn main() {
             println!("{:?}", requests);
         }
 
-        /*
-        if backup_countdown == 0 {
-            let masses_clone = masses.clone();
-            spawn(move || backup(masses_clone));
-            backup_countdown = constants::BACKUP_COUNTDOWN;
-        }
-        backup_countdown -= 1;
-        */
-
         requests.clear();
         while timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
+            thread::sleep(Duration::from_millis(1));
             match rx.try_recv() {
                 Ok(request) => requests.push(request),
                 Err(mpsc::TryRecvError::Disconnected) => run = false,
