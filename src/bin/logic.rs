@@ -1,8 +1,7 @@
 extern crate space;
 
 use legion::prelude::*;
-use std::sync::mpsc;
-use std::thread;
+use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use space::components::engines::Engines;
@@ -10,7 +9,6 @@ use space::components::navigation::Navigation;
 use space::components::storage::Storage;
 use space::constants;
 use space::math::{rand_name, Vector};
-use space::requests;
 
 fn populate(world: &mut World) {
     for _ in 0..constants::ASTROID_COUNT {
@@ -73,31 +71,14 @@ fn main() {
 
     populate(&mut world);
 
-    let (tx, rx) = mpsc::channel();
-    thread::spawn(move || {
-        requests::run(tx).unwrap();
-    });
-
-    let mut requests = Vec::new();
-
-    let mut run = true;
-    while run {
+    loop {
         let timer = Instant::now();
 
         process(&mut world);
 
-        if !requests.is_empty() {
-            println!("{:?}", requests);
-        }
-
-        requests.clear();
         while timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
-            thread::sleep(Duration::from_millis(1));
-            match rx.try_recv() {
-                Ok(request) => requests.push(request),
-                Err(mpsc::TryRecvError::Disconnected) => run = false,
-                Err(mpsc::TryRecvError::Empty) => (),
-            }
+            sleep(Duration::from_millis(1));
+            // TODO get requests, do logic, make responses
         }
     }
 }

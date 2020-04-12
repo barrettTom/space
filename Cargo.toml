@@ -5,9 +5,11 @@ authors = ["tom barrett <spalf0@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+actix-rt = "1"
+actix-web = "2"
+diesel = { version = "1.4.4", features = ["sqlite", "r2d2"] }
+legion = "0.2.1"
+migrations_internals = "1.4.1"
+rand = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-rand = "0.7"
-legion = "0.2.1"
-actix-web = "2"
-actix-rt = "1"
