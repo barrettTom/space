@@ -1,6 +1,8 @@
 table! {
-    users (id) {
+    requests (id) {
         id -> Text,
-        name -> Text,
+        data -> Text,
+        time -> Timestamp,
+        received -> Bool,
     }
 }
