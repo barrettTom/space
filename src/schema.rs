@@ -1,6 +1,7 @@
 table! {
-    users (id) {
+    requests (id) {
         id -> Text,
-        name -> Text,
+        ship -> Text,
+        module -> Text,
     }
 }

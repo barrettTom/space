@@ -1,26 +1,19 @@
+#[macro_use]
+extern crate diesel;
+
 use actix_web::{get, web, App, HttpServer, Responder};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
+use serde::Serialize;
+use uuid::Uuid;
 
-use serde::{Deserialize, Serialize};
-
-use space::schema::users;
+use space::schema::requests;
 
 #[derive(Debug, Clone, Serialize, Queryable, Insertable)]
-pub struct User {
-    pub id: String,
-    pub name: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct NewUser {
-    pub name: String,
-}
-
-#[derive(Debug)]
-pub enum Request {
-    Register { ship: String },
-    Play { ship: String, module: String },
+pub struct Request {
+    id: String,
+    ship: String,
+    module: String,
 }
 
 #[get("play/{ship}/{module}")]
@@ -44,13 +37,22 @@ async fn register(
     info: web::Path<String>,
     pool: web::Data<Pool<ConnectionManager<SqliteConnection>>>,
 ) -> impl Responder {
-    /*
-    data.get_ref()
-        .send(Request::Register {
-            ship: info.to_string(),
-        })
-        .unwrap();
-    */
+    let connection = pool.get().unwrap();
+
+    let request = Request {
+        id: Uuid::new_v4().to_string(),
+        ship: info.to_string(),
+        module: String::new(),
+    };
+
+    web::block(move || {
+        diesel::insert_into(requests::dsl::requests)
+            .values(&request)
+            .execute(&connection)
+    })
+    .await
+    .unwrap();
+
     "Good"
 }
 
