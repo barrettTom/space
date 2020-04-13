@@ -3,4 +3,11 @@ CREATE TABLE requests (
   data TEXT NOT NULL,
   time TIMESTAMP NOT NULL,
   received BOOLEAN NOT NULL
+);
+
+CREATE TABLE responses (
+  id TEXT NOT NULL PRIMARY KEY,
+  data TEXT NOT NULL,
+  time TIMESTAMP NOT NULL,
+  request_id TEXT NOT NULL
 )

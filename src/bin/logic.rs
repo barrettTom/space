@@ -68,18 +68,22 @@ struct Position(Vector);
 #[derive(Debug, Clone, Default, PartialEq)]
 struct Name(String);
 
-fn get_requests(connection: &SqliteConnection) -> Vec<Request> {
+fn process_requests(connection: &SqliteConnection) {
     let requests = dsl::requests
         .filter(dsl::received.eq(false))
         .load::<Request>(connection)
         .unwrap();
 
-    diesel::update(dsl::requests)
-        .set(dsl::received.eq(true))
-        .execute(connection)
-        .unwrap();
+    if !requests.is_empty() {
+        println!("{:?}", requests);
+    }
 
-    requests
+    for request in requests.iter() {
+        diesel::update(request)
+            .set(dsl::received.eq(true))
+            .execute(connection)
+            .unwrap();
+    }
 }
 
 fn main() {
@@ -95,10 +99,7 @@ fn main() {
 
         process(&mut world);
 
-        let requests = get_requests(&connection);
-        if !requests.is_empty() {
-            println!("{:?}", requests);
-        }
+        process_requests(&connection);
 
         while timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
             sleep(Duration::from_millis(1));
