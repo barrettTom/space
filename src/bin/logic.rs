@@ -1,5 +1,6 @@
 extern crate space;
 
+use diesel::prelude::*;
 use legion::prelude::*;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
@@ -9,6 +10,8 @@ use space::components::navigation::Navigation;
 use space::components::storage::Storage;
 use space::constants;
 use space::math::{rand_name, Vector};
+use space::request::Request;
+use space::schema::requests::dsl;
 
 fn populate(world: &mut World) {
     for _ in 0..constants::ASTROID_COUNT {
@@ -65,7 +68,23 @@ struct Position(Vector);
 #[derive(Debug, Clone, Default, PartialEq)]
 struct Name(String);
 
+fn get_requests(connection: &SqliteConnection) -> Vec<Request> {
+    let requests = dsl::requests
+        .filter(dsl::received.eq(false))
+        .load::<Request>(connection)
+        .unwrap();
+
+    diesel::update(dsl::requests)
+        .set(dsl::received.eq(true))
+        .execute(connection)
+        .unwrap();
+
+    requests
+}
+
 fn main() {
+    let connection = SqliteConnection::establish(constants::DB_PATH).unwrap();
+
     let universe = Universe::new();
     let mut world = universe.create_world();
 
@@ -75,6 +94,11 @@ fn main() {
         let timer = Instant::now();
 
         process(&mut world);
+
+        let requests = get_requests(&connection);
+        if !requests.is_empty() {
+            println!("{:?}", requests);
+        }
 
         while timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
             sleep(Duration::from_millis(1));

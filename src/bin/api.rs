@@ -1,43 +1,9 @@
-#[macro_use]
-extern crate diesel;
-
 use actix_web::{get, web, App, HttpServer, Responder};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
-use serde::Serialize;
-use std::time::SystemTime;
-use uuid::Uuid;
 
+use space::request::{Request, RequestData};
 use space::schema::requests;
-
-#[derive(Debug, Serialize, Queryable, Insertable)]
-pub struct Request {
-    id: String,
-    data: String,
-    time: String,
-    received: bool,
-}
-
-impl Request {
-    pub fn new(data: RequestData) -> Request {
-        Request {
-            id: Uuid::new_v4().to_string(),
-            data: serde_json::to_string(&data).unwrap(),
-            time: SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
-                .to_string(),
-            received: false,
-        }
-    }
-}
-
-#[derive(Debug, Serialize)]
-pub enum RequestData {
-    Play { ship: String, module: String },
-    Register { ship: String },
-}
 
 #[get("play/{ship}/{module}")]
 async fn play(

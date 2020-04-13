@@ -19,10 +19,10 @@ impl Engines {
 
     pub fn process(
         &mut self,
-        position: Vector,
+        _position: Vector,
         velocity: Vector,
         acceleration: &mut Vector,
-        target_position: Option<Vector>,
+        _target_position: Option<Vector>,
         target_velocity: Option<Vector>,
     ) {
         self.desired_velocity = match self.status {
