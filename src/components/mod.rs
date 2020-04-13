@@ -3,6 +3,7 @@ pub mod dashboard;
 pub mod engines;
 pub mod item;
 pub mod mining;
+pub mod misc;
 pub mod navigation;
 pub mod refinery;
 pub mod storage;

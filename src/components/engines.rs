@@ -32,7 +32,7 @@ impl Engines {
             Status::Inactive => None,
         };
 
-        if let Some(desired_velocity) = self.desired_velocity.clone() {
+        if let Some(desired_velocity) = self.desired_velocity {
             *acceleration += desired_velocity - velocity;
             if *acceleration == Vector::default() {
                 self.desired_velocity = None;

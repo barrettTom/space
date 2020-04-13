@@ -41,7 +41,7 @@ impl Effects {
     }
 
     pub fn take_acceleration(&mut self) -> Vector {
-        let acceleration = self.acceleration.clone();
+        let acceleration = self.acceleration;
         self.acceleration = Vector::default();
         acceleration
     }

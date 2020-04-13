@@ -49,11 +49,7 @@ impl Construction {
 
             masses.insert(
                 "Station".to_string(),
-                Mass::new_station(
-                    ModuleType::Refinery,
-                    ship_position.clone(),
-                    ship_velocity.clone(),
-                ),
+                Mass::new_station(ModuleType::Refinery, ship_position, ship_velocity),
             );
             self.constructed();
         }

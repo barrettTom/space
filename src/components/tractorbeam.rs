@@ -29,7 +29,7 @@ impl Tractorbeam {
         if self.range < distance {
             self.off()
         } else {
-            let direction = target.position.clone() - ship_position.clone();
+            let direction = target.position - ship_position;
             let acceleration = match self.status {
                 Status::Push => direction.unitize() * self.strength,
                 Status::Pull => direction.unitize() * -1.0 * self.strength,

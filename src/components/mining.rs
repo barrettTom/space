@@ -45,12 +45,8 @@ impl Mining {
             match target.take_item(ItemType::CrudeMinerals) {
                 Some(item) => {
                     if !storage.give_item(item.clone()) {
-                        let mass = Mass::new_item(
-                            item.clone(),
-                            target.position.clone(),
-                            target.velocity.clone(),
-                        );
-                        masses.insert(item.name.clone(), mass);
+                        let mass = Mass::new_item(item.clone(), target.position, target.velocity);
+                        masses.insert(item.name, mass);
                     }
                 }
                 None => self.off(),
