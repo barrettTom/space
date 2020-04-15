@@ -8,6 +8,7 @@ use std::time::{Duration, Instant};
 use space::constants;
 use space::entities;
 use space::request::Request;
+use space::response::{Response, ResponseData};
 use space::schema::requests::dsl;
 use space::systems;
 
@@ -29,10 +30,9 @@ fn process_requests(connection: &SqliteConnection) {
     }
 
     for request in requests.iter() {
-        diesel::update(request)
-            .set(dsl::received.eq(true))
-            .execute(connection)
-            .unwrap();
+        let response = Response::new(ResponseData::Good, request.id().to_string());
+        response.insert_into(&connection);
+        request.mark_received(&connection);
     }
 }
 

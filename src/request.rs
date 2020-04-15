@@ -1,3 +1,5 @@
+use diesel::prelude::*;
+use diesel::result::Error;
 use serde::Serialize;
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -24,6 +26,19 @@ impl Request {
                 .to_string(),
             received: false,
         }
+    }
+
+    pub fn insert_into(self, connection: &SqliteConnection) -> Result<usize, Error> {
+        diesel::insert_into(requests::dsl::requests)
+            .values(&self)
+            .execute(connection)
+    }
+
+    pub fn mark_received(&self, connection: &SqliteConnection) {
+        diesel::update(self)
+            .set(requests::dsl::received.eq(true))
+            .execute(connection)
+            .unwrap();
     }
 }
 

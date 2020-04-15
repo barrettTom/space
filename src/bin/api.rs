@@ -3,7 +3,6 @@ use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 
 use space::request::{Request, RequestData};
-use space::schema::requests;
 
 #[get("play/{ship}/{module}")]
 async fn play(
@@ -19,13 +18,9 @@ async fn play(
 
     let request = Request::new(data);
 
-    web::block(move || {
-        diesel::insert_into(requests::dsl::requests)
-            .values(&request)
-            .execute(&connection)
-    })
-    .await
-    .unwrap();
+    web::block(move || request.insert_into(&connection))
+        .await
+        .unwrap();
 
     "Good"
 }
@@ -43,13 +38,9 @@ async fn register(
 
     let request = Request::new(data);
 
-    web::block(move || {
-        diesel::insert_into(requests::dsl::requests)
-            .values(&request)
-            .execute(&connection)
-    })
-    .await
-    .unwrap();
+    web::block(move || request.insert_into(&connection))
+        .await
+        .unwrap();
 
     "Good"
 }
