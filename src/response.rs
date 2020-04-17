@@ -37,6 +37,12 @@ impl Response {
     }
 }
 
+impl ToString for Response {
+    fn to_string(&self) -> String {
+        self.data.clone()
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub enum ResponseData {
     Good,

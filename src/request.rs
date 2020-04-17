@@ -5,8 +5,9 @@ use std::time::SystemTime;
 use uuid::Uuid;
 
 use crate::schema::requests;
+use crate::response::Response;
 
-#[derive(Debug, Serialize, Queryable, Insertable, Identifiable)]
+#[derive(Debug, Clone, Serialize, Queryable, Insertable, Identifiable)]
 pub struct Request {
     id: String,
     data: String,
@@ -28,9 +29,9 @@ impl Request {
         }
     }
 
-    pub fn insert_into(self, connection: &SqliteConnection) -> Result<usize, Error> {
+    pub fn insert_into(&self, connection: &SqliteConnection) -> Result<usize, Error> {
         diesel::insert_into(requests::dsl::requests)
-            .values(&self)
+            .values(self)
             .execute(connection)
     }
 
@@ -39,6 +40,11 @@ impl Request {
             .set(requests::dsl::received.eq(true))
             .execute(connection)
             .unwrap();
+    }
+
+    pub fn get_response(&self, connection: &SqliteConnection) -> Result<Response, Error> {
+        self.insert_into(connection).unwrap()
+        Response::belonging_to(self).first(connection)
     }
 }
 

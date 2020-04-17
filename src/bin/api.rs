@@ -17,12 +17,11 @@ async fn play(
     };
 
     let request = Request::new(data);
+    let request_clone = request.clone();
 
-    web::block(move || request.insert_into(&connection))
+    web::block(move || request.get_response(&connection))
         .await
         .unwrap();
-
-    "Good"
 }
 
 #[get("register/{ship}")]
