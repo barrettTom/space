@@ -17,11 +17,11 @@ async fn play(
     };
 
     let request = Request::new(data);
-    let request_clone = request.clone();
 
     web::block(move || request.get_response(&connection))
         .await
-        .unwrap();
+        .unwrap()
+        .to_string()
 }
 
 #[get("register/{ship}")]
@@ -37,11 +37,10 @@ async fn register(
 
     let request = Request::new(data);
 
-    web::block(move || request.insert_into(&connection))
+    web::block(move || request.get_response(&connection))
         .await
-        .unwrap();
-
-    "Good"
+        .unwrap()
+        .to_string()
 }
 
 #[actix_rt::main]

@@ -1,11 +1,14 @@
 use diesel::prelude::*;
 use diesel::result::Error;
 use serde::Serialize;
+use std::thread::sleep;
 use std::time::SystemTime;
+use std::time::{Duration, Instant};
 use uuid::Uuid;
 
-use crate::schema::requests;
+use crate::constants;
 use crate::response::Response;
+use crate::schema::requests;
 
 #[derive(Debug, Clone, Serialize, Queryable, Insertable, Identifiable)]
 pub struct Request {
@@ -43,7 +46,14 @@ impl Request {
     }
 
     pub fn get_response(&self, connection: &SqliteConnection) -> Result<Response, Error> {
-        self.insert_into(connection).unwrap()
+        self.insert_into(connection).unwrap();
+        let timer = Instant::now();
+        while timer.elapsed().as_millis() < (constants::LOOP_DURATION_MS * 2).into() {
+            sleep(Duration::from_millis(constants::LOOP_DURATION_MS / 6));
+            if let Ok(response) = Response::belonging_to(self).first(connection) {
+                return Ok(response);
+            }
+        }
         Response::belonging_to(self).first(connection)
     }
 }
