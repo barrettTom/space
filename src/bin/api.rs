@@ -4,7 +4,7 @@ use diesel::r2d2::{ConnectionManager, Pool};
 
 use space::request::{Request, RequestData};
 
-#[get("play/{ship}/{module}")]
+#[get("play")]
 async fn play(
     info: web::Path<(String, String)>,
     pool: web::Data<Pool<ConnectionManager<SqliteConnection>>>,
@@ -24,7 +24,7 @@ async fn play(
         .to_string()
 }
 
-#[get("register/{ship}")]
+#[get("register")]
 async fn register(
     info: web::Path<String>,
     pool: web::Data<Pool<ConnectionManager<SqliteConnection>>>,
