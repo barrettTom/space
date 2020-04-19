@@ -52,8 +52,9 @@ fn main() {
         process_requests(&connection);
 
         while timer.elapsed().as_millis() < constants::LOOP_DURATION_MS.into() {
-            sleep(Duration::from_millis(1));
-            // TODO get requests, do logic, make responses
+            sleep(Duration::from_millis(
+                constants::LOOP_DURATION_MS - timer.elapsed().as_millis() as u64,
+            ));
         }
     }
 }
