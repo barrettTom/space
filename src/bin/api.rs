@@ -1,4 +1,6 @@
 use actix_web::{get, web, App, HttpServer, Responder};
+use actix_web_httpauth::extractors::basic::BasicAuth;
+
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 
@@ -6,14 +8,15 @@ use space::request::{Request, RequestData};
 
 #[get("play")]
 async fn play(
-    info: web::Path<(String, String)>,
+    auth: BasicAuth,
     pool: web::Data<Pool<ConnectionManager<SqliteConnection>>>,
 ) -> impl Responder {
     let connection = pool.get().unwrap();
 
     let data = RequestData::Play {
-        ship: info.0.to_string(),
-        module: info.1.to_string(),
+        user: auth.user_id().to_string(),
+        pass: auth.password().unwrap().to_string(),
+        module: String::new(),
     };
 
     let request = Request::new(data);
@@ -26,13 +29,14 @@ async fn play(
 
 #[get("register")]
 async fn register(
-    info: web::Path<String>,
+    auth: BasicAuth,
     pool: web::Data<Pool<ConnectionManager<SqliteConnection>>>,
 ) -> impl Responder {
     let connection = pool.get().unwrap();
 
     let data = RequestData::Register {
-        ship: info.to_string(),
+        user: auth.user_id().to_string(),
+        pass: auth.password().unwrap().to_string(),
     };
 
     let request = Request::new(data);

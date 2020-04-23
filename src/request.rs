@@ -60,6 +60,13 @@ impl Request {
 
 #[derive(Debug, Serialize)]
 pub enum RequestData {
-    Play { ship: String, module: String },
-    Register { ship: String },
+    Play {
+        user: String,
+        pass: String,
+        module: String,
+    },
+    Register {
+        user: String,
+        pass: String,
+    },
 }
