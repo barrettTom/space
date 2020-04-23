@@ -11,3 +11,6 @@ pub struct Position(pub Vector);
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Name(pub String);
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Pass(pub String);

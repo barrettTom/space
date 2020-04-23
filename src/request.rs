@@ -32,6 +32,10 @@ impl Request {
         }
     }
 
+    pub fn get_data(&self) -> RequestData {
+        serde_json::from_str(&self.data).unwrap()
+    }
+
     pub fn insert_into(&self, connection: &SqliteConnection) -> Result<usize, Error> {
         diesel::insert_into(requests::dsl::requests)
             .values(self)
@@ -58,7 +62,7 @@ impl Request {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum RequestData {
     Play {
         user: String,

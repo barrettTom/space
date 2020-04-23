@@ -1,7 +1,7 @@
 use legion::prelude::*;
 
 use crate::components::engines::Engines;
-use crate::components::misc::{Name, Position, Velocity};
+use crate::components::misc::{Name, Pass, Position, Velocity};
 use crate::components::navigation::Navigation;
 use crate::components::storage::Storage;
 use crate::constants;
@@ -28,11 +28,12 @@ impl Astroid {
 pub struct Ship;
 
 impl Ship {
-    pub fn insert_to(world: &mut World) {
+    pub fn insert_to(user: String, pass: String, world: &mut World) {
         world.insert(
             (Ship, true),
             vec![(
-                Name(rand_name()),
+                Name(user),
+                Pass(pass),
                 Velocity::default(),
                 Position::default(),
                 Storage::new(Vec::new(), constants::SHIP_STORAGE_CAPACITY),
