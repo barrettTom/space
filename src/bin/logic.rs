@@ -5,12 +5,12 @@ use legion::prelude::*;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
+use space::components::misc::Name;
 use space::constants;
 use space::entities;
 use space::request::{Request, RequestData};
 use space::response::{Response, ResponseData};
 use space::schema::requests::dsl;
-use space::components::misc::Name;
 use space::systems;
 
 fn populate(world: &mut World) {
@@ -32,16 +32,15 @@ fn process_requests(world: &mut World, connection: &SqliteConnection) {
     for request in requests.iter() {
         let request_data = request.get_data();
         let response = match request_data {
-            RequestData::Register{user, pass} => {
-                match <Read<Name>>::query().iter(world).find(|name| name.0 == user) {
-                    Some(_) => Response::new(ResponseData::Bad, request.id().to_string()),
-                    None => {
-                        entities::Ship::insert_to(user, pass, world);
-                        Response::new(ResponseData::Good, request.id().to_string())
-                    },
+            RequestData::Register { user, pass } => {
+                let exists = <Read<Name>>::query().iter(world).any(|name| name.0 == user);
+                if exists {
+                    Response::new(ResponseData::Bad, request.id().to_string())
+                } else {
+                    entities::Ship::insert_to(user, pass, world);
+                    Response::new(ResponseData::Good, request.id().to_string())
                 }
-
-            },
+            }
             _ => Response::new(ResponseData::Bad, request.id().to_string()),
         };
 
