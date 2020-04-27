@@ -1,3 +1,6 @@
+use actix_web::dev::HttpResponseBuilder;
+use actix_web::http::StatusCode;
+use actix_web::web::HttpResponse;
 use diesel::prelude::*;
 use serde::Serialize;
 use std::time::SystemTime;
@@ -35,6 +38,14 @@ impl Response {
             .execute(connection)
             .unwrap();
     }
+
+    pub fn get_data(&self) -> ResponseData {
+        serde_json::from_str(&self.data).unwrap()
+    }
+
+    pub fn to_http_response(&self) -> HttpResponse {
+        HttpResponseBuilder::new(StatusCode::OK).finish()
+    }
 }
 
 impl ToString for Response {
@@ -43,7 +54,7 @@ impl ToString for Response {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ResponseData {
     Good,
     Bad,

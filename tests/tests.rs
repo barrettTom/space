@@ -28,7 +28,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_register() {
         let response = Client::default()
-            .put("localhost:8000/register")
+            .put("http://localhost:8000/register")
             .basic_auth("user", Some("pass"))
             .send()
             .await;

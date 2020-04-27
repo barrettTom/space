@@ -1,3 +1,4 @@
+use actix_web::web::HttpResponse;
 use diesel::prelude::*;
 use diesel::result::Error;
 use serde::Serialize;
@@ -49,7 +50,7 @@ impl Request {
             .unwrap();
     }
 
-    pub fn get_response(&self, connection: &SqliteConnection) -> Result<Response, Error> {
+    fn get_response(&self, connection: &SqliteConnection) -> Result<Response, Error> {
         self.insert_into(connection).unwrap();
         let timer = Instant::now();
         while timer.elapsed().as_millis() < (constants::LOOP_DURATION_MS * 2).into() {
@@ -59,6 +60,13 @@ impl Request {
             }
         }
         Response::belonging_to(self).first(connection)
+    }
+
+    pub fn get_http_response(&self, connection: &SqliteConnection) -> HttpResponse {
+        match self.get_response(connection) {
+            Ok(response) => response.to_http_response(),
+            Err(_) => HttpResponse::RequestTimeout().finish(),
+        }
     }
 }
 

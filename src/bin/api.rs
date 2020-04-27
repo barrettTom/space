@@ -1,4 +1,5 @@
-use actix_web::{get, web, App, HttpServer, Responder};
+use actix_web::web::HttpResponse;
+use actix_web::{get, put, web, App, HttpServer};
 use actix_web_httpauth::extractors::basic::BasicAuth;
 
 use diesel::prelude::*;
@@ -10,7 +11,7 @@ use space::request::{Request, RequestData};
 async fn play(
     auth: BasicAuth,
     pool: web::Data<Pool<ConnectionManager<SqliteConnection>>>,
-) -> impl Responder {
+) -> HttpResponse {
     let connection = pool.get().unwrap();
 
     let data = RequestData::Play {
@@ -19,19 +20,14 @@ async fn play(
         module: String::new(),
     };
 
-    let request = Request::new(data);
-
-    web::block(move || request.get_response(&connection))
-        .await
-        .unwrap()
-        .to_string()
+    Request::new(data).get_http_response(&connection)
 }
 
-#[get("register")]
+#[put("register")]
 async fn register(
     auth: BasicAuth,
     pool: web::Data<Pool<ConnectionManager<SqliteConnection>>>,
-) -> impl Responder {
+) -> HttpResponse {
     let connection = pool.get().unwrap();
 
     let data = RequestData::Register {
@@ -39,12 +35,7 @@ async fn register(
         pass: auth.password().unwrap().to_string(),
     };
 
-    let request = Request::new(data);
-
-    web::block(move || request.get_response(&connection))
-        .await
-        .unwrap()
-        .to_string()
+    Request::new(data).get_http_response(&connection)
 }
 
 #[actix_rt::main]
