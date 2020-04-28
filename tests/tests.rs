@@ -26,7 +26,6 @@ mod tests {
     use actix_web::client::Client;
     use actix_web::http::StatusCode;
 
-    #[actix_rt::test]
     async fn test_register() {
         let response = Client::default()
             .put("http://localhost:8000/register")
@@ -41,5 +40,20 @@ mod tests {
             .send()
             .await;
         assert!(response.unwrap().status() == StatusCode::CONFLICT);
+    }
+
+    async fn test_dashboard() {
+        let response = Client::default()
+            .get("http://localhost:8000/play")
+            .basic_auth("user", Some("pass"))
+            .send_body(r#"{"module" : "dashboard"}"#)
+            .await;
+        assert!(response.unwrap().status() == StatusCode::OK);
+    }
+
+    #[actix_rt::test]
+    async fn test_api() {
+        test_register().await;
+        test_dashboard().await;
     }
 }
