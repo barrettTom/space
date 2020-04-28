@@ -35,13 +35,19 @@ fn process_requests(world: &mut World, connection: &SqliteConnection) {
             RequestData::Register { user, pass } => {
                 let exists = <Read<Name>>::query().iter(world).any(|name| name.0 == user);
                 if exists {
-                    Response::new(ResponseData::Bad, request.id().to_string())
+                    Response::new(
+                        ResponseData::Error("Username already exists.".to_string()),
+                        request.id().to_string(),
+                    )
                 } else {
                     entities::Ship::insert_to(user, pass, world);
-                    Response::new(ResponseData::Good, request.id().to_string())
+                    Response::new(ResponseData::Okay, request.id().to_string())
                 }
             }
-            _ => Response::new(ResponseData::Bad, request.id().to_string()),
+            _ => Response::new(
+                ResponseData::Error("Not yet made.".to_string()),
+                request.id().to_string(),
+            ),
         };
 
         response.insert_into(&connection);

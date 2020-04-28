@@ -24,6 +24,7 @@ mod tests {
     use space::modules::types::ModuleType;
     */
     use actix_web::client::Client;
+    use actix_web::http::StatusCode;
 
     #[actix_rt::test]
     async fn test_register() {
@@ -32,7 +33,13 @@ mod tests {
             .basic_auth("user", Some("pass"))
             .send()
             .await;
-        println!("{:?}", response);
-        assert!(true == true);
+        assert!(response.unwrap().status() == StatusCode::OK);
+
+        let response = Client::default()
+            .put("http://localhost:8000/register")
+            .basic_auth("user", Some("pass"))
+            .send()
+            .await;
+        assert!(response.unwrap().status() == StatusCode::CONFLICT);
     }
 }
