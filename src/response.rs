@@ -46,9 +46,10 @@ impl Response {
     pub fn to_http_response(&self) -> HttpResponse {
         match self.get_data() {
             ResponseData::Okay => HttpResponseBuilder::new(StatusCode::OK).finish(),
-            ResponseData::Error(_reason) => HttpResponseBuilder::new(StatusCode::CONFLICT)
-                .reason("TODO figure how to take reason")
-                .finish(),
+            ResponseData::Conflict => HttpResponseBuilder::new(StatusCode::CONFLICT).finish(),
+            ResponseData::Unauthorized => {
+                HttpResponseBuilder::new(StatusCode::UNAUTHORIZED).finish()
+            }
         }
     }
 }
@@ -62,5 +63,6 @@ impl ToString for Response {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ResponseData {
     Okay,
-    Error(String),
+    Conflict,
+    Unauthorized,
 }

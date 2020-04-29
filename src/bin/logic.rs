@@ -5,7 +5,7 @@ use legion::prelude::*;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
-use space::components::misc::Name;
+use space::components::misc::{Name, Pass};
 use space::constants;
 use space::entities;
 use space::request::{Request, RequestData};
@@ -35,19 +35,25 @@ fn process_requests(world: &mut World, connection: &SqliteConnection) {
             RequestData::Register { user, pass } => {
                 let exists = <Read<Name>>::query().iter(world).any(|name| name.0 == user);
                 if exists {
-                    Response::new(
-                        ResponseData::Error("Username already exists.".to_string()),
-                        request.id().to_string(),
-                    )
+                    Response::new(ResponseData::Conflict, request.id().to_string())
                 } else {
                     entities::Ship::insert_to(user, pass, world);
                     Response::new(ResponseData::Okay, request.id().to_string())
                 }
             }
-            _ => Response::new(
-                ResponseData::Error("Not yet made.".to_string()),
-                request.id().to_string(),
-            ),
+            RequestData::Play { user, pass, module } => {
+                let authd = <(Read<Name>, Read<Pass>)>::query()
+                    .iter(world)
+                    .any(|(name, passs)| name.0 == user && passs.0 == pass);
+                if authd {
+                    match module {
+                        _ => (),
+                    }
+                    Response::new(ResponseData::Okay, request.id().to_string())
+                } else {
+                    Response::new(ResponseData::Unauthorized, request.id().to_string())
+                }
+            }
         };
 
         response.insert_into(&connection);

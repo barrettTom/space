@@ -42,7 +42,16 @@ mod tests {
         assert!(response.unwrap().status() == StatusCode::CONFLICT);
     }
 
-    async fn test_dashboard() {
+    async fn test_password() {
+        let response = Client::default()
+            .get("http://localhost:8000/play")
+            .basic_auth("user", Some("pass2"))
+            .send_body(r#"{"module" : "dashboard"}"#)
+            .await;
+        assert!(response.unwrap().status() == StatusCode::UNAUTHORIZED);
+    }
+
+    async fn test_login() {
         let response = Client::default()
             .get("http://localhost:8000/play")
             .basic_auth("user", Some("pass"))
@@ -51,9 +60,21 @@ mod tests {
         assert!(response.unwrap().status() == StatusCode::OK);
     }
 
+    async fn test_dashboard() {
+        let response = Client::default()
+            .get("http://localhost:8000/play")
+            .basic_auth("user", Some("pass"))
+            .send_body(r#"{"module" : "dashboard"}"#)
+            .await;
+        // something like this
+        //assert!(response.unwrap().body() == "{position = (0,0,0)}");
+    }
+
     #[actix_rt::test]
     async fn test_api() {
         test_register().await;
+        test_login().await;
+        test_password().await;
         test_dashboard().await;
     }
 }
