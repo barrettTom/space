@@ -6,6 +6,7 @@ use serde::Serialize;
 use std::time::SystemTime;
 use uuid::Uuid;
 
+use crate::components::dashboard::ClientDashboard;
 use crate::request::Request;
 use crate::schema::responses;
 
@@ -44,12 +45,11 @@ impl Response {
     }
 
     pub fn to_http_response(&self) -> HttpResponse {
-        match self.get_data() {
-            ResponseData::Okay => HttpResponseBuilder::new(StatusCode::OK).finish(),
-            ResponseData::Conflict => HttpResponseBuilder::new(StatusCode::CONFLICT).finish(),
-            ResponseData::Unauthorized => {
-                HttpResponseBuilder::new(StatusCode::UNAUTHORIZED).finish()
-            }
+        match self.get_data().status_code.as_str() {
+            "Ok" => HttpResponseBuilder::new(StatusCode::OK).finish(),
+            "Conflict" => HttpResponseBuilder::new(StatusCode::CONFLICT).finish(),
+            "Unauthorized" => HttpResponseBuilder::new(StatusCode::UNAUTHORIZED).finish(),
+            _ => HttpResponseBuilder::new(StatusCode::IM_A_TEAPOT).finish(),
         }
     }
 }
@@ -61,8 +61,22 @@ impl ToString for Response {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ResponseData {
-    Okay,
-    Conflict,
-    Unauthorized,
+pub struct ResponseData {
+    status_code: String,
+    reason: String,
+    client_data: Option<ClientDashboard>,
+}
+
+impl ResponseData {
+    pub fn new(
+        status_code: &str,
+        reason: &str,
+        client_data: Option<ClientDashboard>,
+    ) -> ResponseData {
+        ResponseData {
+            status_code: status_code.to_string(),
+            reason: reason.to_string(),
+            client_data,
+        }
+    }
 }

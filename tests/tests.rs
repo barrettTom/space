@@ -25,6 +25,7 @@ mod tests {
     */
     use actix_web::client::Client;
     use actix_web::http::StatusCode;
+    use space::components::dashboard::ClientDashboard;
 
     async fn test_register() {
         let response = Client::default()
@@ -66,8 +67,8 @@ mod tests {
             .basic_auth("user", Some("pass"))
             .send_body(r#"{"module" : "dashboard"}"#)
             .await;
-        // something like this
-        //assert!(response.unwrap().body() == "{position = (0,0,0)}");
+        let d: Result<ClientDashboard, _> = response.unwrap().json().await;
+        assert!(d.is_ok());
     }
 
     #[actix_rt::test]

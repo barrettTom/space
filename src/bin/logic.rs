@@ -20,44 +20,49 @@ fn populate(world: &mut World) {
 }
 
 fn process_requests(world: &mut World, connection: &SqliteConnection) {
-    let requests = dsl::requests
+    if let Ok(requests) = dsl::requests
         .filter(dsl::received.eq(false))
         .load::<Request>(connection)
-        .unwrap();
+    {
+        if !requests.is_empty() {
+            println!("{:?}", requests);
+        }
 
-    if !requests.is_empty() {
-        println!("{:?}", requests);
-    }
-
-    for request in requests.iter() {
-        let request_data = request.get_data();
-        let response = match request_data {
-            RequestData::Register { user, pass } => {
-                let exists = <Read<Name>>::query().iter(world).any(|name| name.0 == user);
-                if exists {
-                    Response::new(ResponseData::Conflict, request.id().to_string())
-                } else {
-                    entities::Ship::insert_to(user, pass, world);
-                    Response::new(ResponseData::Okay, request.id().to_string())
-                }
-            }
-            RequestData::Play { user, pass, module } => {
-                let authd = <(Read<Name>, Read<Pass>)>::query()
-                    .iter(world)
-                    .any(|(name, passs)| name.0 == user && passs.0 == pass);
-                if authd {
-                    match module {
-                        _ => (),
+        for request in requests.iter() {
+            let request_data = request.get_data();
+            let response = match request_data {
+                RequestData::Register { user, pass } => {
+                    let exists = <Read<Name>>::query().iter(world).any(|name| name.0 == user);
+                    if exists {
+                        let response_data = ResponseData::new("Conflict", "Already Exists", None);
+                        Response::new(response_data, request.id().to_string())
+                    } else {
+                        entities::Ship::insert_to(user, pass, world);
+                        let response_data = ResponseData::new("Ok", "", None);
+                        Response::new(response_data, request.id().to_string())
                     }
-                    Response::new(ResponseData::Okay, request.id().to_string())
-                } else {
-                    Response::new(ResponseData::Unauthorized, request.id().to_string())
                 }
-            }
-        };
+                RequestData::Play { user, pass, module } => {
+                    let authd = <(Read<Name>, Read<Pass>)>::query()
+                        .iter(world)
+                        .any(|(name, passs)| name.0 == user && passs.0 == pass);
+                    if authd {
+                        match module {
+                            _ => (),
+                        }
+                        let response_data = ResponseData::new("Ok", "", None);
+                        Response::new(response_data, request.id().to_string())
+                    } else {
+                        let response_data =
+                            ResponseData::new("Unauthorized", "Username/Password is wrong.", None);
+                        Response::new(response_data, request.id().to_string())
+                    }
+                }
+            };
 
-        response.insert_into(&connection);
-        request.mark_received(&connection);
+            response.insert_into(&connection);
+            request.mark_received(&connection);
+        }
     }
 }
 
