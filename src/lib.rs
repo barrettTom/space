@@ -4,6 +4,7 @@ extern crate diesel;
 #[macro_use]
 extern crate serde;
 
+pub mod client;
 pub mod components;
 pub mod constants;
 pub mod entities;

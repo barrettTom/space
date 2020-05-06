@@ -6,7 +6,7 @@ use serde::Serialize;
 use std::time::SystemTime;
 use uuid::Uuid;
 
-use crate::components::dashboard::ClientDashboard;
+use crate::client::types::ClientDashboard;
 use crate::request::Request;
 use crate::schema::responses;
 

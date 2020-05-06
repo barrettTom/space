@@ -37,10 +37,14 @@ impl Request {
         serde_json::from_str(&self.data).unwrap()
     }
 
-    pub fn insert_into(&self, connection: &SqliteConnection) -> Result<usize, Error> {
-        diesel::insert_into(requests::dsl::requests)
-            .values(self)
-            .execute(connection)
+    pub fn insert_into(&self, connection: &SqliteConnection) {
+        let mut inserted = false;
+        while !inserted {
+            let result = diesel::insert_into(requests::dsl::requests)
+                .values(self)
+                .execute(connection);
+            inserted = result.is_ok();
+        }
     }
 
     pub fn mark_received(&self, connection: &SqliteConnection) {
@@ -51,7 +55,7 @@ impl Request {
     }
 
     fn get_response(&self, connection: &SqliteConnection) -> Result<Response, Error> {
-        self.insert_into(connection).unwrap();
+        self.insert_into(connection);
         let timer = Instant::now();
         while timer.elapsed().as_millis() < (constants::LOOP_DURATION_MS * 2).into() {
             sleep(Duration::from_millis(constants::LOOP_DURATION_MS / 6));
