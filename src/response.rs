@@ -34,10 +34,13 @@ impl Response {
     }
 
     pub fn insert_into(self, connection: &SqliteConnection) {
-        diesel::insert_into(responses::dsl::responses)
-            .values(&self)
-            .execute(connection)
-            .unwrap();
+        let mut inserted = false;
+        while !inserted {
+            let result = diesel::insert_into(responses::dsl::responses)
+                .values(&self)
+                .execute(connection);
+            inserted = result.is_ok();
+        }
     }
 
     pub fn get_data(&self) -> ResponseData {
