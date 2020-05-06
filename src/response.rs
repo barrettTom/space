@@ -52,6 +52,7 @@ impl Response {
             "Ok" => HttpResponseBuilder::new(StatusCode::OK).finish(),
             "Conflict" => HttpResponseBuilder::new(StatusCode::CONFLICT).finish(),
             "Unauthorized" => HttpResponseBuilder::new(StatusCode::UNAUTHORIZED).finish(),
+            "Not Implemented" => HttpResponseBuilder::new(StatusCode::NOT_IMPLEMENTED).finish(),
             _ => HttpResponseBuilder::new(StatusCode::IM_A_TEAPOT).finish(),
         }
     }

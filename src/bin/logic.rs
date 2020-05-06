@@ -47,10 +47,10 @@ fn process_requests(world: &mut World, connection: &SqliteConnection) {
                         .iter(world)
                         .any(|(name, passs)| name.0 == user && passs.0 == pass);
                     if authd {
-                        match module {
-                            _ => (),
-                        }
-                        let response_data = ResponseData::new("Ok", "", None);
+                        let response_data = match module.as_str() {
+                            "dashboard" => ResponseData::new("Ok", "", None),
+                            _ => ResponseData::new("Not Implemented", "", None),
+                        };
                         Response::new(response_data, request.id().to_string())
                     } else {
                         let response_data =
